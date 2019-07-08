@@ -397,11 +397,12 @@ interface AnimateOptions {
     timingFunction?: AnimationTimingFunction;
 }
 
-class Elem {
-    _htmlElement: HTMLElement;
+class BetterHTMLElement extends HTMLElement {
     
     
     constructor(elemOptions: ElemOptions) {
+        super();
+        let proxy;
         const {tag, id, htmlElement, text, query, children, cls} = elemOptions;
         
         if ([tag, id, htmlElement, query].filter(x => x).length > 1)
@@ -412,13 +413,13 @@ class Elem {
                 query
             }}`);
         if (tag)
-            this._htmlElement = document.createElement(tag);
+            proxy = document.createElement(tag);
         else if (id)
-            this._htmlElement = document.getElementById(id);
+            proxy = document.getElementById(id);
         else if (query)
-            this._htmlElement = document.querySelector(query);
+            proxy = document.querySelector(query);
         else if (htmlElement)
-            this._htmlElement = htmlElement;
+            proxy = htmlElement;
         else
             throw new Error(`Didn't receive one, pass exactly one of: [tag, id, htmlElement, query], ${{
                 tag,
@@ -430,7 +431,7 @@ class Elem {
         if (text !== undefined)
             this.text(text);
         if (cls !== undefined)
-            this.setClass(cls);
+            this.class(cls);
         
         if (children !== undefined) {
             if (tag)
@@ -444,35 +445,33 @@ class Elem {
                 }}`);
             this.cacheChildren(children);
         }
+        return proxy;
         
         
     }
     
-    get e() {
-        return this._htmlElement;
-    }
     
     // **  Basic
     
     html(html: string): this {
-        this._htmlElement.innerHTML = html;
+        this.innerHTML = html;
         return this;
     }
     
     text(txt: string): this {
-        this.e.innerText = txt;
+        this.innerText = txt;
         return this;
         
     }
     
     id(id: string): this {
-        this.e.id = id;
+        super.id = id;
         return this;
     }
     
     css(css: CssOptions): this {
         for (let [styleAttr, styleVal] of enumerate(css))
-            this.e.style[<string>styleAttr] = styleVal;
+            this.style[<string>styleAttr] = styleVal;
         return this;
     }
     
@@ -483,86 +482,80 @@ class Elem {
         return this.css(css);
     }
     
-    animate(opts: AnimateOptions): this {
-        // ordered
-        console.group('animate, opts: ', opts);
-        const optionals = [opts.timingFunction, opts.delay, opts.iterationCount, opts.direction, opts.fillMode, opts.playState];
-        // filter out undefined, whitespace separate. mandatories first.
-        const animation = `${opts.name} ${opts.duration} ${optionals.filter(v => v).join(' ')}`;
-        // reset so can run animation again
-        /*this.on({
-            animationend: () => {
-                console.log('animate > animationend', this);
-                this.e.style.animation = '';
-            },
-        }, {once: true, capture: true, passive: true});
-        */
-        console.groupEnd();
-        return this.css({animation});
-    }
+    /*
+        animate(opts: AnimateOptions) {
+            // see: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations/Tips
+            throw new Error('Not implemented');
+        }
+    */
     
     // **  Classes
-    class(): string[] {
-        return Array.from(this.e.classList);
+    class(cls: string): this;
+    class(): string[];
+    class(cls?: string) {
+        if (cls !== undefined) {
+            this.className = cls;
+            return this;
+        } else {
+            return Array.from(this.classList);
+        }
     }
     
     addClass(cls: string, ...clses: string[]): this {
-        this.e.classList.add(cls);
+        this.classList.add(cls);
         for (let c of clses)
-            this.e.classList.add(c);
+            this.classList.add(c);
         return this;
     }
     
     
     removeClass(cls: string): this {
-        this.e.classList.remove(cls);
+        this.classList.remove(cls);
         return this;
     }
     
     replaceClass(oldToken: string, newToken: string): this {
-        this.e.classList.replace(oldToken, newToken);
-        return this;
-    }
-    
-    
-    setClass(cls: string): this {
-        this.e.className = cls;
+        this.classList.replace(oldToken, newToken);
         return this;
     }
     
     
     toggleClass(cls: string, force?: boolean): this {
-        this.e.classList.toggle(cls, force);
+        this.classList.toggle(cls, force);
         return this;
     }
     
     // **  Nodes
-    append(...children: Elem[]): this {
-        for (let child of children)
-            this.e.appendChild(child.e);
+    append(...nodes: BetterHTMLElement[] | (string|Node)[]): this {
+        
+        for (let node of nodes)
+            super.append(node);
         return this;
     }
     
-    cacheAppend(keyChildObj: TMap<Elem>): this {
+    cacheAppend(keyChildObj: TMap<BetterHTMLElement>): this {
         for (let [key, child] of enumerate(keyChildObj)) {
-            this.e.appendChild(child.e);
+            this.append(child);
             this[key] = child;
         }
         return this;
     }
-    
-    child(selector: string): Elem {
-        return new Elem({htmlElement: this.e.querySelector(selector)});
+    child<K extends keyof HTMLElementTagNameMap>(selector: K): this;
+    child<K extends keyof SVGElementTagNameMap>(selector: K): this;
+    child(selector: string): BetterHTMLElement;
+    child(selector) {
+        return new BetterHTMLElement({htmlElement: this.querySelector(selector)});
     }
-    
-    replaceChild(newChild: this, oldChild: this): this {
-        this.e.replaceChild(newChild.e, oldChild.e);
+    replaceChild(newChild: Node, oldChild: Node):this;
+    replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
+    replaceChild(newChild, oldChild) {
+        super.replaceChild(newChild, oldChild);
         return this;
     }
     
-    children(): Elem[] {
-        const childrenVanilla = <HTMLElement[]>Array.from(this.e.children);
-        const toElem = (c: HTMLElement) => new Elem({htmlElement: c});
+    children(): BetterHTMLElement[] {
+        const childrenVanilla = <HTMLElement[]>Array.from(super.children);
+        const toElem = (c: HTMLElement) => new BetterHTMLElement({htmlElement: c});
         return childrenVanilla.map(toElem);
     }
     
@@ -574,13 +567,13 @@ class Elem {
     
     empty(): this {
         // TODO: is this faster than innerHTML = ""?
-        while (this.e.firstChild)
-            this.e.removeChild(this.e.firstChild);
+        while (this.firstChild)
+            this.removeChild(this.firstChild);
         return this;
     }
     
     remove(): this {
-        this.e.remove();
+        super.remove();
         return this;
     }
     
@@ -588,7 +581,7 @@ class Elem {
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this {
         const that = this; // "this" changes inside function _f
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
-            this.e.addEventListener(evType, function _f(evt) {
+            this.addEventListener(evType, function _f(evt) {
                 evFn(evt);
                 // console.log('addEventListener, evt: ', evt, 'options: ', options, 'this: ', this);
                 // if (options && options.once)
@@ -599,35 +592,31 @@ class Elem {
     }
     
     
-    touchstart(fn: (ev: Event) => any, options?: { once: boolean }): this {
-        this.e.addEventListener('touchstart', function _f(ev: Event) {
+    touchstart(fn: (ev: Event) => any, options?: AddEventListenerOptions): this {
+        this.addEventListener('touchstart', function _f(ev: Event) {
             ev.preventDefault();
-            fn(ev);
-            if (options && options.once)
+            fn(ev); // LOL: what
+            if (options && options.once) // TODO: maybe native options.once is enough 
                 this.removeEventListener('touchstart', _f);
         });
         return this;
     }
     
-    pointerdown(fn: (event: Event) => any, options?: { once: boolean; } | null): this {
-        let evType;
-        if ("onpointerdown" in window)
-            evType = 'pointerdown';
-        else // happens in Browserstack Safari, maybe also actual iOS safari
-            evType = 'mousedown';
+    pointerdown(fn: (event: Event) => any, options?: AddEventListenerOptions): this {
         
-        this.e.addEventListener(evType, function _f(ev: Event): void {
+        
+        this.addEventListener('pointerdown', function _f(ev: Event): void {
             ev.preventDefault();
             fn(ev);
-            if (options && options.once)
-                this.removeEventListener(evType, _f);
+            if (options && options.once) // TODO: maybe native options.once is enough
+                this.removeEventListener('pointerdown', _f);
         });
         return this;
     }
-    
-    
-    click(fn, ...args: any[]): this {
-        this.e.addEventListener('click', fn);
+    click(): this;
+    click(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    click(fn?, options?): this {
+        this.addEventListener('click', fn,options);
         return this;
     }
     
@@ -635,17 +624,17 @@ class Elem {
     
     attr(attrValPairs: TElemAttrs): this {
         for (let [attr, val] of enumerate(attrValPairs))
-            this.e.setAttribute(attr, val);
+            this.setAttribute(attr, val);
         return this;
     }
     
     removeAttribute(qualifiedName: string): this {
-        this.e.removeAttribute(qualifiedName);
+        super.removeAttribute(qualifiedName);
         return this;
     }
     
     data(key: string, parse: boolean = true) {
-        const data = this.e.getAttribute(`data-${key}`);
+        const data = this.getAttribute(`data-${key}`);
         if (parse)
             return JSON.parse(data);
         else
@@ -654,7 +643,7 @@ class Elem {
     
     // **  Fade
     async fade(dur: number, to: 0 | 1): Promise<this> {
-        const styles = window.getComputedStyle(this.e);
+        const styles = window.getComputedStyle(this);
         const transProp = styles.transitionProperty.split(', ');
         const indexOfOpacity = transProp.indexOf('opacity');
         // css opacity:0 => transDur[indexOfOpacity]: 0s
@@ -671,7 +660,7 @@ class Elem {
             // trans.splice(indexOfOpacity, 1, `opacity ${dur / 1000}s`);
             trans.splice(indexOfOpacity, 1, `opacity 0s`);
             console.log(`after, trans: ${trans}`);
-            this.e.style.transition = trans.join(', ');
+            this.style.transition = trans.join(', ');
             this.css({opacity: to});
             await wait(dur);
             return this;
@@ -681,12 +670,11 @@ class Elem {
             return this.css({opacity: to});
         }
         const isFadeOut = to === 0;
-        let opacity = parseFloat(this.e.style.opacity);
+        let opacity = parseFloat(this.style.opacity);
         
         if (opacity === undefined || isNaN(opacity)) {
             console.warn(`fade(${dur}, ${to}) htmlElement has NO opacity at all. recursing`, {
                 opacity,
-                'this.e': this.e,
                 this: this
             });
             return this.css({opacity: Math.abs(1 - to)}).fade(dur, to)
@@ -695,7 +683,6 @@ class Elem {
             if (isFadeOut ? opacity <= 0 : opacity > 1) {
                 console.warn(`fade(${dur}, ${to}) opacity was beyond target opacity. returning this as is.`, {
                     opacity,
-                    'this.e': this.e,
                     this: this
                 });
                 return this;
@@ -737,156 +724,19 @@ class Elem {
         return await this.fade(dur, 0);
     }
     
-    async fadeOutOLD(dur: number): Promise<this> {
-        
-        const styles = window.getComputedStyle(this.e);
-        const trans = styles.transition.split(', ');
-        const transProp = styles.transitionProperty.split(', ');
-        const indexOfOpacity = transProp.indexOf('opacity');
-        // css opacity:0 => transDur[indexOfOpacity]: 0s
-        // css opacity:500ms => transDur[indexOfOpacity]: 0.5s
-        // css NO opacity => transDur[indexOfOpacity]: undefined
-        if (indexOfOpacity !== -1) {
-            const transDur = styles.transitionDuration.split(', ');
-            const opacityTransDur = transDur[indexOfOpacity];
-            // transition: opacity was defined in css.
-            // set transition to dur, set opacity to 0, leave the animation to native transition, wait dur and return this
-            console.warn('fadeOut, opacityTransDur !== undefined. leveraging transition.');
-            console.log(`trans:\t${trans}\ntransProp:\t${transProp}\nindexOfOpacity:\t${indexOfOpacity}\nopacityTransDur:\t${opacityTransDur}`);
-            // trans.splice(indexOfOpacity, 1, `opacity ${dur / 1000}s`);
-            trans.splice(indexOfOpacity, 1, `opacity 0s`);
-            console.log(`after, trans: ${trans}`);
-            this.e.style.transition = trans.join(', ');
-            this.css({opacity: 0});
-            await wait(dur);
-            return this;
-        }
-        // transition: opacity was NOT defined in css.
-        if (dur == 0) {
-            return this.css({opacity: 0});
-        }
-        let opacity = parseFloat(this.e.style.opacity);
-        
-        if (opacity === undefined || isNaN(opacity)) {
-            console.warn(`fadeOut(${dur}) htmlElement has NO opacity at all. recursing`, {
-                opacity,
-                'this.e': this.e,
-                this: this
-            });
-            return this.css({opacity: 1}).fadeOut(dur)
-        } else if (opacity <= 0) {
-            console.warn('fadeOut opacity was lower equal to 0', {
-                opacity,
-                'this.e': this.e,
-                this: this
-            });
-            return this;
-        }
-        
-        let steps = 30;
-        let opDec = 1 / steps;
-        let everyms = dur / steps;
-        if (everyms < 1) {
-            everyms = 1;
-            steps = dur;
-            opDec = 1 / steps;
-        }
-        console.log(`fadeOut(${dur}) had opacity, no transition. opacity: ${opacity}`, {steps, opDec, everyms});
-        const interval = setInterval(() => {
-            if (opacity - opDec > 0) {
-                opacity -= opDec;
-                this.css({opacity});
-            } else {
-                opacity = 0;
-                this.css({opacity});
-                clearInterval(interval);
-            }
-        }, everyms);
-        await wait(dur);
-        return this;
-        
-    }
+    
     
     async fadeIn(dur: number): Promise<this> {
         return await this.fade(dur, 1);
     }
     
-    async fadeInOLD(dur: number): Promise<this> {
-        const styles = window.getComputedStyle(this.e);
-        const trans = styles.transition.split(', ');
-        const transProp = styles.transitionProperty.split(', ');
-        const indexOfOpacity = transProp.indexOf('opacity');
-        // css opacity:0 => transDur[indexOfOpacity]: 0s
-        // css opacity:500ms => transDur[indexOfOpacity]: 0.5s
-        // css NO opacity => transDur[indexOfOpacity]: undefined
-        if (indexOfOpacity !== -1) {
-            const transDur = styles.transitionDuration.split(', ');
-            const opacityTransDur = transDur[indexOfOpacity];
-            // transition: opacity was defined in css.
-            // set transition to dur, set opacity to 0, leave the animation to native transition, wait dur and return this
-            console.warn('fadeIn, opacityTransDur !== undefined. leveraging transition.');
-            console.log(`trans:\t${trans}\ntransProp:\t${transProp}\nindexOfOpacity:\t${indexOfOpacity}\nopacityTransDur:\t${opacityTransDur}`);
-            // trans.splice(indexOfOpacity, 1, `opacity ${dur / 1000}s`);
-            trans.splice(indexOfOpacity, 1, `opacity 0s`);
-            console.log(`after, trans: ${trans}`);
-            this.e.style.transition = trans.join(', ');
-            this.css({opacity: 1});
-            await wait(dur);
-            return this;
-        }
-        // transition: opacity was NOT defined in css.
-        
-        
-        if (dur == 0)
-            return this.css({opacity: 1});
-        let opacity = parseFloat(this.e.style.opacity);
-        if (opacity == undefined || isNaN(opacity)) {
-            console.warn(`fadeIn(${dur}) htmlElement has NO opacity at all. recursing`, {
-                opacity,
-                'this.e': this.e,
-                this: this
-            });
-            return this.css({opacity: 0}).fadeIn(dur);
-        } else if (opacity > 1) {
-            console.warn(`fadeIn(${dur}) opacity was higher than 1`, {
-                opacity,
-                'this.e': this.e,
-                this: this
-            });
-            return this;
-        }
-        
-        let steps = 30;
-        let opInc = 1 / steps;
-        let everyms = dur / steps;
-        if (everyms < 1) {
-            everyms = 1;
-            steps = dur;
-            opInc = 1 / steps;
-        }
-        console.log(`fadeIn(${dur}) had opacity, no transition. opacity: ${opacity}`, {steps, opInc, everyms});
-        
-        
-        const interval = setInterval(() => {
-            if (opacity + opInc < 1) {
-                opacity += opInc;
-                this.css({opacity});
-            } else {
-                opacity = 1;
-                this.css({opacity});
-                clearInterval(interval);
-            }
-        }, everyms);
-        await wait(dur);
-        return this;
-        
-    }
+    
     
     
 }
 
 
-class Div extends Elem {
+class Div extends BetterHTMLElement {
     _htmlElement: HTMLDivElement;
     
     constructor({id, text, cls}: TSubElemOptions = {}) {
@@ -896,7 +746,7 @@ class Div extends Elem {
     }
 }
 
-class Span extends Elem {
+class Span extends BetterHTMLElement {
     _htmlElement: HTMLSpanElement;
     
     constructor({id, text, cls}: TSubElemOptions = {}) {
@@ -907,7 +757,7 @@ class Span extends Elem {
     }
 }
 
-class Img extends Elem {
+class Img extends BetterHTMLElement {
     _htmlElement: HTMLImageElement;
     
     constructor({id, src, cls}: TImgOptions) {
@@ -923,8 +773,8 @@ class Img extends Elem {
 }
 
 
-function elem(elemOptions: ElemOptions): Elem {
-    return new Elem(elemOptions);
+function elem(elemOptions: ElemOptions): BetterHTMLElement {
+    return new BetterHTMLElement(elemOptions);
 }
 
 function span({id, text, cls}: TSubElemOptions): Span {
