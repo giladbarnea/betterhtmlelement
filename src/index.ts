@@ -398,8 +398,6 @@ interface AnimateOptions {
 }
 
 
-
-
 class BetterHTMLElement {
     _htmlElement: HTMLElement;
     
@@ -479,28 +477,31 @@ class BetterHTMLElement {
         */
     }
     
+    get e() {
+        return this._htmlElement;
+    }
     
     // **  Basic
     
     html(html: string): this {
-        this.innerHTML = html;
+        this.e.innerHTML = html;
         return this;
     }
     
     text(txt: string): this {
-        this.innerText = txt;
+        this.e.innerText = txt;
         return this;
         
     }
     
     id(id: string): this {
-        super.id = id;
+        this.e.id = id;
         return this;
     }
     
     css(css: CssOptions): this {
         for (let [styleAttr, styleVal] of enumerate(css))
-            this.style[<string>styleAttr] = styleVal;
+            this.e.style[<string>styleAttr] = styleVal;
         return this;
     }
     
@@ -523,34 +524,34 @@ class BetterHTMLElement {
     class(): string[];
     class(cls?: string) {
         if (cls !== undefined) {
-            this.className = cls;
+            this.e.className = cls;
             return this;
         } else {
-            return Array.from(this.classList);
+            return Array.from(this.e.classList);
         }
     }
     
     addClass(cls: string, ...clses: string[]): this {
-        this.classList.add(cls);
+        this.e.classList.add(cls);
         for (let c of clses)
-            this.classList.add(c);
+            this.e.classList.add(c);
         return this;
     }
     
     
     removeClass(cls: string): this {
-        this.classList.remove(cls);
+        this.e.classList.remove(cls);
         return this;
     }
     
     replaceClass(oldToken: string, newToken: string): this {
-        this.classList.replace(oldToken, newToken);
+        this.e.classList.replace(oldToken, newToken);
         return this;
     }
     
     
     toggleClass(cls: string, force?: boolean): this {
-        this.classList.toggle(cls, force);
+        this.e.classList.toggle(cls, force);
         return this;
     }
     
@@ -558,7 +559,7 @@ class BetterHTMLElement {
     append(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
         
         for (let node of nodes)
-            super.append(node);
+            this.e.append(node);
         return this;
     }
     
@@ -574,18 +575,18 @@ class BetterHTMLElement {
     child<K extends keyof SVGElementTagNameMap>(selector: K): this;
     child(selector: string): BetterHTMLElement;
     child(selector) {
-        return new BetterHTMLElement({htmlElement: this.querySelector(selector)});
+        return new BetterHTMLElement({htmlElement: this.e.querySelector(selector)});
     }
     
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
     replaceChild(newChild, oldChild) {
-        super.replaceChild(newChild, oldChild);
+        this.e.replaceChild(newChild, oldChild);
         return this;
     }
     
     children(): BetterHTMLElement[] {
-        const childrenVanilla = <HTMLElement[]>Array.from(super.children);
+        const childrenVanilla = <HTMLElement[]>Array.from(this.e.children);
         const toElem = (c: HTMLElement) => new BetterHTMLElement({htmlElement: c});
         return childrenVanilla.map(toElem);
     }
@@ -598,13 +599,13 @@ class BetterHTMLElement {
     
     empty(): this {
         // TODO: is this faster than innerHTML = ""?
-        while (this.firstChild)
-            this.removeChild(this.firstChild);
+        while (this.e.firstChild)
+            this.e.removeChild(this.e.firstChild);
         return this;
     }
     
     remove(): this {
-        super.remove();
+        this.e.remove();
         return this;
     }
     
@@ -612,7 +613,7 @@ class BetterHTMLElement {
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this {
         const that = this; // "this" changes inside function _f
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
-            this.addEventListener(evType, function _f(evt) {
+            this.e.addEventListener(evType, function _f(evt) {
                 evFn(evt);
                 // console.log('addEventListener, evt: ', evt, 'options: ', options, 'this: ', this);
                 // if (options && options.once)
@@ -624,7 +625,7 @@ class BetterHTMLElement {
     
     
     touchstart(fn: (ev: Event) => any, options?: AddEventListenerOptions): this {
-        this.addEventListener('touchstart', function _f(ev: Event) {
+        this.e.addEventListener('touchstart', function _f(ev: Event) {
             ev.preventDefault();
             fn(ev); // LOL: what
             if (options && options.once) // TODO: maybe native options.once is enough
@@ -636,7 +637,7 @@ class BetterHTMLElement {
     pointerdown(fn: (event: Event) => any, options?: AddEventListenerOptions): this {
         
         
-        this.addEventListener('pointerdown', function _f(ev: Event): void {
+        this.e.addEventListener('pointerdown', function _f(ev: Event): void {
             ev.preventDefault();
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
@@ -648,7 +649,7 @@ class BetterHTMLElement {
     click(): this;
     click(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
     click(fn?, options?): this {
-        this.addEventListener('click', fn, options);
+        this.e.addEventListener('click', fn, options);
         return this;
     }
     
@@ -656,17 +657,17 @@ class BetterHTMLElement {
     
     attr(attrValPairs: TElemAttrs): this {
         for (let [attr, val] of enumerate(attrValPairs))
-            this.setAttribute(attr, val);
+            this.e.setAttribute(attr, val);
         return this;
     }
     
     removeAttribute(qualifiedName: string): this {
-        super.removeAttribute(qualifiedName);
+        this.e.removeAttribute(qualifiedName);
         return this;
     }
     
     data(key: string, parse: boolean = true) {
-        const data = this.getAttribute(`data-${key}`);
+        const data = this.e.getAttribute(`data-${key}`);
         if (parse)
             return JSON.parse(data);
         else
@@ -675,7 +676,7 @@ class BetterHTMLElement {
     
     // **  Fade
     async fade(dur: number, to: 0 | 1): Promise<this> {
-        const styles = window.getComputedStyle(this);
+        const styles = window.getComputedStyle(this.e);
         const transProp = styles.transitionProperty.split(', ');
         const indexOfOpacity = transProp.indexOf('opacity');
         // css opacity:0 => transDur[indexOfOpacity]: 0s
@@ -692,7 +693,7 @@ class BetterHTMLElement {
             // trans.splice(indexOfOpacity, 1, `opacity ${dur / 1000}s`);
             trans.splice(indexOfOpacity, 1, `opacity 0s`);
             console.log(`after, trans: ${trans}`);
-            this.style.transition = trans.join(', ');
+            this.e.style.transition = trans.join(', ');
             this.css({opacity: to});
             await wait(dur);
             return this;
@@ -702,7 +703,7 @@ class BetterHTMLElement {
             return this.css({opacity: to});
         }
         const isFadeOut = to === 0;
-        let opacity = parseFloat(this.style.opacity);
+        let opacity = parseFloat(this.e.style.opacity);
         
         if (opacity === undefined || isNaN(opacity)) {
             console.warn(`fade(${dur}, ${to}) htmlElement has NO opacity at all. recursing`, {

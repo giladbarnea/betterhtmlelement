@@ -5,10 +5,10 @@ function extend(sup, base) {
 	// base.prototype = Object.create(sup.prototype);
 	base.prototype = new sup.prototype.constructor();
 	var handler = {
-		construct: function (target, args) {
+		construct: function (_, args) {
 			var obj = Object.create(base.prototype);
 			debugger;
-			this.apply(obj, args);
+			this.apply(_, obj, args);
 			return obj;
 		},
 		apply: function (_, that, args) {

@@ -377,6 +377,7 @@ interface AnimateOptions {
 declare class BetterHTMLElement {
     _htmlElement: HTMLElement;
     constructor(elemOptions: ElemOptions);
+    readonly e: HTMLElement;
     html(html: string): this;
     text(txt: string): this;
     id(id: string): this;
