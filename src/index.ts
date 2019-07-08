@@ -397,15 +397,62 @@ interface AnimateOptions {
     timingFunction?: AnimationTimingFunction;
 }
 
+/*function extend(sup, base) {
+    var descriptor = Object.getOwnPropertyDescriptor(
+        base.prototype, 'constructor'
+    );
+    base.prototype = Object.create(sup.prototype);
+    var handler = {
+        construct: function (target, args) {
+            var obj = Object.create(base.prototype);
+            this.apply(target, obj, args);
+            return obj;
+        },
+        apply: function (target, that, args) {
+            sup.apply(that, args);
+            base.apply(that, args);
+        }
+    };
+    var proxy = new Proxy(base, handler);
+    descriptor.value = proxy;
+    Object.defineProperty(base.prototype, 'constructor', descriptor);
+    return proxy;
+}
 
-class BetterHTMLElement extends HTMLElement {
+// var Person = function (name) {
+//     this.name = name;
+// };
+
+var Boy = extend(Person, function (name, age) {
+    this.age = age;
+});
+var Peter = new Boy('Peter', 13);
+
+// Boy.prototype.gender = 'M';
+*/
+
+
+class BetterHTMLElement {
+    _htmlElement: HTMLElement;
+    
+    /*[Symbol.toPrimitive](hint) {
+        console.log('from toPrimitive, hint: ', hint, '\nthis: ', this);
+        return this._htmlElement;
+    }
+    
+    valueOf() {
+        console.log('from valueOf, this: ', this);
+        return this;
+    }
+    
+    toString() {
+        console.log('from toString, this: ', this);
+        return this;
+    }
+    */
     
     
     constructor(elemOptions: ElemOptions) {
-        // new HTMLElement(); // TODO: hack. otherwise "illegal constructor".
-        debugger;
-        super();
-        let proxy;
         const {tag, id, htmlElement, text, query, children, cls} = elemOptions;
         
         if ([tag, id, htmlElement, query].filter(x => x).length > 1)
@@ -416,13 +463,13 @@ class BetterHTMLElement extends HTMLElement {
                 query
             }}`);
         if (tag)
-            proxy = document.createElement(tag);
+            this._htmlElement = document.createElement(tag);
         else if (id)
-            proxy = document.getElementById(id);
+            this._htmlElement = document.getElementById(id);
         else if (query)
-            proxy = document.querySelector(query);
+            this._htmlElement = document.querySelector(query);
         else if (htmlElement)
-            proxy = htmlElement;
+            this._htmlElement = htmlElement;
         else
             throw new Error(`Didn't receive one, pass exactly one of: [tag, id, htmlElement, query], ${{
                 tag,
@@ -430,7 +477,6 @@ class BetterHTMLElement extends HTMLElement {
                 htmlElement,
                 query
             }}`);
-        debugger;
         if (text !== undefined)
             this.text(text);
         if (cls !== undefined)
@@ -448,10 +494,21 @@ class BetterHTMLElement extends HTMLElement {
                 }}`);
             this.cacheChildren(children);
         }
-        proxy = {...this, proxy};
-        return proxy;
-        
-        
+        // Object.assign(this, proxy);
+        /*const that = this;
+        return new Proxy(this, {
+            get(target: BetterHTMLElement, p: string | number | symbol, receiver: any): any {
+                // console.log('logging');
+                // console.log('target: ', target,
+                //     '\nthat: ', that,
+                //     '\ntypeof(that): ', typeof (that),
+                //     '\np: ', p,
+                //     '\nreceiver: ', receiver,
+                //     '\nthis: ', this);
+                return that[p];
+            }
+        })
+        */
     }
     
     

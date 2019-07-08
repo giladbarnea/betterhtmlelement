@@ -374,7 +374,8 @@ interface AnimateOptions {
      * */
     timingFunction?: AnimationTimingFunction;
 }
-declare class BetterHTMLElement extends HTMLElement {
+declare class BetterHTMLElement {
+    _htmlElement: HTMLElement;
     constructor(elemOptions: ElemOptions);
     html(html: string): this;
     text(txt: string): this;
