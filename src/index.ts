@@ -397,10 +397,13 @@ interface AnimateOptions {
     timingFunction?: AnimationTimingFunction;
 }
 
+
 class BetterHTMLElement extends HTMLElement {
     
     
     constructor(elemOptions: ElemOptions) {
+        // new HTMLElement(); // TODO: hack. otherwise "illegal constructor".
+        debugger;
         super();
         let proxy;
         const {tag, id, htmlElement, text, query, children, cls} = elemOptions;
@@ -427,7 +430,7 @@ class BetterHTMLElement extends HTMLElement {
                 htmlElement,
                 query
             }}`);
-        
+        debugger;
         if (text !== undefined)
             this.text(text);
         if (cls !== undefined)
@@ -445,6 +448,7 @@ class BetterHTMLElement extends HTMLElement {
                 }}`);
             this.cacheChildren(children);
         }
+        proxy = {...this, proxy};
         return proxy;
         
         
@@ -526,7 +530,7 @@ class BetterHTMLElement extends HTMLElement {
     }
     
     // **  Nodes
-    append(...nodes: BetterHTMLElement[] | (string|Node)[]): this {
+    append(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
         
         for (let node of nodes)
             super.append(node);
@@ -540,13 +544,15 @@ class BetterHTMLElement extends HTMLElement {
         }
         return this;
     }
+    
     child<K extends keyof HTMLElementTagNameMap>(selector: K): this;
     child<K extends keyof SVGElementTagNameMap>(selector: K): this;
     child(selector: string): BetterHTMLElement;
     child(selector) {
         return new BetterHTMLElement({htmlElement: this.querySelector(selector)});
     }
-    replaceChild(newChild: Node, oldChild: Node):this;
+    
+    replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
     replaceChild(newChild, oldChild) {
         super.replaceChild(newChild, oldChild);
@@ -596,7 +602,7 @@ class BetterHTMLElement extends HTMLElement {
         this.addEventListener('touchstart', function _f(ev: Event) {
             ev.preventDefault();
             fn(ev); // LOL: what
-            if (options && options.once) // TODO: maybe native options.once is enough 
+            if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener('touchstart', _f);
         });
         return this;
@@ -613,10 +619,11 @@ class BetterHTMLElement extends HTMLElement {
         });
         return this;
     }
+    
     click(): this;
     click(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
     click(fn?, options?): this {
-        this.addEventListener('click', fn,options);
+        this.addEventListener('click', fn, options);
         return this;
     }
     
@@ -725,16 +732,15 @@ class BetterHTMLElement extends HTMLElement {
     }
     
     
-    
     async fadeIn(dur: number): Promise<this> {
         return await this.fade(dur, 1);
     }
     
     
-    
-    
 }
 
+
+customElements.define('better-html-element', BetterHTMLElement);
 
 class Div extends BetterHTMLElement {
     _htmlElement: HTMLDivElement;
@@ -773,7 +779,7 @@ class Img extends BetterHTMLElement {
 }
 
 
-function elem(elemOptions: ElemOptions): BetterHTMLElement {
+function betterhtmlelement(elemOptions: ElemOptions): BetterHTMLElement {
     return new BetterHTMLElement(elemOptions);
 }
 
@@ -788,3 +794,5 @@ function div({id, text, cls}: TSubElemOptions): Div {
 function img({id, src, cls}: TImgOptions): Img {
     return new Img({id, src, cls});
 }
+
+

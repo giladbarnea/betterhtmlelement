@@ -1,13 +1,39 @@
 {
-  "name": "betterhtmlelement",
-  "version": "1.0.0",
-  "description": "A Fast, intuitive, chainable wrapper for HTMLElement",
-  "main": "dist/index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": ["htmlelement","html","element","jquery","wrapper","performance","chain","fast"],
-  "repository": {"type": "git","url": "https://github.com/giladbarnea/betterhtmlelement"},
-  "author": "Gilad Barnea",
-  "license": "ISC"
+	"name": "betterhtmlelement",
+	"version": "1.0.0",
+	"description": "A Fast, intuitive, chainable wrapper for HTMLElement",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "node src/test/test_index.spec.js",
+		"try1": "node src/test/test_index.spec.js",
+		"try2": "nodemon --watch src/test/test_index.spec.ts --exec ts-node -T src/test/test_index.spec.ts",
+		"try3": "node -r dom src/test/test_index.spec.js",
+		"try4": "jest dist/test_index.js"
+	},
+	"keywords": [
+		"htmlelement",
+		"html",
+		"element",
+		"jquery",
+		"wrapper",
+		"performance",
+		"chain",
+		"fast"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/giladbarnea/betterhtmlelement"
+	},
+	"author": "Gilad Barnea",
+	"license": "ISC",
+	"devDependencies": {
+		"@types/jest": "latest",
+		"chance": "latest",
+		"jest": "latest",
+		"nodemon": "latest",
+		"ts-jest": "latest",
+		"ts-node": "latest",
+		"typescript": "^3.5.2",
+		"@types/node": "^12.0.12"
+	}
 }

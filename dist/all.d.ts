@@ -422,7 +422,13 @@ declare class Img extends BetterHTMLElement {
     _htmlElement: HTMLImageElement;
     constructor({ id, src, cls }: TImgOptions);
 }
-declare function elem(elemOptions: ElemOptions): BetterHTMLElement;
+declare function betterhtmlelement(elemOptions: ElemOptions): BetterHTMLElement;
 declare function span({ id, text, cls }: TSubElemOptions): Span;
 declare function div({ id, text, cls }: TSubElemOptions): Div;
 declare function img({ id, src, cls }: TImgOptions): Img;
+declare type TMap<T> = {
+    [s: string]: T;
+};
+declare function enumerate<T>(obj: T[]): IterableIterator<[number, T]>;
+declare function enumerate<T>(obj: T): IterableIterator<[keyof T, T[keyof T]]>;
+declare function wait(ms: number): Promise<any>;
