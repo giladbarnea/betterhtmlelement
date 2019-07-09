@@ -808,7 +808,7 @@ class Img extends BetterHTMLElement {
 }
 
 
-function betterhtmlelement(elemOptions: ElemOptions): BetterHTMLElement {
+function elem(elemOptions: ElemOptions): BetterHTMLElement {
     return new BetterHTMLElement(elemOptions);
 }
 

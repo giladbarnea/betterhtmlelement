@@ -424,7 +424,7 @@ declare class Img extends BetterHTMLElement {
     _htmlElement: HTMLImageElement;
     constructor({ id, src, cls }: TImgOptions);
 }
-declare function betterhtmlelement(elemOptions: ElemOptions): BetterHTMLElement;
+declare function elem(elemOptions: ElemOptions): BetterHTMLElement;
 declare function span({ id, text, cls }: TSubElemOptions): Span;
 declare function div({ id, text, cls }: TSubElemOptions): Div;
 declare function img({ id, src, cls }: TImgOptions): Img;

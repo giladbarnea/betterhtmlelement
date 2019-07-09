@@ -3,7 +3,6 @@
 	"version": "1.0.0",
 	"description": "A Fast, intuitive, chainable wrapper for HTMLElement",
 	"main": "dist/all.js",
-	
 	"keywords": [
 		"htmlelement",
 		"html",
@@ -21,13 +20,6 @@
 	"author": "Gilad Barnea",
 	"license": "ISC",
 	"devDependencies": {
-		"@types/jest": "latest",
-		"chance": "latest",
-		"jest": "latest",
-		"nodemon": "latest",
-		"ts-jest": "latest",
-		"ts-node": "latest",
-		"typescript": "^3.5.2",
-		"@types/node": "^12.0.12"
+		"typescript": "^3.5.2"
 	}
 }

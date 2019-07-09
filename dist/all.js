@@ -329,7 +329,7 @@ class Img extends BetterHTMLElement {
             this._htmlElement.src = src;
     }
 }
-function betterhtmlelement(elemOptions) {
+function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
 function span({ id, text, cls }) {
