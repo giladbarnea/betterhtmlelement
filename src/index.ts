@@ -557,9 +557,12 @@ class BetterHTMLElement {
     
     // **  Nodes
     append(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
-        
-        for (let node of nodes)
-            this.e.append(node);
+        if (nodes[0] instanceof BetterHTMLElement)
+            for (let node of <BetterHTMLElement[]>nodes)
+                this.e.append(node.e);
+        else
+            for (let node of <(string | Node)[]>nodes)
+                this.e.append(node);
         return this;
     }
     

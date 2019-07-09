@@ -126,8 +126,12 @@ class BetterHTMLElement {
     }
     // **  Nodes
     append(...nodes) {
-        for (let node of nodes)
-            this.e.append(node);
+        if (nodes[0] instanceof BetterHTMLElement)
+            for (let node of nodes)
+                this.e.append(node.e);
+        else
+            for (let node of nodes)
+                this.e.append(node);
         return this;
     }
     cacheAppend(keyChildObj) {

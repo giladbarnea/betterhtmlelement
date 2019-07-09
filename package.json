@@ -2,14 +2,8 @@
 	"name": "betterhtmlelement",
 	"version": "1.0.0",
 	"description": "A Fast, intuitive, chainable wrapper for HTMLElement",
-	"main": "dist/index.js",
-	"scripts": {
-		"test": "node src/test/test_index.spec.js",
-		"try1": "node src/test/test_index.spec.js",
-		"try2": "nodemon --watch src/test/test_index.spec.ts --exec ts-node -T src/test/test_index.spec.ts",
-		"try3": "node -r dom src/test/test_index.spec.js",
-		"try4": "jest dist/test_index.js"
-	},
+	"main": "dist/all.js",
+	
 	"keywords": [
 		"htmlelement",
 		"html",
