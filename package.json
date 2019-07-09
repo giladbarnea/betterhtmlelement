@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"description": "A Fast, intuitive, chainable wrapper for HTMLElement",
 	"main": "dist/all.js",
+	"typings": "dist/all.d.ts",
 	"keywords": [
 		"htmlelement",
 		"html",
@@ -17,6 +18,7 @@
 		"type": "git",
 		"url": "https://github.com/giladbarnea/betterhtmlelement"
 	},
+	"jsdelivr": "dist/all.js",
 	"author": "Gilad Barnea",
 	"license": "ISC",
 	"devDependencies": {
