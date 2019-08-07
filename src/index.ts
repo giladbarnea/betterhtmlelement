@@ -630,7 +630,7 @@ class BetterHTMLElement {
     touchstart(fn: (ev: Event) => any, options?: AddEventListenerOptions): this {
         this.e.addEventListener('touchstart', function _f(ev: Event) {
             ev.preventDefault();
-            fn(ev); // LOL: what
+            fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener('touchstart', _f);
         });
