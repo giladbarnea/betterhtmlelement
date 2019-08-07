@@ -626,7 +626,15 @@ class BetterHTMLElement {
         return this;
     }
     
-    
+    /*
+	mousedown   touchstart	pointerdown
+	mouseenter		        pointerenter
+	mouseleave		        pointerleave
+	mousemove	touchmove	pointermove
+	mouseout		        pointerout
+	mouseover		        pointerover
+	mouseup	    touchend    pointerup
+	*/
     touchstart(fn: (ev: Event) => any, options?: AddEventListenerOptions): this {
         this.e.addEventListener('touchstart', function _f(ev: Event) {
             ev.preventDefault();
@@ -639,12 +647,17 @@ class BetterHTMLElement {
     
     pointerdown(fn: (event: Event) => any, options?: AddEventListenerOptions): this {
         
-        
-        this.e.addEventListener('pointerdown', function _f(ev: Event): void {
+        let action;
+        try {
+            action = window.PointerEvent ? 'pointerdown' : 'mousedown'; // safari doesn't support pointerdown
+        } catch (e) {
+            action = 'mousedown'
+        }
+        this.e.addEventListener(action, function _f(ev: Event): void {
             ev.preventDefault();
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
-                this.removeEventListener('pointerdown', _f);
+                this.removeEventListener(action, _f);
         });
         return this;
     }
