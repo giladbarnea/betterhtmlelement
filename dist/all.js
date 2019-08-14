@@ -6,16 +6,58 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+class BadArgumentsAmountError extends Error {
+    constructor(expectedArgsNum, passedArgs) {
+        const requiresExactNumOfArgs = !Array.isArray(expectedArgsNum);
+        const validArgs = {};
+        for (let [argname, argval] of Object.entries(passedArgs)) {
+            if (argval)
+                validArgs[argname] = argval;
+        }
+        const argNamesValues = Object.entries(validArgs).flatMap(([argname, argval]) => `${argname}: ${argval}`).join(', ');
+        let message;
+        if (requiresExactNumOfArgs) {
+            message = `Didn't receive exactly ${expectedArgsNum} arg. `;
+        }
+        else {
+            message = `Didn't receive between ${expectedArgsNum[0]} to ${expectedArgsNum[1]} args. `;
+        }
+        message += `Instead, out of ${Object.keys(passedArgs).length} received, ${Object.keys(validArgs).length} had value: ${argNamesValues}`;
+        super(message);
+    }
+}
+class TooManyArgumentsError extends Error {
+    constructor(maxArgNum, passedArgs) {
+        const argNamesValues = Object.entries(passedArgs).flatMap(([argname, argval]) => `${argname}: ${argval}`).join(', ');
+        const message = `Didn't receive ${maxArgNum} arg${maxArgNum > 1 ? 's (or less)' : ''}. Instead, the following were passed: ${argNamesValues}`;
+        super(message);
+    }
+}
+class NotEnoughArgumentsError extends Error {
+    constructor(reqArgNum, passedArgs) {
+        const requiresExactNumOfArgs = !Array.isArray(reqArgNum);
+        const argNamesValues = Object.entries(passedArgs).flatMap(([argname, argval]) => `${argname}: ${argval}`).join(', ');
+        let message;
+        if (requiresExactNumOfArgs) {
+            message = `Didn't receive ${reqArgNum} arg. Instead, the following were passed: ${argNamesValues}`;
+        }
+        else {
+            message = `Didn't receive between ${reqArgNum[0]} to ${reqArgNum[1]} args. Instead, the following were passed: ${argNamesValues}`;
+        }
+        super(message);
+    }
+}
 class BetterHTMLElement {
     constructor(elemOptions) {
         const { tag, id, htmlElement, text, query, children, cls } = elemOptions;
-        if ([tag, id, htmlElement, query].filter(x => x).length > 1)
-            throw new Error(`Received more than one, pass exactly one of: [tag, id, htmlElement, query], ${{
+        if ([tag, id, htmlElement, query].filter(x => x).length > 1) {
+            throw new BadArgumentsAmountError(1, {
                 tag,
                 id,
                 htmlElement,
                 query
-            }}`);
+            });
+        }
         if (tag)
             this._htmlElement = document.createElement(tag);
         else if (id)
@@ -24,13 +66,14 @@ class BetterHTMLElement {
             this._htmlElement = document.querySelector(query);
         else if (htmlElement)
             this._htmlElement = htmlElement;
-        else
-            throw new Error(`Didn't receive one, pass exactly one of: [tag, id, htmlElement, query], ${{
+        else {
+            throw new BadArgumentsAmountError(1, {
                 tag,
                 id,
                 htmlElement,
                 query
-            }}`);
+            });
+        }
         if (text !== undefined)
             this.text(text);
         if (cls !== undefined)

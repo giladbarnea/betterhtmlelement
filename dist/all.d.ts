@@ -1,3 +1,12 @@
+declare class BadArgumentsAmountError extends Error {
+    constructor(expectedArgsNum: number | number[], passedArgs: any);
+}
+declare class TooManyArgumentsError extends Error {
+    constructor(maxArgNum: number, passedArgs: TMap<any>);
+}
+declare class NotEnoughArgumentsError extends Error {
+    constructor(reqArgNum: number | number[], passedArgs: any);
+}
 declare type TEvent = keyof HTMLElementEventMap;
 declare type TEventFunctionMap<K> = {
     [P in Extract<K, string>]?: (evt: Event) => void;

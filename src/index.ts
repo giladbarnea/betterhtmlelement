@@ -421,13 +421,21 @@ class BetterHTMLElement {
     constructor(elemOptions: ElemOptions) {
         const {tag, id, htmlElement, text, query, children, cls} = elemOptions;
         
-        if ([tag, id, htmlElement, query].filter(x => x).length > 1)
-            throw new Error(`Received more than one, pass exactly one of: [tag, id, htmlElement, query], ${{
+        if ([tag, id, htmlElement, query].filter(x => x).length > 1) {
+            throw new BadArgumentsAmountError(1, {
+                tag,
+                id,
+                htmlElement,
+                query
+            })
+            /*throw new Error(`Received more than one, pass exactly one of: [tag, id, htmlElement, query], ${{
                 tag,
                 id,
                 htmlElement,
                 query
             }}`);
+            */
+        }
         if (tag)
             this._htmlElement = document.createElement(tag);
         else if (id)
@@ -436,13 +444,21 @@ class BetterHTMLElement {
             this._htmlElement = document.querySelector(query);
         else if (htmlElement)
             this._htmlElement = htmlElement;
-        else
-            throw new Error(`Didn't receive one, pass exactly one of: [tag, id, htmlElement, query], ${{
+        else {
+            /*throw new Error(`Didn't receive one, pass exactly one of: [tag, id, htmlElement, query], ${{
                 tag,
                 id,
                 htmlElement,
                 query
             }}`);
+            */
+            throw new BadArgumentsAmountError(1, {
+                tag,
+                id,
+                htmlElement,
+                query
+            })
+        }
         if (text !== undefined)
             this.text(text);
         if (cls !== undefined)
