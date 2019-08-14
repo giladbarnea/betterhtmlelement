@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 class BadArgumentsAmountError extends Error {
-    constructor(expectedArgsNum, passedArgs) {
+    constructor(expectedArgsNum, passedArgs, details) {
         const requiresExactNumOfArgs = !Array.isArray(expectedArgsNum);
         const validArgs = {};
         for (let [argname, argval] of Object.entries(passedArgs)) {
@@ -22,28 +22,7 @@ class BadArgumentsAmountError extends Error {
         else {
             message = `Didn't receive between ${expectedArgsNum[0]} to ${expectedArgsNum[1]} args. `;
         }
-        message += `Instead, out of ${Object.keys(passedArgs).length} received, ${Object.keys(validArgs).length} had value: ${argNamesValues}`;
-        super(message);
-    }
-}
-class TooManyArgumentsError extends Error {
-    constructor(maxArgNum, passedArgs) {
-        const argNamesValues = Object.entries(passedArgs).flatMap(([argname, argval]) => `${argname}: ${argval}`).join(', ');
-        const message = `Didn't receive ${maxArgNum} arg${maxArgNum > 1 ? 's (or less)' : ''}. Instead, the following were passed: ${argNamesValues}`;
-        super(message);
-    }
-}
-class NotEnoughArgumentsError extends Error {
-    constructor(reqArgNum, passedArgs) {
-        const requiresExactNumOfArgs = !Array.isArray(reqArgNum);
-        const argNamesValues = Object.entries(passedArgs).flatMap(([argname, argval]) => `${argname}: ${argval}`).join(', ');
-        let message;
-        if (requiresExactNumOfArgs) {
-            message = `Didn't receive ${reqArgNum} arg. Instead, the following were passed: ${argNamesValues}`;
-        }
-        else {
-            message = `Didn't receive between ${reqArgNum[0]} to ${reqArgNum[1]} args. Instead, the following were passed: ${argNamesValues}`;
-        }
+        message += `Instead, out of ${Object.keys(passedArgs).length} received, ${Object.keys(validArgs).length} had value: ${argNamesValues}. ${details ? 'Details: ' + details : ''}`;
         super(message);
     }
 }
@@ -58,6 +37,11 @@ class BetterHTMLElement {
                 query
             });
         }
+        if (tag && children)
+            throw new BadArgumentsAmountError(1, {
+                tag,
+                children
+            }, 'children and tag options are mutually exclusive, since tag implies creating a new element and children implies getting an existing one.');
         if (tag)
             this._htmlElement = document.createElement(tag);
         else if (id)
@@ -78,18 +62,8 @@ class BetterHTMLElement {
             this.text(text);
         if (cls !== undefined)
             this.class(cls);
-        if (children !== undefined) {
-            if (tag)
-                throw new Error(`Received children and tag, impossible since tag implies creating a new element and children implies getting an existing one. ${{
-                    tag,
-                    id,
-                    htmlElement,
-                    text,
-                    query,
-                    children
-                }}`);
+        if (children !== undefined)
             this.cacheChildren(children);
-        }
     }
     get e() {
         return this._htmlElement;

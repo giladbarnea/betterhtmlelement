@@ -428,14 +428,14 @@ class BetterHTMLElement {
                 htmlElement,
                 query
             })
-            /*throw new Error(`Received more than one, pass exactly one of: [tag, id, htmlElement, query], ${{
-                tag,
-                id,
-                htmlElement,
-                query
-            }}`);
-            */
+            
         }
+        if (tag && children)
+            throw new BadArgumentsAmountError(1, {
+                tag,
+                children
+            }, 'children and tag options are mutually exclusive, since tag implies creating a new element and children implies getting an existing one.');
+        
         if (tag)
             this._htmlElement = document.createElement(tag);
         else if (id)
@@ -445,13 +445,7 @@ class BetterHTMLElement {
         else if (htmlElement)
             this._htmlElement = htmlElement;
         else {
-            /*throw new Error(`Didn't receive one, pass exactly one of: [tag, id, htmlElement, query], ${{
-                tag,
-                id,
-                htmlElement,
-                query
-            }}`);
-            */
+            
             throw new BadArgumentsAmountError(1, {
                 tag,
                 id,
@@ -464,18 +458,9 @@ class BetterHTMLElement {
         if (cls !== undefined)
             this.class(cls);
         
-        if (children !== undefined) {
-            if (tag)
-                throw new Error(`Received children and tag, impossible since tag implies creating a new element and children implies getting an existing one. ${{
-                    tag,
-                    id,
-                    htmlElement,
-                    text,
-                    query,
-                    children
-                }}`);
+        if (children !== undefined)
             this.cacheChildren(children);
-        }
+        
         // Object.assign(this, proxy);
         /*const that = this;
         return new Proxy(this, {

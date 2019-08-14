@@ -1,5 +1,5 @@
 class BadArgumentsAmountError extends Error {
-    constructor(expectedArgsNum: number | number[], passedArgs) {
+    constructor(expectedArgsNum: number | number[], passedArgs, details?: string) {
         const requiresExactNumOfArgs = !Array.isArray(expectedArgsNum);
         const validArgs = {};
         for (let [argname, argval] of Object.entries(passedArgs)) {
@@ -14,7 +14,7 @@ class BadArgumentsAmountError extends Error {
             
             message = `Didn't receive between ${expectedArgsNum[0]} to ${expectedArgsNum[1]} args. `
         }
-        message += `Instead, out of ${Object.keys(passedArgs).length} received, ${Object.keys(validArgs).length} had value: ${argNamesValues}`;
+        message += `Instead, out of ${Object.keys(passedArgs).length} received, ${Object.keys(validArgs).length} had value: ${argNamesValues}. ${details ? 'Details: ' + details : ''}`;
         super(message);
     }
     
