@@ -3,13 +3,12 @@ type TEventFunctionMap<K> = {
     [P in Extract<K, string>]?: (evt: Event) => void
 };
 
-
 type ElemOptions = {
-    tag?: "span" | "div" | "button" | "img" | any;
+    tag?: keyof HTMLElementTagNameMap;
     id?: string;
     text?: string;
     htmlElement?: HTMLElement;
-    query?: string;
+    query?: keyof HTMLElementTagNameMap | string;
     children?: TMap<string>;
     cls?: string;
 };
@@ -397,7 +396,7 @@ interface AnimateOptions {
     timingFunction?: AnimationTimingFunction;
 }
 
-
+// TODO: make BetterHTMLElement<T>, for use in eg child function
 class BetterHTMLElement {
     _htmlElement: HTMLElement;
     
@@ -483,21 +482,38 @@ class BetterHTMLElement {
     }
     
     // **  Basic
-    
-    html(html: string): this {
-        this.e.innerHTML = html;
-        return this;
+    html(html: string): this;
+    html(): string;
+    html(html?) {
+        if (html === undefined) {
+            return this.e.innerHTML;
+        } else {
+            this.e.innerHTML = html;
+            return this;
+        }
     }
     
-    text(txt: string): this {
-        this.e.innerText = txt;
-        return this;
+    text(txt: string): this;
+    text(): string;
+    text(txt?) {
+        if (txt === undefined) {
+            return this.e.innerText;
+        } else {
+            this.e.innerText = txt;
+            return this;
+        }
         
     }
     
-    id(id: string): this {
-        this.e.id = id;
-        return this;
+    id(id: string): this;
+    id(): string;
+    id(id?) {
+        if (id === undefined) {
+            return this.e.id;
+        } else {
+            this.e.id = id;
+            return this;
+        }
     }
     
     css(css: CssOptions): this {
@@ -523,7 +539,7 @@ class BetterHTMLElement {
     // **  Classes
     class(cls: string): this;
     class(): string[];
-    class(cls?: string) {
+    class(cls?) {
         if (cls !== undefined) {
             this.e.className = cls;
             return this;
@@ -575,8 +591,7 @@ class BetterHTMLElement {
         return this;
     }
     
-    child<K extends keyof HTMLElementTagNameMap>(selector: K): this;
-    child<K extends keyof SVGElementTagNameMap>(selector: K): this;
+    child<K extends keyof HTMLElementTagNameMap>(selector: K): BetterHTMLElement;
     child(selector: string): BetterHTMLElement;
     child(selector) {
         return new BetterHTMLElement({htmlElement: this.e.querySelector(selector)});
@@ -595,7 +610,9 @@ class BetterHTMLElement {
         return childrenVanilla.map(toElem);
     }
     
-    cacheChildren(keySelectorObj: TMap<string>) {
+    cacheChildren(keySelectorObj: TMap<string>); // .class | #id | ...
+    cacheChildren(keySelectorObj: TMap<keyof HTMLElementTagNameMap>); // img, button, ...
+    cacheChildren(keySelectorObj) {
         for (let [key, selector] of enumerate(keySelectorObj))
             this[key] = this.child(selector);
         
@@ -650,6 +667,7 @@ class BetterHTMLElement {
         
         let action;
         try {
+            // @ts-ignore
             action = window.PointerEvent ? 'pointerdown' : 'mousedown'; // safari doesn't support pointerdown
         } catch (e) {
             action = 'mousedown'

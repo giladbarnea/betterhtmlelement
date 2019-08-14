@@ -6,11 +6,11 @@ declare type TEventFunctionMap<K> = {
     [P in Extract<K, string>]?: (evt: Event) => void;
 };
 declare type ElemOptions = {
-    tag?: "span" | "div" | "button" | "img" | any;
+    tag?: keyof HTMLElementTagNameMap;
     id?: string;
     text?: string;
     htmlElement?: HTMLElement;
-    query?: string;
+    query?: keyof HTMLElementTagNameMap | string;
     children?: TMap<string>;
     cls?: string;
 };
@@ -352,6 +352,9 @@ interface CssOptions {
 }
 declare type CubicBezierFunction = [number, number, number, number];
 declare type Jumpterm = 'jump-start' | 'jump-end' | 'jump-none' | 'jump-both' | 'start' | 'end';
+/**Displays an animation iteration along n stops along the transition, displaying each stop for equal lengths of time.
+ * For example, if n is 5,  there are 5 steps.
+ * Whether the animation holds temporarily at 0%, 20%, 40%, 60% and 80%, on the 20%, 40%, 60%, 80% and 100%, or makes 5 stops between the 0% and 100% along the animation, or makes 5 stops including the 0% and 100% marks (on the 0%, 25%, 50%, 75%, and 100%) depends on which of the following jump terms is used*/
 declare type StepsFunction = [number, Jumpterm];
 declare type AnimationTimingFunction = 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'step-start' | 'step-end' | StepsFunction | CubicBezierFunction;
 declare type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
@@ -364,6 +367,14 @@ interface AnimateOptions {
     iterationCount?: number;
     name: string;
     playState?: AnimationPlayState;
+    /** Also accepts:
+     * cubic-bezier(p1, p2, p3, p4)
+     * 'ease' == 'cubic-bezier(0.25, 0.1, 0.25, 1.0)'
+     * 'linear' == 'cubic-bezier(0.0, 0.0, 1.0, 1.0)'
+     * 'ease-in' == 'cubic-bezier(0.42, 0, 1.0, 1.0)'
+     * 'ease-out' == 'cubic-bezier(0, 0, 0.58, 1.0)'
+     * 'ease-in-out' == 'cubic-bezier(0.42, 0, 0.58, 1.0)'
+     * */
     timingFunction?: AnimationTimingFunction;
 }
 declare class BetterHTMLElement {
@@ -371,8 +382,11 @@ declare class BetterHTMLElement {
     constructor(elemOptions: ElemOptions);
     readonly e: HTMLElement;
     html(html: string): this;
+    html(): string;
     text(txt: string): this;
+    text(): string;
     id(id: string): this;
+    id(): string;
     css(css: CssOptions): this;
     uncss(...removeProps: (keyof CssOptions)[]): this;
     class(cls: string): this;
@@ -383,13 +397,13 @@ declare class BetterHTMLElement {
     toggleClass(cls: string, force?: boolean): this;
     append(...nodes: BetterHTMLElement[] | (string | Node)[]): this;
     cacheAppend(keyChildObj: TMap<BetterHTMLElement>): this;
-    child<K extends keyof HTMLElementTagNameMap>(selector: K): this;
-    child<K extends keyof SVGElementTagNameMap>(selector: K): this;
+    child<K extends keyof HTMLElementTagNameMap>(selector: K): BetterHTMLElement;
     child(selector: string): BetterHTMLElement;
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
     children(): BetterHTMLElement[];
-    cacheChildren(keySelectorObj: TMap<string>): void;
+    cacheChildren(keySelectorObj: TMap<string>): any;
+    cacheChildren(keySelectorObj: TMap<keyof HTMLElementTagNameMap>): any;
     empty(): this;
     remove(): this;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;

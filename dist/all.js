@@ -26,7 +26,23 @@ class BadArgumentsAmountError extends Error {
         super(message);
     }
 }
+// TODO: make BetterHTMLElement<T>, for use in eg child function
 class BetterHTMLElement {
+    /*[Symbol.toPrimitive](hint) {
+        console.log('from toPrimitive, hint: ', hint, '\nthis: ', this);
+        return this._htmlElement;
+    }
+    
+    valueOf() {
+        console.log('from valueOf, this: ', this);
+        return this;
+    }
+    
+    toString() {
+        console.log('from toString, this: ', this);
+        return this;
+    }
+    */
     constructor(elemOptions) {
         const { tag, id, htmlElement, text, query, children, cls } = elemOptions;
         if ([tag, id, htmlElement, query].filter(x => x).length > 1) {
@@ -64,21 +80,51 @@ class BetterHTMLElement {
             this.class(cls);
         if (children !== undefined)
             this.cacheChildren(children);
+        // Object.assign(this, proxy);
+        /*const that = this;
+        return new Proxy(this, {
+            get(target: BetterHTMLElement, p: string | number | symbol, receiver: any): any {
+                // console.log('logging');
+                // console.log('target: ', target,
+                //     '\nthat: ', that,
+                //     '\ntypeof(that): ', typeof (that),
+                //     '\np: ', p,
+                //     '\nreceiver: ', receiver,
+                //     '\nthis: ', this);
+                return that[p];
+            }
+        })
+        */
     }
     get e() {
         return this._htmlElement;
     }
     html(html) {
-        this.e.innerHTML = html;
-        return this;
+        if (html === undefined) {
+            return this.e.innerHTML;
+        }
+        else {
+            this.e.innerHTML = html;
+            return this;
+        }
     }
     text(txt) {
-        this.e.innerText = txt;
-        return this;
+        if (txt === undefined) {
+            return this.e.innerText;
+        }
+        else {
+            this.e.innerText = txt;
+            return this;
+        }
     }
     id(id) {
-        this.e.id = id;
-        return this;
+        if (id === undefined) {
+            return this.e.id;
+        }
+        else {
+            this.e.id = id;
+            return this;
+        }
     }
     css(css) {
         for (let [styleAttr, styleVal] of enumerate(css))
@@ -118,6 +164,7 @@ class BetterHTMLElement {
         this.e.classList.toggle(cls, force);
         return this;
     }
+    // **  Nodes
     append(...nodes) {
         if (nodes[0] instanceof BetterHTMLElement)
             for (let node of nodes)
@@ -151,6 +198,7 @@ class BetterHTMLElement {
             this[key] = this.child(selector);
     }
     empty() {
+        // TODO: is this faster than innerHTML = ""?
         while (this.e.firstChild)
             this.e.removeChild(this.e.firstChild);
         return this;
@@ -159,20 +207,33 @@ class BetterHTMLElement {
         this.e.remove();
         return this;
     }
+    // **  Events
     on(evTypeFnPairs, options) {
-        const that = this;
+        const that = this; // "this" changes inside function _f
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             this.e.addEventListener(evType, function _f(evt) {
                 evFn(evt);
+                // console.log('addEventListener, evt: ', evt, 'options: ', options, 'this: ', this);
+                // if (options && options.once)
+                //     this.removeEventListener(evType, _f);
             }, options);
         }
         return this;
     }
+    /*
+    mousedown   touchstart	pointerdown
+    mouseenter		        pointerenter
+    mouseleave		        pointerleave
+    mousemove	touchmove	pointermove
+    mouseout		        pointerout
+    mouseover		        pointerover
+    mouseup	    touchend    pointerup
+    */
     touchstart(fn, options) {
         this.e.addEventListener('touchstart', function _f(ev) {
             ev.preventDefault();
             fn(ev);
-            if (options && options.once)
+            if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener('touchstart', _f);
         });
         return this;
@@ -180,7 +241,8 @@ class BetterHTMLElement {
     pointerdown(fn, options) {
         let action;
         try {
-            action = window.PointerEvent ? 'pointerdown' : 'mousedown';
+            // @ts-ignore
+            action = window.PointerEvent ? 'pointerdown' : 'mousedown'; // safari doesn't support pointerdown
         }
         catch (e) {
             action = 'mousedown';
@@ -188,7 +250,7 @@ class BetterHTMLElement {
         this.e.addEventListener(action, function _f(ev) {
             ev.preventDefault();
             fn(ev);
-            if (options && options.once)
+            if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener(action, _f);
         });
         return this;
@@ -197,6 +259,7 @@ class BetterHTMLElement {
         this.e.addEventListener('click', fn, options);
         return this;
     }
+    // **  Attributes
     attr(attrValPairs) {
         for (let [attr, val] of enumerate(attrValPairs))
             this.e.setAttribute(attr, val);
@@ -213,17 +276,24 @@ class BetterHTMLElement {
         else
             return data;
     }
+    // **  Fade
     fade(dur, to) {
         return __awaiter(this, void 0, void 0, function* () {
             const styles = window.getComputedStyle(this.e);
             const transProp = styles.transitionProperty.split(', ');
             const indexOfOpacity = transProp.indexOf('opacity');
+            // css opacity:0 => transDur[indexOfOpacity]: 0s
+            // css opacity:500ms => transDur[indexOfOpacity]: 0.5s
+            // css NO opacity => transDur[indexOfOpacity]: undefined
             if (indexOfOpacity !== -1) {
                 const transDur = styles.transitionDuration.split(', ');
                 const opacityTransDur = transDur[indexOfOpacity];
                 const trans = styles.transition.split(', ');
+                // transition: opacity was defined in css.
+                // set transition to dur, set opacity to 0, leave the animation to native transition, wait dur and return this
                 console.warn(`fade(${dur}, ${to}), opacityTransDur !== undefined. nullifying transition. SHOULD NOT WORK`);
                 console.log(`trans:\t${trans}\ntransProp:\t${transProp}\nindexOfOpacity:\t${indexOfOpacity}\nopacityTransDur:\t${opacityTransDur}`);
+                // trans.splice(indexOfOpacity, 1, `opacity ${dur / 1000}s`);
                 trans.splice(indexOfOpacity, 1, `opacity 0s`);
                 console.log(`after, trans: ${trans}`);
                 this.e.style.transition = trans.join(', ');
@@ -231,6 +301,7 @@ class BetterHTMLElement {
                 yield wait(dur);
                 return this;
             }
+            // transition: opacity was NOT defined in css.
             if (dur == 0) {
                 return this.css({ opacity: to });
             }
@@ -312,6 +383,8 @@ class Span extends BetterHTMLElement {
 }
 class Img extends BetterHTMLElement {
     constructor({ id, src, cls }) {
+        // if (!src)
+        //     throw new Error(`Img constructor didn't receive src`);
         super({ tag: 'img', cls });
         if (id)
             this.id(id);
