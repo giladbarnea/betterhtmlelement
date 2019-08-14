@@ -5,12 +5,14 @@ declare type TEvent = keyof HTMLElementEventMap;
 declare type TEventFunctionMap<K> = {
     [P in Extract<K, string>]?: (evt: Event) => void;
 };
+declare type HTMLTag = keyof HTMLElementTagNameMap;
+declare type QuerySelector = HTMLTag | string;
 declare type ElemOptions = {
-    tag?: keyof HTMLElementTagNameMap;
+    tag?: HTMLTag;
     id?: string;
     text?: string;
     htmlElement?: HTMLElement;
-    query?: keyof HTMLElementTagNameMap | string;
+    query?: QuerySelector;
     children?: TMap<string>;
     cls?: string;
 };
@@ -397,13 +399,13 @@ declare class BetterHTMLElement {
     toggleClass(cls: string, force?: boolean): this;
     append(...nodes: BetterHTMLElement[] | (string | Node)[]): this;
     cacheAppend(keyChildObj: TMap<BetterHTMLElement>): this;
-    child<K extends keyof HTMLElementTagNameMap>(selector: K): BetterHTMLElement;
+    child<K extends HTMLTag>(selector: K): BetterHTMLElement;
     child(selector: string): BetterHTMLElement;
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
     children(): BetterHTMLElement[];
     cacheChildren(keySelectorObj: TMap<string>): any;
-    cacheChildren(keySelectorObj: TMap<keyof HTMLElementTagNameMap>): any;
+    cacheChildren(keySelectorObj: TMap<HTMLTag>): any;
     empty(): this;
     remove(): this;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;

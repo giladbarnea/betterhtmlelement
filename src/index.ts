@@ -3,12 +3,14 @@ type TEventFunctionMap<K> = {
     [P in Extract<K, string>]?: (evt: Event) => void
 };
 
+type HTMLTag = keyof HTMLElementTagNameMap;
+type QuerySelector = HTMLTag | string;
 type ElemOptions = {
-    tag?: keyof HTMLElementTagNameMap;
+    tag?: HTMLTag;
     id?: string;
     text?: string;
     htmlElement?: HTMLElement;
-    query?: keyof HTMLElementTagNameMap | string;
+    query?: QuerySelector;
     children?: TMap<string>;
     cls?: string;
 };
@@ -591,7 +593,7 @@ class BetterHTMLElement {
         return this;
     }
     
-    child<K extends keyof HTMLElementTagNameMap>(selector: K): BetterHTMLElement;
+    child<K extends HTMLTag>(selector: K): BetterHTMLElement;
     child(selector: string): BetterHTMLElement;
     child(selector) {
         return new BetterHTMLElement({htmlElement: this.e.querySelector(selector)});
@@ -611,7 +613,7 @@ class BetterHTMLElement {
     }
     
     cacheChildren(keySelectorObj: TMap<string>); // .class | #id | ...
-    cacheChildren(keySelectorObj: TMap<keyof HTMLElementTagNameMap>); // img, button, ...
+    cacheChildren(keySelectorObj: TMap<HTMLTag>); // img, button, ...
     cacheChildren(keySelectorObj) {
         for (let [key, selector] of enumerate(keySelectorObj))
             this[key] = this.child(selector);
