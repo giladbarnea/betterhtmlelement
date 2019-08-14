@@ -14,7 +14,7 @@ class BadArgumentsAmountError extends Error {
             
             message = `Didn't receive between ${expectedArgsNum[0]} to ${expectedArgsNum[1]} args. `
         }
-        message += `Instead, out of ${Object.keys(passedArgs).length} received, ${Object.keys(validArgs).length} had value: ${argNamesValues}. ${details ? 'Details: ' + details : ''}`;
+        message += `Instead, out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(validArgs).length} had value: ${argNamesValues}. ${details ? 'Details: ' + details : ''}`;
         super(message);
     }
     
