@@ -174,6 +174,7 @@ class BetterHTMLElement {
                 this.e.append(node);
         return this;
     }
+    /**For each item, `append(child)` and stores it by `[key]`. */
     cacheAppend(keyChildObj) {
         for (let [key, child] of enumerate(keyChildObj)) {
             this.append(child);
@@ -188,14 +189,17 @@ class BetterHTMLElement {
         this.e.replaceChild(newChild, oldChild);
         return this;
     }
+    /**Returns a BetterHTMLElement list of all children */
     children() {
         const childrenVanilla = Array.from(this.e.children);
         const toElem = (c) => new BetterHTMLElement({ htmlElement: c });
         return childrenVanilla.map(toElem);
     }
+    /**Gets each existing child by `selector`, and stores it by `[key]` */
     cacheChildren(keySelectorObj) {
         for (let [key, selector] of enumerate(keySelectorObj))
             this[key] = this.child(selector);
+        return this;
     }
     empty() {
         // TODO: is this faster than innerHTML = ""?

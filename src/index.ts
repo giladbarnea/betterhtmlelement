@@ -587,6 +587,7 @@ class BetterHTMLElement {
         return this;
     }
     
+    /**For each item, `append(child)` and stores it by `[key]`. */
     cacheAppend(keyChildObj: TMap<BetterHTMLElement>): this {
         for (let [key, child] of enumerate(keyChildObj)) {
             this.append(child);
@@ -595,6 +596,7 @@ class BetterHTMLElement {
         return this;
     }
     
+    /**Gets a child with `querySelector`*/
     child<K extends HTMLTag>(selector: K): BetterHTMLElement;
     child(selector: string): BetterHTMLElement;
     child(selector) {
@@ -608,16 +610,18 @@ class BetterHTMLElement {
         return this;
     }
     
+    /**Returns a BetterHTMLElement list of all children */
     children(): BetterHTMLElement[] {
         const childrenVanilla = <HTMLElement[]>Array.from(this.e.children);
         const toElem = (c: HTMLElement) => new BetterHTMLElement({htmlElement: c});
         return childrenVanilla.map(toElem);
     }
     
-    cacheChildren(keySelectorObj: TMap<QuerySelector>); // .class | #id | img, button, ...
-    cacheChildren(keySelectorObj) {
+    /**Gets each existing child by `selector`, and stores it by `[key]` */
+    cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement {// .class | #id | img, button, ...
         for (let [key, selector] of enumerate(keySelectorObj))
             this[key] = this.child(selector);
+        return this;
         
     }
     

@@ -400,13 +400,17 @@ declare class BetterHTMLElement {
     replaceClass(oldToken: string, newToken: string): this;
     toggleClass(cls: string, force?: boolean): this;
     append(...nodes: BetterHTMLElement[] | (string | Node)[]): this;
+    /**For each item, `append(child)` and stores it by `[key]`. */
     cacheAppend(keyChildObj: TMap<BetterHTMLElement>): this;
+    /**Gets a child with `querySelector`*/
     child<K extends HTMLTag>(selector: K): BetterHTMLElement;
     child(selector: string): BetterHTMLElement;
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
+    /**Returns a BetterHTMLElement list of all children */
     children(): BetterHTMLElement[];
-    cacheChildren(keySelectorObj: TMap<QuerySelector>): any;
+    /**Gets each existing child by `selector`, and stores it by `[key]` */
+    cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement;
     empty(): this;
     remove(): this;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
