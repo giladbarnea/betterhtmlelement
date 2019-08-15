@@ -26,10 +26,6 @@ declare type TImgOptions = {
     src?: string;
     cls?: string;
 };
-declare type TElemAttrs = {
-    src?: string;
-    href?: string;
-};
 interface CssOptions {
     alignContentS?: string;
     alignItems?: string;
@@ -381,46 +377,93 @@ interface AnimateOptions {
 }
 declare class BetterHTMLElement {
     _htmlElement: HTMLElement;
-    constructor(elemOptions: ElemOptions);
+    /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
+    constructor({ tag, text, cls }: {
+        tag: QuerySelector;
+        text?: string;
+        cls?: string;
+    });
+    /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
+    constructor({ id, text, cls, children }: {
+        id: string;
+        text?: string;
+        cls?: string;
+        children?: TMap<string>;
+    });
+    /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
+    constructor({ query, text, cls, children }: {
+        query: QuerySelector;
+        text?: string;
+        cls?: string;
+        children?: TMap<string>;
+    });
+    /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
+    constructor({ htmlElement, text, cls, children }: {
+        htmlElement: HTMLElement;
+        text?: string;
+        cls?: string;
+        children?: TMap<string>;
+    });
+    /**Return the wrapped HTMLElement*/
     readonly e: HTMLElement;
+    /**Set the element's innerHTML*/
     html(html: string): this;
+    /**Get the element's innerHTML*/
     html(): string;
-    /**Sets the element's innerText and returns this*/
+    /**Set the element's innerText*/
     text(txt: string): this;
-    /**Gets the element's innerText*/
+    /**Get the element's innerText*/
     text(): string;
+    /**Set the id of the element*/
     id(id: string): this;
+    /**Get the id of the element*/
     id(): string;
+    /**For each `[styleAttr, styleVal]` pair, set the `style[styleAttr]` to `styleVal`.*/
     css(css: CssOptions): this;
+    /**Remove the value of the passed style properties*/
     uncss(...removeProps: (keyof CssOptions)[]): this;
+    /**`.className = cls`*/
     class(cls: string): this;
+    /**Return a string array of the element's classes (not a classList)*/
     class(): string[];
     addClass(cls: string, ...clses: string[]): this;
-    removeClass(cls: string): this;
+    removeClass(cls: string, ...clses: string[]): this;
     replaceClass(oldToken: string, newToken: string): this;
     toggleClass(cls: string, force?: boolean): this;
+    /**Append one or several `BetterHTMLElement`s or vanilla `Node`s*/
     append(...nodes: BetterHTMLElement[] | (string | Node)[]): this;
-    /**For each item, `append(child)` and stores it by `[key]`. */
+    /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
     cacheAppend(keyChildObj: TMap<BetterHTMLElement>): this;
-    /**Gets a child with `querySelector`*/
+    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
     child<K extends HTMLTag>(selector: K): BetterHTMLElement;
+    /**Get a child with `querySelector` and return a BetterHTMLElement of it*/
     child(selector: string): BetterHTMLElement;
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
-    /**Returns a BetterHTMLElement list of all children */
+    /**Return a `BetterHTMLElement` list of all children */
     children(): BetterHTMLElement[];
-    /**Gets each existing child by `selector`, and stores it by `[key]` */
+    /**For each `[key, selector]` pair, get `this.child(selector)`, and store it in `this[key]`. Useful for eg `navbar.home.toggleClass("selected")`
+     * @see this.child*/
     cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement;
+    /**Remove all children from DOM*/
     empty(): this;
+    /**Remove element from DOM*/
     remove(): this;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
+    /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
     touchstart(fn: (ev: Event) => any, options?: AddEventListenerOptions): this;
+    /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
     pointerdown(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    /**Simulate a click of the element. Useful for `<a>` elements.*/
     click(): this;
+    /**Add a `click` event listener. You should probably use `pointerdown()` if on desktop, or `touchstart()` if on mobile.*/
     click(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
-    attr(attrValPairs: TElemAttrs): this;
-    removeAttribute(qualifiedName: string): this;
-    data(key: string, parse?: boolean): any;
+    /** For each `[attr, val]` pair, apply `setAttribute`*/
+    attr(attrValPairs: TMap<keyof CssOptions>): this;
+    /** `removeAttribute` */
+    removeAttr(qualifiedName: keyof CssOptions & string, ...qualifiedNames: (keyof CssOptions & string)[]): this;
+    /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/
+    data(key: string, parse?: boolean): string | TMap<string>;
     fade(dur: number, to: 0 | 1): Promise<this>;
     fadeOut(dur: number): Promise<this>;
     fadeIn(dur: number): Promise<this>;
@@ -437,7 +480,33 @@ declare class Img extends BetterHTMLElement {
     _htmlElement: HTMLImageElement;
     constructor({ id, src, cls }: TImgOptions);
 }
-declare function elem(elemOptions: ElemOptions): BetterHTMLElement;
+/**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
+declare function elem({ tag, text, cls }: {
+    tag: QuerySelector;
+    text?: string;
+    cls?: string;
+}): any;
+/**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
+declare function elem({ id, text, cls, children }: {
+    id: string;
+    text?: string;
+    cls?: string;
+    children?: TMap<string>;
+}): any;
+/**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
+declare function elem({ query, text, cls, children }: {
+    query: QuerySelector;
+    text?: string;
+    cls?: string;
+    children?: TMap<string>;
+}): any;
+/**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
+declare function elem({ htmlElement, text, cls, children }: {
+    htmlElement: HTMLElement;
+    text?: string;
+    cls?: string;
+    children?: TMap<string>;
+}): any;
 declare function span({ id, text, cls }: TSubElemOptions): Span;
 declare function div({ id, text, cls }: TSubElemOptions): Div;
 declare function img({ id, src, cls }: TImgOptions): Img;

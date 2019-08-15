@@ -26,10 +26,6 @@ type TImgOptions = {
     cls?: string;
 };
 
-type TElemAttrs = {
-    src?: string;
-    href?: string;
-};
 
 interface CssOptions {
     alignContentS?: string;
@@ -417,9 +413,15 @@ class BetterHTMLElement {
         return this;
     }
     */
-    
-    
-    constructor(elemOptions: ElemOptions) {
+    /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
+    constructor({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string });
+    /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
+    constructor({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: TMap<string> });
+    /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
+    constructor({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: TMap<string> });
+    /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
+    constructor({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: TMap<string> });
+    constructor(elemOptions) {
         const {tag, id, htmlElement, text, query, children, cls} = elemOptions;
         
         if ([tag, id, htmlElement, query].filter(x => x).length > 1) {
@@ -479,12 +481,15 @@ class BetterHTMLElement {
         */
     }
     
+    /**Return the wrapped HTMLElement*/
     get e() {
         return this._htmlElement;
     }
     
     // **  Basic
+    /**Set the element's innerHTML*/
     html(html: string): this;
+    /**Get the element's innerHTML*/
     html(): string;
     html(html?) {
         if (html === undefined) {
@@ -495,9 +500,9 @@ class BetterHTMLElement {
         }
     }
     
-    /**Sets the element's innerText and returns this*/
+    /**Set the element's innerText*/
     text(txt: string): this;
-    /**Gets the element's innerText*/
+    /**Get the element's innerText*/
     text(): string;
     text(txt?) {
         if (txt === undefined) {
@@ -509,7 +514,9 @@ class BetterHTMLElement {
         
     }
     
+    /**Set the id of the element*/
     id(id: string): this;
+    /**Get the id of the element*/
     id(): string;
     id(id?) {
         if (id === undefined) {
@@ -520,12 +527,14 @@ class BetterHTMLElement {
         }
     }
     
+    /**For each `[styleAttr, styleVal]` pair, set the `style[styleAttr]` to `styleVal`.*/
     css(css: CssOptions): this {
         for (let [styleAttr, styleVal] of enumerate(css))
             this.e.style[<string>styleAttr] = styleVal;
         return this;
     }
     
+    /**Remove the value of the passed style properties*/
     uncss(...removeProps: (keyof CssOptions)[]): this {
         let css = {};
         for (let prop of removeProps)
@@ -541,14 +550,16 @@ class BetterHTMLElement {
     */
     
     // **  Classes
+    /**`.className = cls`*/
     class(cls: string): this;
+    /**Return a string array of the element's classes (not a classList)*/
     class(): string[];
     class(cls?) {
-        if (cls !== undefined) {
+        if (cls === undefined) {
+            return Array.from(this.e.classList);
+        } else {
             this.e.className = cls;
             return this;
-        } else {
-            return Array.from(this.e.classList);
         }
     }
     
@@ -560,8 +571,10 @@ class BetterHTMLElement {
     }
     
     
-    removeClass(cls: string): this {
+    removeClass(cls: string, ...clses: string[]): this {
         this.e.classList.remove(cls);
+        for (let c of clses)
+            this.e.classList.remove(c);
         return this;
     }
     
@@ -577,17 +590,18 @@ class BetterHTMLElement {
     }
     
     // **  Nodes
+    /**Append one or several `BetterHTMLElement`s or vanilla `Node`s*/
     append(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
         if (nodes[0] instanceof BetterHTMLElement)
             for (let node of <BetterHTMLElement[]>nodes)
                 this.e.append(node.e);
         else
             for (let node of <(string | Node)[]>nodes)
-                this.e.append(node);
+                this.e.append(node); // TODO: test what happens when passed strings
         return this;
     }
     
-    /**For each item, `append(child)` and stores it by `[key]`. */
+    /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
     cacheAppend(keyChildObj: TMap<BetterHTMLElement>): this {
         for (let [key, child] of enumerate(keyChildObj)) {
             this.append(child);
@@ -596,13 +610,15 @@ class BetterHTMLElement {
         return this;
     }
     
-    /**Gets a child with `querySelector`*/
+    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
     child<K extends HTMLTag>(selector: K): BetterHTMLElement;
+    /**Get a child with `querySelector` and return a BetterHTMLElement of it*/
     child(selector: string): BetterHTMLElement;
     child(selector) {
         return new BetterHTMLElement({htmlElement: this.e.querySelector(selector)});
     }
     
+    // TODO: if append supports strings, so should this
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
     replaceChild(newChild, oldChild) {
@@ -610,14 +626,15 @@ class BetterHTMLElement {
         return this;
     }
     
-    /**Returns a BetterHTMLElement list of all children */
+    /**Return a `BetterHTMLElement` list of all children */
     children(): BetterHTMLElement[] {
         const childrenVanilla = <HTMLElement[]>Array.from(this.e.children);
         const toElem = (c: HTMLElement) => new BetterHTMLElement({htmlElement: c});
         return childrenVanilla.map(toElem);
     }
     
-    /**Gets each existing child by `selector`, and stores it by `[key]` */
+    /**For each `[key, selector]` pair, get `this.child(selector)`, and store it in `this[key]`. Useful for eg `navbar.home.toggleClass("selected")`
+     * @see this.child*/
     cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement {// .class | #id | img, button, ...
         for (let [key, selector] of enumerate(keySelectorObj))
             this[key] = this.child(selector);
@@ -625,6 +642,7 @@ class BetterHTMLElement {
         
     }
     
+    /**Remove all children from DOM*/
     empty(): this {
         // TODO: is this faster than innerHTML = ""?
         while (this.e.firstChild)
@@ -632,6 +650,7 @@ class BetterHTMLElement {
         return this;
     }
     
+    /**Remove element from DOM*/
     remove(): this {
         this.e.remove();
         return this;
@@ -660,6 +679,7 @@ class BetterHTMLElement {
 	mouseover		        pointerover
 	mouseup	    touchend    pointerup
 	*/
+    /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
     touchstart(fn: (ev: Event) => any, options?: AddEventListenerOptions): this {
         this.e.addEventListener('touchstart', function _f(ev: Event) {
             ev.preventDefault();
@@ -670,6 +690,7 @@ class BetterHTMLElement {
         return this;
     }
     
+    /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
     pointerdown(fn: (event: Event) => any, options?: AddEventListenerOptions): this {
         
         let action;
@@ -688,27 +709,39 @@ class BetterHTMLElement {
         return this;
     }
     
+    /**Simulate a click of the element. Useful for `<a>` elements.*/
     click(): this;
+    /**Add a `click` event listener. You should probably use `pointerdown()` if on desktop, or `touchstart()` if on mobile.*/
     click(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
     click(fn?, options?): this {
-        this.e.addEventListener('click', fn, options);
-        return this;
+        if (fn === undefined) {
+            this.e.click();
+            return this;
+        } else {
+            this.e.addEventListener('click', fn, options);
+            return this;
+        }
     }
     
     // **  Attributes
     
-    attr(attrValPairs: TElemAttrs): this {
+    /** For each `[attr, val]` pair, apply `setAttribute`*/
+    attr(attrValPairs: TMap<keyof CssOptions>): this {
         for (let [attr, val] of enumerate(attrValPairs))
             this.e.setAttribute(attr, val);
         return this;
     }
     
-    removeAttribute(qualifiedName: string): this {
+    /** `removeAttribute` */
+    removeAttr(qualifiedName: keyof CssOptions & string, ...qualifiedNames: (keyof CssOptions & string)[]): this {
         this.e.removeAttribute(qualifiedName);
+        for (let qn of qualifiedNames)
+            this.e.removeAttribute(qn);
         return this;
     }
     
-    data(key: string, parse: boolean = true) {
+    /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/
+    data(key: string, parse: boolean = true): string | TMap<string> {
         const data = this.e.getAttribute(`data-${key}`);
         if (parse)
             return JSON.parse(data);
@@ -846,8 +879,15 @@ class Img extends BetterHTMLElement {
     }
 }
 
-
-function elem(elemOptions: ElemOptions): BetterHTMLElement {
+/**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
+function elem({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string });
+/**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
+function elem({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: TMap<string> });
+/**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
+function elem({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: TMap<string> });
+/**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
+function elem({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: TMap<string> });
+function elem(elemOptions): BetterHTMLElement {
     return new BetterHTMLElement(elemOptions);
 }
 
