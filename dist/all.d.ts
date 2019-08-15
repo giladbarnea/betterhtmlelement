@@ -385,6 +385,8 @@ declare class BetterHTMLElement {
     readonly e: HTMLElement;
     html(html: string): this;
     html(): string;
+    /**If a value is passed, sets the element's innerText and returns this.
+     * If no value is passed, returns the element's innerText.*/
     text(txt: string): this;
     text(): string;
     id(id: string): this;
@@ -440,5 +442,6 @@ declare type TMap<T> = {
     [s: string]: T;
 };
 declare function enumerate<T>(obj: T[]): IterableIterator<[number, T]>;
+declare function enumerate<T>(obj: IterableIterator<T>): IterableIterator<[number, T]>;
 declare function enumerate<T>(obj: T): IterableIterator<[keyof T, T[keyof T]]>;
 declare function wait(ms: number): Promise<any>;

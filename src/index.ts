@@ -495,6 +495,8 @@ class BetterHTMLElement {
         }
     }
     
+    /**If a value is passed, sets the element's innerText and returns this.
+     * If no value is passed, returns the element's innerText.*/
     text(txt: string): this;
     text(): string;
     text(txt?) {
