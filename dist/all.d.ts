@@ -385,9 +385,9 @@ declare class BetterHTMLElement {
     readonly e: HTMLElement;
     html(html: string): this;
     html(): string;
-    /**If a value is passed, sets the element's innerText and returns this.
-     * If no value is passed, returns the element's innerText.*/
+    /**Sets the element's innerText and returns this*/
     text(txt: string): this;
+    /**Gets the element's innerText*/
     text(): string;
     id(id: string): this;
     id(): string;
