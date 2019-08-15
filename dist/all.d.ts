@@ -8,7 +8,7 @@ declare type TEventFunctionMap<K> = {
 declare type HTMLTag = keyof HTMLElementTagNameMap;
 declare type QuerySelector = HTMLTag | string;
 declare type ElemOptions = {
-    tag?: HTMLTag;
+    tag?: QuerySelector;
     id?: string;
     text?: string;
     htmlElement?: HTMLElement;
@@ -406,8 +406,7 @@ declare class BetterHTMLElement {
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
     children(): BetterHTMLElement[];
-    cacheChildren(keySelectorObj: TMap<string>): any;
-    cacheChildren(keySelectorObj: TMap<HTMLTag>): any;
+    cacheChildren(keySelectorObj: TMap<QuerySelector>): any;
     empty(): this;
     remove(): this;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;

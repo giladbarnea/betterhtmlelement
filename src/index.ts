@@ -6,7 +6,7 @@ type TEventFunctionMap<K> = {
 type HTMLTag = keyof HTMLElementTagNameMap;
 type QuerySelector = HTMLTag | string;
 type ElemOptions = {
-    tag?: HTMLTag;
+    tag?: QuerySelector;
     id?: string;
     text?: string;
     htmlElement?: HTMLElement;
@@ -614,8 +614,7 @@ class BetterHTMLElement {
         return childrenVanilla.map(toElem);
     }
     
-    cacheChildren(keySelectorObj: TMap<string>); // .class | #id | ...
-    cacheChildren(keySelectorObj: TMap<HTMLTag>); // img, button, ...
+    cacheChildren(keySelectorObj: TMap<QuerySelector>); // .class | #id | img, button, ...
     cacheChildren(keySelectorObj) {
         for (let [key, selector] of enumerate(keySelectorObj))
             this[key] = this.child(selector);
