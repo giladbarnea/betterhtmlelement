@@ -880,13 +880,13 @@ class Img extends BetterHTMLElement {
 }
 
 /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
-function elem({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string });
+function elem({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string }): BetterHTMLElement;
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: TMap<string> });
+function elem({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: TMap<string> }): BetterHTMLElement;
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: TMap<string> });
+function elem({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: TMap<string> }): BetterHTMLElement;
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: TMap<string> });
+function elem({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: TMap<string> }): BetterHTMLElement;
 function elem(elemOptions): BetterHTMLElement {
     return new BetterHTMLElement(elemOptions);
 }

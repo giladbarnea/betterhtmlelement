@@ -485,28 +485,28 @@ declare function elem({ tag, text, cls }: {
     tag: QuerySelector;
     text?: string;
     cls?: string;
-}): any;
+}): BetterHTMLElement;
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
 declare function elem({ id, text, cls, children }: {
     id: string;
     text?: string;
     cls?: string;
     children?: TMap<string>;
-}): any;
+}): BetterHTMLElement;
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
 declare function elem({ query, text, cls, children }: {
     query: QuerySelector;
     text?: string;
     cls?: string;
     children?: TMap<string>;
-}): any;
+}): BetterHTMLElement;
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
 declare function elem({ htmlElement, text, cls, children }: {
     htmlElement: HTMLElement;
     text?: string;
     cls?: string;
     children?: TMap<string>;
-}): any;
+}): BetterHTMLElement;
 declare function span({ id, text, cls }: TSubElemOptions): Span;
 declare function div({ id, text, cls }: TSubElemOptions): Div;
 declare function img({ id, src, cls }: TImgOptions): Img;
