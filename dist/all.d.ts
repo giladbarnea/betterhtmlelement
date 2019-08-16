@@ -27,7 +27,7 @@ declare type TImgOptions = {
     cls?: string;
 };
 interface CssOptions {
-    alignContentS?: string;
+    alignContent?: string;
     alignItems?: string;
     alignSelf?: string;
     alignmentBaseline?: string;
@@ -459,9 +459,9 @@ declare class BetterHTMLElement {
     /**Add a `click` event listener. You should probably use `pointerdown()` if on desktop, or `touchstart()` if on mobile.*/
     click(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
     /** For each `[attr, val]` pair, apply `setAttribute`*/
-    attr(attrValPairs: TMap<keyof CssOptions>): this;
+    attr(attrValPairs: TMap<string>): this;
     /** `removeAttribute` */
-    removeAttr(qualifiedName: keyof CssOptions & string, ...qualifiedNames: (keyof CssOptions & string)[]): this;
+    removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this;
     /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/
     data(key: string, parse?: boolean): string | TMap<string>;
     fade(dur: number, to: 0 | 1): Promise<this>;

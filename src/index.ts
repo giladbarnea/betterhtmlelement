@@ -28,7 +28,7 @@ type TImgOptions = {
 
 
 interface CssOptions {
-    alignContentS?: string;
+    alignContent?: string;
     alignItems?: string;
     alignSelf?: string;
     alignmentBaseline?: string;
@@ -726,14 +726,14 @@ class BetterHTMLElement {
     // **  Attributes
     
     /** For each `[attr, val]` pair, apply `setAttribute`*/
-    attr(attrValPairs: TMap<keyof CssOptions>): this {
+    attr(attrValPairs: TMap<string>): this {
         for (let [attr, val] of enumerate(attrValPairs))
             this.e.setAttribute(attr, val);
         return this;
     }
     
     /** `removeAttribute` */
-    removeAttr(qualifiedName: keyof CssOptions & string, ...qualifiedNames: (keyof CssOptions & string)[]): this {
+    removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this {
         this.e.removeAttribute(qualifiedName);
         for (let qn of qualifiedNames)
             this.e.removeAttribute(qn);
