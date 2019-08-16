@@ -891,15 +891,15 @@ function elem(elemOptions): BetterHTMLElement {
     return new BetterHTMLElement(elemOptions);
 }
 
-function span({id, text, cls}: TSubElemOptions): Span {
+function span({id, text, cls}: TSubElemOptions = {}): Span {
     return new Span({id, text, cls});
 }
 
-function div({id, text, cls}: TSubElemOptions): Div {
+function div({id, text, cls}: TSubElemOptions = {}): Div {
     return new Div({id, text, cls});
 }
 
-function img({id, src, cls}: TImgOptions): Img {
+function img({id, src, cls}: TImgOptions = {}): Img {
     return new Img({id, src, cls});
 }
 
