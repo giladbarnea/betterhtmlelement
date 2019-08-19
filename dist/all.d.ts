@@ -430,6 +430,7 @@ declare class BetterHTMLElement {
     removeClass(cls: string, ...clses: string[]): this;
     replaceClass(oldToken: string, newToken: string): this;
     toggleClass(cls: string, force?: boolean): this;
+    after(...nodes: BetterHTMLElement[] | (string | Node)[]): this;
     /**Append one or several `BetterHTMLElement`s or vanilla `Node`s*/
     append(...nodes: BetterHTMLElement[] | (string | Node)[]): this;
     /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */

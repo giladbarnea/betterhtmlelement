@@ -590,6 +590,16 @@ class BetterHTMLElement {
     }
     
     // **  Nodes
+    after(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
+        if (nodes[0] instanceof BetterHTMLElement)
+            for (let node of <BetterHTMLElement[]>nodes)
+                this.e.after(node.e);
+        else
+            for (let node of <(string | Node)[]>nodes)
+                this.e.after(node); // TODO: test what happens when passed strings
+        return this;
+    }
+    
     /**Append one or several `BetterHTMLElement`s or vanilla `Node`s*/
     append(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
         if (nodes[0] instanceof BetterHTMLElement)

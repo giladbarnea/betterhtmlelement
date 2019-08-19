@@ -155,6 +155,15 @@ class BetterHTMLElement {
         return this;
     }
     // **  Nodes
+    after(...nodes) {
+        if (nodes[0] instanceof BetterHTMLElement)
+            for (let node of nodes)
+                this.e.after(node.e);
+        else
+            for (let node of nodes)
+                this.e.after(node); // TODO: test what happens when passed strings
+        return this;
+    }
     /**Append one or several `BetterHTMLElement`s or vanilla `Node`s*/
     append(...nodes) {
         if (nodes[0] instanceof BetterHTMLElement)
