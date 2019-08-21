@@ -388,6 +388,7 @@ class BetterHTMLElement {
 }
 customElements.define('better-html-element', BetterHTMLElement);
 class Div extends BetterHTMLElement {
+    /**Create an Div element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls } = {}) {
         super({ tag: "div", text, cls });
         if (id)
@@ -395,6 +396,7 @@ class Div extends BetterHTMLElement {
     }
 }
 class Span extends BetterHTMLElement {
+    /**Create an Span element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls } = {}) {
         super({ tag: 'span', text, cls });
         if (id)
@@ -402,6 +404,7 @@ class Span extends BetterHTMLElement {
     }
 }
 class Img extends BetterHTMLElement {
+    /**Create an Img element. Optionally set its id, src or cls.*/
     constructor({ id, src, cls }) {
         // if (!src)
         //     throw new Error(`Img constructor didn't receive src`);
@@ -415,12 +418,15 @@ class Img extends BetterHTMLElement {
 function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
+/**Create an Span element. Optionally set its id, text or cls.*/
 function span({ id, text, cls } = {}) {
     return new Span({ id, text, cls });
 }
+/**Create an Div element. Optionally set its id, text or cls.*/
 function div({ id, text, cls } = {}) {
     return new Div({ id, text, cls });
 }
+/**Create an Img element. Optionally set its id, src or cls.*/
 function img({ id, src, cls } = {}) {
     return new Img({ id, src, cls });
 }

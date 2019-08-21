@@ -260,11 +260,11 @@ interface CssOptions {
     overflow?: string;
     overflowX?: string;
     overflowY?: string;
-    padding?: string;
-    paddingBottom?: string;
-    paddingLeft?: string;
-    paddingRight?: string;
-    paddingTop?: string;
+    padding?: string | number;
+    paddingBottom?: string | number;
+    paddingLeft?: string | number;
+    paddingRight?: string | number;
+    paddingTop?: string | number;
     pageBreakAfter?: string;
     pageBreakBefore?: string;
     pageBreakInside?: string;
@@ -856,6 +856,7 @@ customElements.define('better-html-element', BetterHTMLElement);
 class Div extends BetterHTMLElement {
     _htmlElement: HTMLDivElement;
     
+    /**Create an Div element. Optionally set its id, text or cls.*/
     constructor({id, text, cls}: TSubElemOptions = {}) {
         super({tag: "div", text, cls});
         if (id)
@@ -866,6 +867,7 @@ class Div extends BetterHTMLElement {
 class Span extends BetterHTMLElement {
     _htmlElement: HTMLSpanElement;
     
+    /**Create an Span element. Optionally set its id, text or cls.*/
     constructor({id, text, cls}: TSubElemOptions = {}) {
         super({tag: 'span', text, cls});
         if (id)
@@ -877,6 +879,7 @@ class Span extends BetterHTMLElement {
 class Img extends BetterHTMLElement {
     _htmlElement: HTMLImageElement;
     
+    /**Create an Img element. Optionally set its id, src or cls.*/
     constructor({id, src, cls}: TImgOptions) {
         // if (!src)
         //     throw new Error(`Img constructor didn't receive src`);
@@ -901,14 +904,17 @@ function elem(elemOptions): BetterHTMLElement {
     return new BetterHTMLElement(elemOptions);
 }
 
+/**Create an Span element. Optionally set its id, text or cls.*/
 function span({id, text, cls}: TSubElemOptions = {}): Span {
     return new Span({id, text, cls});
 }
 
+/**Create an Div element. Optionally set its id, text or cls.*/
 function div({id, text, cls}: TSubElemOptions = {}): Div {
     return new Div({id, text, cls});
 }
 
+/**Create an Img element. Optionally set its id, src or cls.*/
 function img({id, src, cls}: TImgOptions = {}): Img {
     return new Img({id, src, cls});
 }

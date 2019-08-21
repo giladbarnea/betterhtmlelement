@@ -259,11 +259,11 @@ interface CssOptions {
     overflow?: string;
     overflowX?: string;
     overflowY?: string;
-    padding?: string;
-    paddingBottom?: string;
-    paddingLeft?: string;
-    paddingRight?: string;
-    paddingTop?: string;
+    padding?: string | number;
+    paddingBottom?: string | number;
+    paddingLeft?: string | number;
+    paddingRight?: string | number;
+    paddingTop?: string | number;
     pageBreakAfter?: string;
     pageBreakBefore?: string;
     pageBreakInside?: string;
@@ -471,14 +471,17 @@ declare class BetterHTMLElement {
 }
 declare class Div extends BetterHTMLElement {
     _htmlElement: HTMLDivElement;
+    /**Create an Div element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls }?: TSubElemOptions);
 }
 declare class Span extends BetterHTMLElement {
     _htmlElement: HTMLSpanElement;
+    /**Create an Span element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls }?: TSubElemOptions);
 }
 declare class Img extends BetterHTMLElement {
     _htmlElement: HTMLImageElement;
+    /**Create an Img element. Optionally set its id, src or cls.*/
     constructor({ id, src, cls }: TImgOptions);
 }
 /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
@@ -508,8 +511,11 @@ declare function elem({ htmlElement, text, cls, children }: {
     cls?: string;
     children?: TMap<string>;
 }): BetterHTMLElement;
+/**Create an Span element. Optionally set its id, text or cls.*/
 declare function span({ id, text, cls }?: TSubElemOptions): Span;
+/**Create an Div element. Optionally set its id, text or cls.*/
 declare function div({ id, text, cls }?: TSubElemOptions): Div;
+/**Create an Img element. Optionally set its id, src or cls.*/
 declare function img({ id, src, cls }?: TImgOptions): Img;
 declare type TMap<T> = {
     [s: string]: T;
