@@ -357,6 +357,7 @@ declare type StepsFunction = [number, Jumpterm];
 declare type AnimationTimingFunction = 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'step-start' | 'step-end' | StepsFunction | CubicBezierFunction;
 declare type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
 declare type AnimationFillMode = 'none' | 'forwards' | 'backwards' | 'both';
+declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
 interface AnimateOptions {
     delay?: string;
     direction?: AnimationDirection;
@@ -376,7 +377,8 @@ interface AnimateOptions {
     timingFunction?: AnimationTimingFunction;
 }
 declare class BetterHTMLElement {
-    _htmlElement: HTMLElement;
+    private readonly _htmlElement;
+    private readonly _isSvg;
     /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
     constructor({ tag, text, cls }: {
         tag: QuerySelector;

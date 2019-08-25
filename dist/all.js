@@ -26,9 +26,11 @@ class BadArgumentsAmountError extends Error {
         super(message);
     }
 }
+const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 // TODO: make BetterHTMLElement<T>, for use in eg child function
 class BetterHTMLElement {
     constructor(elemOptions) {
+        this._isSvg = false;
         const { tag, id, htmlElement, text, query, children, cls } = elemOptions;
         if ([tag, id, htmlElement, query].filter(x => x).length > 1) {
             throw new BadArgumentsAmountError(1, {
@@ -43,8 +45,16 @@ class BetterHTMLElement {
                 tag,
                 children
             }, 'children and tag options are mutually exclusive, since tag implies creating a new element and children implies getting an existing one.');
-        if (tag)
-            this._htmlElement = document.createElement(tag);
+        if (tag) {
+            if (['svg', 'path'].includes(tag.toLowerCase())) {
+                this._isSvg = true;
+                this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
+                // this._htmlElement.setAttribute('xmlns', "http://www.w3.org/2000/svg");
+            }
+            else {
+                this._htmlElement = document.createElement(tag);
+            }
+        }
         else if (id)
             this._htmlElement = document.getElementById(id);
         else if (query)
@@ -130,7 +140,10 @@ class BetterHTMLElement {
             return Array.from(this.e.classList);
         }
         else {
-            this.e.className = cls;
+            if (this._isSvg)
+                this.e.classList = [cls];
+            else
+                this.e.className = cls;
             return this;
         }
     }
@@ -277,15 +290,26 @@ class BetterHTMLElement {
     // **  Attributes
     /** For each `[attr, val]` pair, apply `setAttribute`*/
     attr(attrValPairs) {
+        let _setAttribute;
+        if (this._isSvg)
+            // _setAttribute = (attr, val) => this.e.setAttributeNS(SVG_NS_URI, attr, val);
+            _setAttribute = (attr, val) => this.e.setAttribute(attr, val);
+        else
+            _setAttribute = (attr, val) => this.e.setAttribute(attr, val);
         for (let [attr, val] of enumerate(attrValPairs))
-            this.e.setAttribute(attr, val);
+            _setAttribute(attr, val);
         return this;
     }
     /** `removeAttribute` */
     removeAttr(qualifiedName, ...qualifiedNames) {
-        this.e.removeAttribute(qualifiedName);
+        let _removeAttribute;
+        if (this._isSvg)
+            _removeAttribute = (qualifiedName) => this.e.removeAttributeNS(SVG_NS_URI, qualifiedName);
+        else
+            _removeAttribute = (qualifiedName) => this.e.removeAttribute(qualifiedName);
+        _removeAttribute(qualifiedName);
         for (let qn of qualifiedNames)
-            this.e.removeAttribute(qn);
+            _removeAttribute(qn);
         return this;
     }
     /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/

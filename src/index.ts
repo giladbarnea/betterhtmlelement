@@ -373,7 +373,7 @@ type AnimationTimingFunction =
     | CubicBezierFunction
 type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
 type AnimationFillMode = 'none' | 'forwards' | 'backwards' | 'both';
-
+const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
 interface AnimateOptions {
     delay?: string;
@@ -396,7 +396,8 @@ interface AnimateOptions {
 
 // TODO: make BetterHTMLElement<T>, for use in eg child function
 class BetterHTMLElement {
-    _htmlElement: HTMLElement;
+    private readonly _htmlElement: HTMLElement;
+    private readonly _isSvg: boolean = false;
     
     /*[Symbol.toPrimitive](hint) {
         console.log('from toPrimitive, hint: ', hint, '\nthis: ', this);
@@ -439,9 +440,15 @@ class BetterHTMLElement {
                 children
             }, 'children and tag options are mutually exclusive, since tag implies creating a new element and children implies getting an existing one.');
         
-        if (tag)
-            this._htmlElement = document.createElement(tag);
-        else if (id)
+        if (tag) {
+            if (['svg', 'path'].includes(tag.toLowerCase())) {
+                this._isSvg = true;
+                this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
+                // this._htmlElement.setAttribute('xmlns', "http://www.w3.org/2000/svg");
+            } else {
+                this._htmlElement = document.createElement(tag);
+            }
+        } else if (id)
             this._htmlElement = document.getElementById(id);
         else if (query)
             this._htmlElement = document.querySelector(query);
@@ -486,7 +493,7 @@ class BetterHTMLElement {
         return this._htmlElement;
     }
     
-    // **  Basic
+    // ***  Basic
     /**Set the element's innerHTML*/
     html(html: string): this;
     /**Get the element's innerHTML*/
@@ -542,6 +549,11 @@ class BetterHTMLElement {
         return this.css(css);
     }
     
+    is(element: BetterHTMLElement) {
+        // https://api.jquery.com/is/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    
     /*
         animate(opts: AnimateOptions) {
             // see: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations/Tips
@@ -549,7 +561,7 @@ class BetterHTMLElement {
         }
     */
     
-    // **  Classes
+    // ***  Classes
     /**`.className = cls`*/
     class(cls: string): this;
     /**Return a string array of the element's classes (not a classList)*/
@@ -558,7 +570,10 @@ class BetterHTMLElement {
         if (cls === undefined) {
             return Array.from(this.e.classList);
         } else {
-            this.e.className = cls;
+            if (this._isSvg)
+                this.e.classList = [cls];
+            else
+                this.e.className = cls;
             return this;
         }
     }
@@ -569,7 +584,6 @@ class BetterHTMLElement {
             this.e.classList.add(c);
         return this;
     }
-    
     
     removeClass(cls: string, ...clses: string[]): this {
         this.e.classList.remove(cls);
@@ -583,13 +597,17 @@ class BetterHTMLElement {
         return this;
     }
     
-    
     toggleClass(cls: string, force?: boolean): this {
         this.e.classList.toggle(cls, force);
         return this;
     }
     
-    // **  Nodes
+    hasClass(cls: string): boolean {
+        return this.e.classList.contains(cls);
+    }
+    
+    // ***  Nodes
+    /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s just after `this`.*/
     after(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
         if (nodes[0] instanceof BetterHTMLElement)
             for (let node of <BetterHTMLElement[]>nodes)
@@ -600,7 +618,16 @@ class BetterHTMLElement {
         return this;
     }
     
-    /**Append one or several `BetterHTMLElement`s or vanilla `Node`s*/
+    /**Insert `this` just after a `BetterHTMLElement` or vanilla `Node`s.*/
+    insertAfter(node: BetterHTMLElement | (string | Node)): this {
+        if (node instanceof BetterHTMLElement)
+            node.e.after(this.e);
+        else
+            node.after(this.e);
+        return this;
+    }
+    
+    /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s after the last child of `this`*/
     append(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
         if (nodes[0] instanceof BetterHTMLElement)
             for (let node of <BetterHTMLElement[]>nodes)
@@ -610,6 +637,36 @@ class BetterHTMLElement {
                 this.e.append(node); // TODO: test what happens when passed strings
         return this;
     }
+    
+    /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
+    appendTo(node: BetterHTMLElement | (string | Node)): this {
+        if (node instanceof BetterHTMLElement)
+            node.e.append(this.e);
+        else
+            node.append(this.e);
+        return this;
+    }
+    
+    /**Inserts one or several `BetterHTMLElement`s or vanilla `Node`s just before `this`*/
+    before(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
+        if (nodes[0] instanceof BetterHTMLElement)
+            for (let node of <BetterHTMLElement[]>nodes)
+                this.e.before(node.e);
+        else
+            for (let node of <(string | Node)[]>nodes)
+                this.e.before(node); // TODO: test what happens when passed strings
+        return this;
+    }
+    
+    /**Insert `this` just before a `BetterHTMLElement` or vanilla `Node`s.*/
+    insertBefore(node: BetterHTMLElement | (string | Node)): this {
+        if (node instanceof BetterHTMLElement)
+            node.e.before(this.e);
+        else
+            node.before(this.e);
+        return this;
+    }
+    
     
     /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
     cacheAppend(keyChildObj: TMap<BetterHTMLElement>): this {
@@ -638,9 +695,15 @@ class BetterHTMLElement {
     
     /**Return a `BetterHTMLElement` list of all children */
     children(): BetterHTMLElement[] {
+        
         const childrenVanilla = <HTMLElement[]>Array.from(this.e.children);
         const toElem = (c: HTMLElement) => new BetterHTMLElement({htmlElement: c});
         return childrenVanilla.map(toElem);
+    }
+    
+    clone(deep?: boolean): BetterHTMLElement {
+        // @ts-ignore
+        return new BetterHTMLElement({htmlElement: this.e.cloneNode(deep)});
     }
     
     /**For each `[key, selector]` pair, get `this.child(selector)`, and store it in `this[key]`. Useful for eg `navbar.home.toggleClass("selected")`
@@ -666,7 +729,43 @@ class BetterHTMLElement {
         return this;
     }
     
-    // **  Events
+    // TODO: recursively yield children (unlike .children(), this doesn't return only the first level)
+    find() {
+        // https://api.jquery.com/find/
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    first() {
+        // https://api.jquery.com/first/
+        // this.e.firstChild
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    last() {
+        // https://api.jquery.com/last/
+        // this.e.lastChild
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    next() {
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    not() {
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    parent() {
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    parents() {
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    
+    // ***  Events
+    
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this {
         const that = this; // "this" changes inside function _f
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
@@ -678,6 +777,10 @@ class BetterHTMLElement {
             }, options);
         }
         return this;
+    }
+    
+    one() {
+        throw new Error("NOT IMPLEMENTED")
     }
     
     /*
@@ -723,7 +826,7 @@ class BetterHTMLElement {
     click(): this;
     /**Add a `click` event listener. You should probably use `pointerdown()` if on desktop, or `touchstart()` if on mobile.*/
     click(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
-    click(fn?, options?): this {
+    click(fn?, options?) {
         if (fn === undefined) {
             this.e.click();
             return this;
@@ -733,25 +836,164 @@ class BetterHTMLElement {
         }
     }
     
-    // **  Attributes
+    /**Blur (unfocus) the element.*/
+    blur(): this;
+    /**Add a `blur` event listener*/
+    blur(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    blur(fn?, options?) {
+        if (fn === undefined) {
+            this.e.blur();
+            return this;
+        } else {
+            return this.on({blur: fn}, options)
+        }
+    }
+    
+    /**Focus the element.*/
+    focus(): this;
+    /**Add a `focus` event listener*/
+    focus(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    focus(fn?, options?) {
+        if (fn === undefined) {
+            this.e.focus();
+            return this;
+        } else {
+            return this.on({focus: fn}, options)
+        }
+    }
+    
+    
+    /**Add a `change` event listener*/
+    change(fn: (event: Event) => any, options?: AddEventListenerOptions): this {
+        return this.on({change: fn}, options);
+    }
+    
+    /**Add a `contextmenu` event listener*/
+    contextmenu(fn: (event: Event) => any, options?: AddEventListenerOptions): this {
+        return this.on({contextmenu: fn}, options);
+    }
+    
+    /**Simulate a double click of the element.*/
+    dblclick(): this;
+    /**Add a `dblclick` event listener*/
+    dblclick(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    dblclick(fn?, options?) {
+        if (fn === undefined) {
+            const dblclick = new MouseEvent('dblclick', {
+                'view': window,
+                'bubbles': true,
+                'cancelable': true
+            });
+            this.e.dispatchEvent(dblclick);
+            return this;
+        } else {
+            return this.on({dblclick: fn}, options)
+        }
+    }
+    
+    /**Simulate a mouseenter event to the element.*/
+    mouseenter(): this;
+    /**Add a `mouseenter` event listener*/
+    mouseenter(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    mouseenter(fn?, options?) {
+        if (fn === undefined) {
+            const mouseenter = new MouseEvent('mouseenter', {
+                'view': window,
+                'bubbles': true,
+                'cancelable': true
+            });
+            this.e.dispatchEvent(mouseenter);
+            return this;
+        } else {
+            return this.on({mouseenter: fn}, options)
+        }
+    }
+    
+    keydown() {
+        // https://api.jquery.com/keydown/
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    keyup() {
+        // https://api.jquery.com/keyup/
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    keypress() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    mousedown() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    hover() {
+        // https://api.jquery.com/hover/
+        // binds to both mouseenter and mouseleave
+        // https://stackoverflow.com/questions/17589420/when-to-choose-mouseover-and-hover-function
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    mouseleave() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    mousemove() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    mouseout() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    mouseover() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    mouseup() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    // ***  Attributes
     
     /** For each `[attr, val]` pair, apply `setAttribute`*/
-    attr(attrValPairs: TMap<string>): this {
-        for (let [attr, val] of enumerate(attrValPairs))
-            this.e.setAttribute(attr, val);
-        return this;
+    attr(attrValPairs: TMap<string>): this
+    /** apply `getAttribute`*/
+    attr(attributeName: string): string
+    attr(attrValPairs) {
+        if (typeof attrValPairs === 'string') {
+            return this.e.getAttribute(attrValPairs);
+        } else {
+            for (let [attr, val] of enumerate(attrValPairs))
+                this.e.setAttribute(attr, val);
+            return this;
+        }
     }
     
     /** `removeAttribute` */
     removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this {
-        this.e.removeAttribute(qualifiedName);
+        let _removeAttribute;
+        if (this._isSvg)
+            _removeAttribute = (qualifiedName) => this.e.removeAttributeNS(SVG_NS_URI, qualifiedName);
+        else
+            _removeAttribute = (qualifiedName) => this.e.removeAttribute(qualifiedName);
+        
+        _removeAttribute(qualifiedName);
         for (let qn of qualifiedNames)
-            this.e.removeAttribute(qn);
+            _removeAttribute(qn);
         return this;
     }
     
     /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/
     data(key: string, parse: boolean = true): string | TMap<string> {
+        // TODO: jquery doesn't affect data-* attrs in DOM. https://api.jquery.com/data/
         const data = this.e.getAttribute(`data-${key}`);
         if (parse)
             return JSON.parse(data);
