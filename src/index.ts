@@ -5,15 +5,7 @@ type TEventFunctionMap<K> = {
 
 type HTMLTag = keyof HTMLElementTagNameMap;
 type QuerySelector = HTMLTag | string;
-type ElemOptions = {
-    tag?: QuerySelector;
-    id?: string;
-    text?: string;
-    htmlElement?: HTMLElement;
-    query?: QuerySelector;
-    children?: TMap<string>;
-    cls?: string;
-};
+
 
 type TSubElemOptions = {
     id?: string;
@@ -373,6 +365,32 @@ type AnimationTimingFunction =
     | CubicBezierFunction
 type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
 type AnimationFillMode = 'none' | 'forwards' | 'backwards' | 'both';
+
+interface TransformOptions {
+    matrix?: [number, number, number, number, number, number],
+    matrix3d?: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number],
+    perspective?: string, // px
+    rotate?: string, // deg
+    rotate3d?: [number, number, number, string] // [,,,deg]
+    rotateX?: string,
+    rotateY?: string,
+    rotateZ?: string,
+    scale?: number, // 1.5
+    scale3d?: [number, number, number],
+    scaleX?: [number, number, number],
+    scaleY?: [number, number, number],
+    skew?: [string, string] // deg, deg
+    skewX?: string,
+    skewY?: string,
+    translate?: [string, string], // px, px
+    translate3d?: [string, string, string],
+    translateX?: string,
+    translateY?: string,
+    translateZ?: string,
+    
+    
+}
+
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
 interface AnimateOptions {
@@ -396,8 +414,9 @@ interface AnimateOptions {
 
 // TODO: make BetterHTMLElement<T>, for use in eg child function
 class BetterHTMLElement {
-    private readonly _htmlElement: HTMLElement;
+    protected readonly _htmlElement: HTMLElement;
     private readonly _isSvg: boolean = false;
+    private readonly _listeners: TEventFunctionMap<TEvent> = {};
     
     /*[Symbol.toPrimitive](hint) {
         console.log('from toPrimitive, hint: ', hint, '\nthis: ', this);
@@ -795,7 +814,7 @@ class BetterHTMLElement {
     /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
     touchstart(fn: (ev: Event) => any, options?: AddEventListenerOptions): this {
         this.e.addEventListener('touchstart', function _f(ev: Event) {
-            ev.preventDefault();
+            ev.preventDefault(); // otherwise "touchmove" is triggered
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener('touchstart', _f);
@@ -813,12 +832,14 @@ class BetterHTMLElement {
         } catch (e) {
             action = 'mousedown'
         }
-        this.e.addEventListener(action, function _f(ev: Event): void {
+        const _f = function _f(ev: Event): void {
             ev.preventDefault();
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener(action, _f);
-        });
+        };
+        this.e.addEventListener(action, _f);
+        this._listeners.pointerdown = _f;
         return this;
     }
     
@@ -909,9 +930,15 @@ class BetterHTMLElement {
         }
     }
     
-    keydown() {
-        // https://api.jquery.com/keydown/
-        throw new Error("NOT IMPLEMENTED")
+    /**Simulate a keydown event to the element.*/
+    // @ts-ignore
+    keydown(): this;
+    /**Add a `keydown` event listener*/
+    keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this;
+    keydown(fn?, options?) {
+        if (fn === undefined) throw new Error("NOT IMPLEMENTED");
+        else
+            return this.on({keydown: fn}, options)
     }
     
     keyup() {
@@ -959,6 +986,25 @@ class BetterHTMLElement {
     mouseup() {
         // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED")
+    }
+    
+    transform(options: TransformOptions) {
+        let transform: string = '';
+        for (let [k, v] of enumerate(options)) {
+            transform += `${k}(${v}) `
+        }
+        return new Promise(resolve => {
+            this.on({
+                transitionend: resolve
+            }, {once: true});
+            this.css({transform})
+        })
+    }
+    
+    /** Remove the event listener of `event`, if exists.*/
+    off(event: TEvent): this {
+        this.e.removeEventListener(event, this._listeners[event]);
+        return this;
     }
     
     // ***  Attributes
@@ -1096,9 +1142,9 @@ class BetterHTMLElement {
 customElements.define('better-html-element', BetterHTMLElement);
 
 class Div extends BetterHTMLElement {
-    _htmlElement: HTMLDivElement;
+    protected readonly _htmlElement: HTMLDivElement;
     
-    /**Create an Div element. Optionally set its id, text or cls.*/
+    /**Create a Div element. Optionally set its id, text or cls.*/
     constructor({id, text, cls}: TSubElemOptions = {}) {
         super({tag: "div", text, cls});
         if (id)
@@ -1107,9 +1153,9 @@ class Div extends BetterHTMLElement {
 }
 
 class Span extends BetterHTMLElement {
-    _htmlElement: HTMLSpanElement;
+    protected readonly _htmlElement: HTMLSpanElement;
     
-    /**Create an Span element. Optionally set its id, text or cls.*/
+    /**Create a Span element. Optionally set its id, text or cls.*/
     constructor({id, text, cls}: TSubElemOptions = {}) {
         super({tag: 'span', text, cls});
         if (id)
@@ -1119,7 +1165,7 @@ class Span extends BetterHTMLElement {
 }
 
 class Img extends BetterHTMLElement {
-    _htmlElement: HTMLImageElement;
+    protected readonly _htmlElement: HTMLImageElement;
     
     /**Create an Img element. Optionally set its id, src or cls.*/
     constructor({id, src, cls}: TImgOptions) {
@@ -1131,6 +1177,17 @@ class Img extends BetterHTMLElement {
         if (src)
             this._htmlElement.src = src;
         
+    }
+    
+    src(src: string): this;
+    src(): string;
+    src(src?) {
+        if (src === undefined) {
+            return this._htmlElement.src
+        } else {
+            this._htmlElement.src = src;
+            return this;
+        }
     }
 }
 

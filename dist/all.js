@@ -31,6 +31,7 @@ const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 class BetterHTMLElement {
     constructor(elemOptions) {
         this._isSvg = false;
+        this._listeners = {};
         const { tag, id, htmlElement, text, query, children, cls } = elemOptions;
         if ([tag, id, htmlElement, query].filter(x => x).length > 1) {
             throw new BadArgumentsAmountError(1, {
@@ -135,6 +136,10 @@ class BetterHTMLElement {
             css[prop] = '';
         return this.css(css);
     }
+    is(element) {
+        // https://api.jquery.com/is/
+        throw new Error("NOT IMPLEMENTED");
+    }
     class(cls) {
         if (cls === undefined) {
             return Array.from(this.e.classList);
@@ -167,7 +172,11 @@ class BetterHTMLElement {
         this.e.classList.toggle(cls, force);
         return this;
     }
-    // **  Nodes
+    hasClass(cls) {
+        return this.e.classList.contains(cls);
+    }
+    // ***  Nodes
+    /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s just after `this`.*/
     after(...nodes) {
         if (nodes[0] instanceof BetterHTMLElement)
             for (let node of nodes)
@@ -177,7 +186,15 @@ class BetterHTMLElement {
                 this.e.after(node); // TODO: test what happens when passed strings
         return this;
     }
-    /**Append one or several `BetterHTMLElement`s or vanilla `Node`s*/
+    /**Insert `this` just after a `BetterHTMLElement` or vanilla `Node`s.*/
+    insertAfter(node) {
+        if (node instanceof BetterHTMLElement)
+            node.e.after(this.e);
+        else
+            node.after(this.e);
+        return this;
+    }
+    /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s after the last child of `this`*/
     append(...nodes) {
         if (nodes[0] instanceof BetterHTMLElement)
             for (let node of nodes)
@@ -185,6 +202,32 @@ class BetterHTMLElement {
         else
             for (let node of nodes)
                 this.e.append(node); // TODO: test what happens when passed strings
+        return this;
+    }
+    /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
+    appendTo(node) {
+        if (node instanceof BetterHTMLElement)
+            node.e.append(this.e);
+        else
+            node.append(this.e);
+        return this;
+    }
+    /**Inserts one or several `BetterHTMLElement`s or vanilla `Node`s just before `this`*/
+    before(...nodes) {
+        if (nodes[0] instanceof BetterHTMLElement)
+            for (let node of nodes)
+                this.e.before(node.e);
+        else
+            for (let node of nodes)
+                this.e.before(node); // TODO: test what happens when passed strings
+        return this;
+    }
+    /**Insert `this` just before a `BetterHTMLElement` or vanilla `Node`s.*/
+    insertBefore(node) {
+        if (node instanceof BetterHTMLElement)
+            node.e.before(this.e);
+        else
+            node.before(this.e);
         return this;
     }
     /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
@@ -208,6 +251,10 @@ class BetterHTMLElement {
         const toElem = (c) => new BetterHTMLElement({ htmlElement: c });
         return childrenVanilla.map(toElem);
     }
+    clone(deep) {
+        // @ts-ignore
+        return new BetterHTMLElement({ htmlElement: this.e.cloneNode(deep) });
+    }
     /**For each `[key, selector]` pair, get `this.child(selector)`, and store it in `this[key]`. Useful for eg `navbar.home.toggleClass("selected")`
      * @see this.child*/
     cacheChildren(keySelectorObj) {
@@ -227,7 +274,34 @@ class BetterHTMLElement {
         this.e.remove();
         return this;
     }
-    // **  Events
+    // TODO: recursively yield children (unlike .children(), this doesn't return only the first level)
+    find() {
+        // https://api.jquery.com/find/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    first() {
+        // https://api.jquery.com/first/
+        // this.e.firstChild
+        throw new Error("NOT IMPLEMENTED");
+    }
+    last() {
+        // https://api.jquery.com/last/
+        // this.e.lastChild
+        throw new Error("NOT IMPLEMENTED");
+    }
+    next() {
+        throw new Error("NOT IMPLEMENTED");
+    }
+    not() {
+        throw new Error("NOT IMPLEMENTED");
+    }
+    parent() {
+        throw new Error("NOT IMPLEMENTED");
+    }
+    parents() {
+        throw new Error("NOT IMPLEMENTED");
+    }
+    // ***  Events
     on(evTypeFnPairs, options) {
         const that = this; // "this" changes inside function _f
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
@@ -239,6 +313,9 @@ class BetterHTMLElement {
             }, options);
         }
         return this;
+    }
+    one() {
+        throw new Error("NOT IMPLEMENTED");
     }
     /*
     mousedown   touchstart	pointerdown
@@ -252,7 +329,7 @@ class BetterHTMLElement {
     /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
     touchstart(fn, options) {
         this.e.addEventListener('touchstart', function _f(ev) {
-            ev.preventDefault();
+            ev.preventDefault(); // otherwise "touchmove" is triggered
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener('touchstart', _f);
@@ -269,12 +346,14 @@ class BetterHTMLElement {
         catch (e) {
             action = 'mousedown';
         }
-        this.e.addEventListener(action, function _f(ev) {
+        const _f = function _f(ev) {
             ev.preventDefault();
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener(action, _f);
-        });
+        };
+        this.e.addEventListener(action, _f);
+        this._listeners.pointerdown = _f;
         return this;
     }
     click(fn, options) {
@@ -287,18 +366,130 @@ class BetterHTMLElement {
             return this;
         }
     }
-    // **  Attributes
-    /** For each `[attr, val]` pair, apply `setAttribute`*/
-    attr(attrValPairs) {
-        let _setAttribute;
-        if (this._isSvg)
-            // _setAttribute = (attr, val) => this.e.setAttributeNS(SVG_NS_URI, attr, val);
-            _setAttribute = (attr, val) => this.e.setAttribute(attr, val);
+    blur(fn, options) {
+        if (fn === undefined) {
+            this.e.blur();
+            return this;
+        }
+        else {
+            return this.on({ blur: fn }, options);
+        }
+    }
+    focus(fn, options) {
+        if (fn === undefined) {
+            this.e.focus();
+            return this;
+        }
+        else {
+            return this.on({ focus: fn }, options);
+        }
+    }
+    /**Add a `change` event listener*/
+    change(fn, options) {
+        return this.on({ change: fn }, options);
+    }
+    /**Add a `contextmenu` event listener*/
+    contextmenu(fn, options) {
+        return this.on({ contextmenu: fn }, options);
+    }
+    dblclick(fn, options) {
+        if (fn === undefined) {
+            const dblclick = new MouseEvent('dblclick', {
+                'view': window,
+                'bubbles': true,
+                'cancelable': true
+            });
+            this.e.dispatchEvent(dblclick);
+            return this;
+        }
+        else {
+            return this.on({ dblclick: fn }, options);
+        }
+    }
+    mouseenter(fn, options) {
+        if (fn === undefined) {
+            const mouseenter = new MouseEvent('mouseenter', {
+                'view': window,
+                'bubbles': true,
+                'cancelable': true
+            });
+            this.e.dispatchEvent(mouseenter);
+            return this;
+        }
+        else {
+            return this.on({ mouseenter: fn }, options);
+        }
+    }
+    keydown(fn, options) {
+        if (fn === undefined)
+            throw new Error("NOT IMPLEMENTED");
         else
-            _setAttribute = (attr, val) => this.e.setAttribute(attr, val);
-        for (let [attr, val] of enumerate(attrValPairs))
-            _setAttribute(attr, val);
+            return this.on({ keydown: fn }, options);
+    }
+    keyup() {
+        // https://api.jquery.com/keyup/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    keypress() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    mousedown() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    hover() {
+        // https://api.jquery.com/hover/
+        // binds to both mouseenter and mouseleave
+        // https://stackoverflow.com/questions/17589420/when-to-choose-mouseover-and-hover-function
+        throw new Error("NOT IMPLEMENTED");
+    }
+    mouseleave() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    mousemove() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    mouseout() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    mouseover() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    mouseup() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    transform(options) {
+        let transform = '';
+        for (let [k, v] of enumerate(options)) {
+            transform += `${k}(${v}) `;
+        }
+        return new Promise(resolve => {
+            this.on({
+                transitionend: resolve
+            }, { once: true });
+            this.css({ transform });
+        });
+    }
+    /** Remove the event listener of `event`, if exists.*/
+    off(event) {
+        this.e.removeEventListener(event, this._listeners[event]);
         return this;
+    }
+    attr(attrValPairs) {
+        if (typeof attrValPairs === 'string') {
+            return this.e.getAttribute(attrValPairs);
+        }
+        else {
+            for (let [attr, val] of enumerate(attrValPairs))
+                this.e.setAttribute(attr, val);
+            return this;
+        }
     }
     /** `removeAttribute` */
     removeAttr(qualifiedName, ...qualifiedNames) {
@@ -314,6 +505,7 @@ class BetterHTMLElement {
     }
     /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/
     data(key, parse = true) {
+        // TODO: jquery doesn't affect data-* attrs in DOM. https://api.jquery.com/data/
         const data = this.e.getAttribute(`data-${key}`);
         if (parse)
             return JSON.parse(data);
@@ -412,7 +604,7 @@ class BetterHTMLElement {
 }
 customElements.define('better-html-element', BetterHTMLElement);
 class Div extends BetterHTMLElement {
-    /**Create an Div element. Optionally set its id, text or cls.*/
+    /**Create a Div element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls } = {}) {
         super({ tag: "div", text, cls });
         if (id)
@@ -420,7 +612,7 @@ class Div extends BetterHTMLElement {
     }
 }
 class Span extends BetterHTMLElement {
-    /**Create an Span element. Optionally set its id, text or cls.*/
+    /**Create a Span element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls } = {}) {
         super({ tag: 'span', text, cls });
         if (id)
@@ -437,6 +629,15 @@ class Img extends BetterHTMLElement {
             this.id(id);
         if (src)
             this._htmlElement.src = src;
+    }
+    src(src) {
+        if (src === undefined) {
+            return this._htmlElement.src;
+        }
+        else {
+            this._htmlElement.src = src;
+            return this;
+        }
     }
 }
 function elem(elemOptions) {
