@@ -255,11 +255,18 @@ class BetterHTMLElement {
         // @ts-ignore
         return new BetterHTMLElement({ htmlElement: this.e.cloneNode(deep) });
     }
-    /**For each `[key, selector]` pair, get `this.child(selector)`, and store it in `this[key]`. Useful for eg `navbar.home.toggleClass("selected")`
-     * @see this.child*/
     cacheChildren(keySelectorObj) {
-        for (let [key, selector] of enumerate(keySelectorObj))
-            this[key] = this.child(selector);
+        for (let [key, selector] of enumerate(keySelectorObj)) {
+            if (typeof selector === 'object') {
+                // only first because multiple selectors for single key aren't supported (ie can't do {right: {.right: {...}, .right2: {...}})
+                let [subselector, subkeyselectorsObj] = Object.entries(selector)[0];
+                this[key] = this.child(subselector);
+                this[key].cacheChildren(subkeyselectorsObj);
+            }
+            else {
+                this[key] = this.child(selector);
+            }
+        }
         return this;
     }
     /**Remove all children from DOM*/
@@ -303,14 +310,13 @@ class BetterHTMLElement {
     }
     // ***  Events
     on(evTypeFnPairs, options) {
-        const that = this; // "this" changes inside function _f
+        // const that = this; // "this" changes inside function _f
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
-            this.e.addEventListener(evType, function _f(evt) {
+            const _f = function _f(evt) {
                 evFn(evt);
-                // console.log('addEventListener, evt: ', evt, 'options: ', options, 'this: ', this);
-                // if (options && options.once)
-                //     this.removeEventListener(evType, _f);
-            }, options);
+            };
+            this.e.addEventListener(evType, _f, options);
+            this._listeners[evType] = _f;
         }
         return this;
     }
@@ -333,7 +339,7 @@ class BetterHTMLElement {
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener('touchstart', _f);
-        });
+        }, options);
         return this;
     }
     /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
@@ -352,7 +358,7 @@ class BetterHTMLElement {
             if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener(action, _f);
         };
-        this.e.addEventListener(action, _f);
+        this.e.addEventListener(action, _f, options);
         this._listeners.pointerdown = _f;
         return this;
     }
@@ -362,8 +368,9 @@ class BetterHTMLElement {
             return this;
         }
         else {
-            this.e.addEventListener('click', fn, options);
-            return this;
+            return this.on({ click: fn }, options);
+            // this.e.addEventListener('click', fn, options);
+            // return this;
         }
     }
     blur(fn, options) {
@@ -434,14 +441,14 @@ class BetterHTMLElement {
         // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED");
     }
-    mousedown() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED");
-    }
     hover() {
         // https://api.jquery.com/hover/
         // binds to both mouseenter and mouseleave
         // https://stackoverflow.com/questions/17589420/when-to-choose-mouseover-and-hover-function
+        throw new Error("NOT IMPLEMENTED");
+    }
+    mousedown() {
+        // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED");
     }
     mouseleave() {
@@ -452,13 +459,17 @@ class BetterHTMLElement {
         // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED");
     }
-    mouseout() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED");
+    mouseout(fn, options) {
+        if (fn === undefined)
+            throw new Error("NOT IMPLEMENTED");
+        else
+            return this.on({ mouseout: fn }, options);
     }
-    mouseover() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED");
+    mouseover(fn, options) {
+        if (fn === undefined)
+            throw new Error("NOT IMPLEMENTED");
+        else
+            return this.on({ mouseover: fn }, options);
     }
     mouseup() {
         // https://api.jquery.com/keypress/
@@ -479,6 +490,12 @@ class BetterHTMLElement {
     /** Remove the event listener of `event`, if exists.*/
     off(event) {
         this.e.removeEventListener(event, this._listeners[event]);
+        return this;
+    }
+    allOff() {
+        for (let event in this._listeners) {
+            this.off(event);
+        }
         return this;
     }
     attr(attrValPairs) {
@@ -622,8 +639,6 @@ class Span extends BetterHTMLElement {
 class Img extends BetterHTMLElement {
     /**Create an Img element. Optionally set its id, src or cls.*/
     constructor({ id, src, cls }) {
-        // if (!src)
-        //     throw new Error(`Img constructor didn't receive src`);
         super({ tag: 'img', cls });
         if (id)
             this.id(id);
@@ -655,6 +670,30 @@ function div({ id, text, cls } = {}) {
 function img({ id, src, cls } = {}) {
     return new Img({ id, src, cls });
 }
+elem({
+    id: '#news', children: {
+        mainImageContainer: '#main_image_container',
+        news: {
+            '#news': {
+                title: '.title',
+                date: '.date',
+                content: '.content'
+            }
+        },
+        radios: '#radios',
+    }
+});
+elem({ id: '#news' }).cacheChildren({
+    mainImageContainer: '#main_image_container',
+    news: {
+        '#news': {
+            title: '.title',
+            date: '.date',
+            content: '.content'
+        }
+    },
+    radios: '#radios',
+});
 function* enumerate(obj) {
     if (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function') {
         let i = 0;

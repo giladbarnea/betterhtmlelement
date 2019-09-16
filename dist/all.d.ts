@@ -389,6 +389,7 @@ interface AnimateOptions {
      * */
     timingFunction?: AnimationTimingFunction;
 }
+declare type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
 declare class BetterHTMLElement {
     protected readonly _htmlElement: HTMLElement;
     private readonly _isSvg;
@@ -404,21 +405,21 @@ declare class BetterHTMLElement {
         id: string;
         text?: string;
         cls?: string;
-        children?: TMap<string>;
+        children?: TChildrenObj;
     });
     /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
     constructor({ query, text, cls, children }: {
         query: QuerySelector;
         text?: string;
         cls?: string;
-        children?: TMap<string>;
+        children?: TChildrenObj;
     });
     /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
     constructor({ htmlElement, text, cls, children }: {
         htmlElement: HTMLElement;
         text?: string;
         cls?: string;
-        children?: TMap<string>;
+        children?: TChildrenObj;
     });
     /**Return the wrapped HTMLElement*/
     readonly e: HTMLElement;
@@ -464,16 +465,56 @@ declare class BetterHTMLElement {
     cacheAppend(keyChildObj: TMap<BetterHTMLElement>): this;
     /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
     child<K extends HTMLTag>(selector: K): BetterHTMLElement;
-    /**Get a child with `querySelector` and return a BetterHTMLElement of it*/
+    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
     child(selector: string): BetterHTMLElement;
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
     /**Return a `BetterHTMLElement` list of all children */
     children(): BetterHTMLElement[];
     clone(deep?: boolean): BetterHTMLElement;
-    /**For each `[key, selector]` pair, get `this.child(selector)`, and store it in `this[key]`. Useful for eg `navbar.home.toggleClass("selected")`
+    /**For each `[key, selector]` pair, where `selector` is either an `HTMLTag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
+     * @example
+     * // Using `cacheChildren` directly
+     * navbar.cacheChildren({ home: '.navbar-item-home', about: '.navbar-item-about' });
+     * navbar.home.toggleClass("selected");
+     * navbar.about.css(...);
+     * @example
+     * // Using `cacheChildren` indirectly through `children` constructor option
+     * elem({query: '#navbar', children: { home: '.navbar-item-home', about: '.navbar-item-about' }});
+     * navbar.home.toggleClass("selected");
+     * navbar.about.css(...);
      * @see this.child*/
     cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement;
+    /**For each `[key, selector]` pair, where `selector` is a recursive `{subselector: keySelectorObj}` object,
+     * extract `this.child(subselector)`, store it in `this[key]`, then call `this[key].cacheChildren` passing the recursive object.
+     * @example
+     * // Using `cacheChildren` directly
+     * navbar.cacheChildren({
+     *      home: {
+     *          '.navbar-item-home': {
+     *              news: '.navbar-subitem-news,
+     *              support: '.navbar-subitem-support'
+     *          }
+     *      }
+     *  });
+     * navbar.home.toggleClass("selected");
+     * navbar.home.news.css(...);
+     * navbar.home.support.pointerdown(...);
+     * @example
+     * // Using `cacheChildren` indirectly through `children` constructor option
+     * elem({query: '#navbar', children: {
+     *      home: {
+     *          '.navbar-item-home': {
+     *              news: '.navbar-subitem-news,
+     *              support: '.navbar-subitem-support'
+     *          }
+     *      }
+     *  }});
+     * navbar.home.toggleClass("selected");
+     * navbar.home.news.css(...);
+     * navbar.home.support.pointerdown(...);
+     * @see this.child*/
+    cacheChildren(keySelectorObj: TRecMap<QuerySelector>): BetterHTMLElement;
     /**Remove all children from DOM*/
     empty(): this;
     /**Remove element from DOM*/
@@ -521,16 +562,23 @@ declare class BetterHTMLElement {
     keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this;
     keyup(): void;
     keypress(): void;
-    mousedown(): void;
     hover(): void;
+    mousedown(): void;
     mouseleave(): void;
     mousemove(): void;
-    mouseout(): void;
-    mouseover(): void;
+    /**Simulate a mouseout event to the element.*/
+    mouseout(): this;
+    /**Add a `mouseout` event listener*/
+    mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+    /**Simulate a mouseover event to the element.*/
+    mouseover(): this;
+    /**Add a `mouseover` event listener*/
+    mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
     mouseup(): void;
     transform(options: TransformOptions): Promise<unknown>;
     /** Remove the event listener of `event`, if exists.*/
     off(event: TEvent): this;
+    allOff(): this;
     /** For each `[attr, val]` pair, apply `setAttribute`*/
     attr(attrValPairs: TMap<string>): this;
     /** apply `getAttribute`*/
@@ -545,11 +593,13 @@ declare class BetterHTMLElement {
 }
 declare class Div extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLDivElement;
+    readonly e: HTMLDivElement;
     /**Create a Div element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls }?: TSubElemOptions);
 }
 declare class Span extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLSpanElement;
+    readonly e: HTMLSpanElement;
     /**Create a Span element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls }?: TSubElemOptions);
 }
@@ -559,6 +609,7 @@ declare class Img extends BetterHTMLElement {
     constructor({ id, src, cls }: TImgOptions);
     src(src: string): this;
     src(): string;
+    readonly e: HTMLImageElement;
 }
 /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
 declare function elem({ tag, text, cls }: {
@@ -571,21 +622,21 @@ declare function elem({ id, text, cls, children }: {
     id: string;
     text?: string;
     cls?: string;
-    children?: TMap<string>;
+    children?: TChildrenObj;
 }): BetterHTMLElement;
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
 declare function elem({ query, text, cls, children }: {
     query: QuerySelector;
     text?: string;
     cls?: string;
-    children?: TMap<string>;
+    children?: TChildrenObj;
 }): BetterHTMLElement;
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
 declare function elem({ htmlElement, text, cls, children }: {
     htmlElement: HTMLElement;
     text?: string;
     cls?: string;
-    children?: TMap<string>;
+    children?: TChildrenObj;
 }): BetterHTMLElement;
 /**Create an Span element. Optionally set its id, text or cls.*/
 declare function span({ id, text, cls }?: TSubElemOptions): Span;
@@ -593,9 +644,12 @@ declare function span({ id, text, cls }?: TSubElemOptions): Span;
 declare function div({ id, text, cls }?: TSubElemOptions): Div;
 /**Create an Img element. Optionally set its id, src or cls.*/
 declare function img({ id, src, cls }?: TImgOptions): Img;
-declare type TMap<T> = {
+interface TMap<T> {
     [s: string]: T;
-};
+}
+interface TRecMap<T> {
+    [s: string]: T | TRecMap<T>;
+}
 declare function enumerate<T>(obj: T[]): IterableIterator<[number, T]>;
 declare function enumerate<T>(obj: IterableIterator<T>): IterableIterator<[number, T]>;
 declare function enumerate<T>(obj: T): IterableIterator<[keyof T, T[keyof T]]>;

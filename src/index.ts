@@ -412,6 +412,8 @@ interface AnimateOptions {
     timingFunction?: AnimationTimingFunction;
 }
 
+type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
+
 // TODO: make BetterHTMLElement<T>, for use in eg child function
 class BetterHTMLElement {
     protected readonly _htmlElement: HTMLElement;
@@ -436,11 +438,11 @@ class BetterHTMLElement {
     /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
     constructor({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string });
     /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: TMap<string> });
+    constructor({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: TChildrenObj });
     /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: TMap<string> });
+    constructor({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: TChildrenObj });
     /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: TMap<string> });
+    constructor({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: TChildrenObj });
     constructor(elemOptions) {
         const {tag, id, htmlElement, text, query, children, cls} = elemOptions;
         
@@ -474,7 +476,6 @@ class BetterHTMLElement {
         else if (htmlElement)
             this._htmlElement = htmlElement;
         else {
-            
             throw new BadArgumentsAmountError(1, {
                 tag,
                 id,
@@ -698,7 +699,7 @@ class BetterHTMLElement {
     
     /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
     child<K extends HTMLTag>(selector: K): BetterHTMLElement;
-    /**Get a child with `querySelector` and return a BetterHTMLElement of it*/
+    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
     child(selector: string): BetterHTMLElement;
     child(selector) {
         return new BetterHTMLElement({htmlElement: this.e.querySelector(selector)});
@@ -725,11 +726,60 @@ class BetterHTMLElement {
         return new BetterHTMLElement({htmlElement: this.e.cloneNode(deep)});
     }
     
-    /**For each `[key, selector]` pair, get `this.child(selector)`, and store it in `this[key]`. Useful for eg `navbar.home.toggleClass("selected")`
+    /**For each `[key, selector]` pair, where `selector` is either an `HTMLTag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
+     * @example
+     * // Using `cacheChildren` directly
+     * navbar.cacheChildren({ home: '.navbar-item-home', about: '.navbar-item-about' });
+     * navbar.home.toggleClass("selected");
+     * navbar.about.css(...);
+     * @example
+     * // Using `cacheChildren` indirectly through `children` constructor option
+     * elem({query: '#navbar', children: { home: '.navbar-item-home', about: '.navbar-item-about' }});
+     * navbar.home.toggleClass("selected");
+     * navbar.about.css(...);
      * @see this.child*/
-    cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement {// .class | #id | img, button, ...
-        for (let [key, selector] of enumerate(keySelectorObj))
-            this[key] = this.child(selector);
+    cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement
+    /**For each `[key, selector]` pair, where `selector` is a recursive `{subselector: keySelectorObj}` object,
+     * extract `this.child(subselector)`, store it in `this[key]`, then call `this[key].cacheChildren` passing the recursive object.
+     * @example
+     * // Using `cacheChildren` directly
+     * navbar.cacheChildren({
+     *      home: {
+     *          '.navbar-item-home': {
+     *              news: '.navbar-subitem-news,
+     *              support: '.navbar-subitem-support'
+     *          }
+     *      }
+     *  });
+     * navbar.home.toggleClass("selected");
+     * navbar.home.news.css(...);
+     * navbar.home.support.pointerdown(...);
+     * @example
+     * // Using `cacheChildren` indirectly through `children` constructor option
+     * elem({query: '#navbar', children: {
+     *      home: {
+     *          '.navbar-item-home': {
+     *              news: '.navbar-subitem-news,
+     *              support: '.navbar-subitem-support'
+     *          }
+     *      }
+     *  }});
+     * navbar.home.toggleClass("selected");
+     * navbar.home.news.css(...);
+     * navbar.home.support.pointerdown(...);
+     * @see this.child*/
+    cacheChildren(keySelectorObj: TRecMap<QuerySelector>): BetterHTMLElement
+    cacheChildren(keySelectorObj) {
+        for (let [key, selector] of enumerate(keySelectorObj)) {
+            if (typeof selector === 'object') {
+                // only first because multiple selectors for single key aren't supported (ie can't do {right: {.right: {...}, .right2: {...}})
+                let [subselector, subkeyselectorsObj] = Object.entries(selector)[0];
+                this[key] = this.child(subselector);
+                this[key].cacheChildren(subkeyselectorsObj)
+            } else {
+                this[key] = this.child(selector);
+            }
+        }
         return this;
         
     }
@@ -786,14 +836,13 @@ class BetterHTMLElement {
     // ***  Events
     
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this {
-        const that = this; // "this" changes inside function _f
+        // const that = this; // "this" changes inside function _f
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
-            this.e.addEventListener(evType, function _f(evt) {
+            const _f = function _f(evt) {
                 evFn(evt);
-                // console.log('addEventListener, evt: ', evt, 'options: ', options, 'this: ', this);
-                // if (options && options.once)
-                //     this.removeEventListener(evType, _f);
-            }, options);
+            };
+            this.e.addEventListener(evType, _f, options);
+            this._listeners[evType] = _f;
         }
         return this;
     }
@@ -818,7 +867,7 @@ class BetterHTMLElement {
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener('touchstart', _f);
-        });
+        }, options);
         return this;
     }
     
@@ -838,7 +887,7 @@ class BetterHTMLElement {
             if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener(action, _f);
         };
-        this.e.addEventListener(action, _f);
+        this.e.addEventListener(action, _f, options);
         this._listeners.pointerdown = _f;
         return this;
     }
@@ -852,8 +901,9 @@ class BetterHTMLElement {
             this.e.click();
             return this;
         } else {
-            this.e.addEventListener('click', fn, options);
-            return this;
+            return this.on({click: fn}, options);
+            // this.e.addEventListener('click', fn, options);
+            // return this;
         }
     }
     
@@ -951,15 +1001,16 @@ class BetterHTMLElement {
         throw new Error("NOT IMPLEMENTED")
     }
     
-    mousedown() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED")
-    }
     
     hover() {
         // https://api.jquery.com/hover/
         // binds to both mouseenter and mouseleave
         // https://stackoverflow.com/questions/17589420/when-to-choose-mouseover-and-hover-function
+        throw new Error("NOT IMPLEMENTED")
+    }
+    
+    mousedown() {
+        // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED")
     }
     
@@ -973,14 +1024,26 @@ class BetterHTMLElement {
         throw new Error("NOT IMPLEMENTED")
     }
     
-    mouseout() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED")
+    /**Simulate a mouseout event to the element.*/
+    // @ts-ignore
+    mouseout(): this;
+    /**Add a `mouseout` event listener*/
+    mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+    mouseout(fn?, options?) {
+        if (fn === undefined) throw new Error("NOT IMPLEMENTED");
+        else
+            return this.on({mouseout: fn}, options)
     }
     
-    mouseover() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED")
+    /**Simulate a mouseover event to the element.*/
+    // @ts-ignore
+    mouseover(): this;
+    /**Add a `mouseover` event listener*/
+    mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+    mouseover(fn?, options?) {
+        if (fn === undefined) throw new Error("NOT IMPLEMENTED");
+        else
+            return this.on({mouseover: fn}, options)
     }
     
     mouseup() {
@@ -1004,6 +1067,13 @@ class BetterHTMLElement {
     /** Remove the event listener of `event`, if exists.*/
     off(event: TEvent): this {
         this.e.removeEventListener(event, this._listeners[event]);
+        return this;
+    }
+    
+    allOff(): this {
+        for (let event in this._listeners) {
+            this.off(<TEvent>event);
+        }
         return this;
     }
     
@@ -1143,6 +1213,7 @@ customElements.define('better-html-element', BetterHTMLElement);
 
 class Div extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLDivElement;
+    readonly e: HTMLDivElement;
     
     /**Create a Div element. Optionally set its id, text or cls.*/
     constructor({id, text, cls}: TSubElemOptions = {}) {
@@ -1154,6 +1225,7 @@ class Div extends BetterHTMLElement {
 
 class Span extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLSpanElement;
+    readonly e: HTMLSpanElement;
     
     /**Create a Span element. Optionally set its id, text or cls.*/
     constructor({id, text, cls}: TSubElemOptions = {}) {
@@ -1169,8 +1241,6 @@ class Img extends BetterHTMLElement {
     
     /**Create an Img element. Optionally set its id, src or cls.*/
     constructor({id, src, cls}: TImgOptions) {
-        // if (!src)
-        //     throw new Error(`Img constructor didn't receive src`);
         super({tag: 'img', cls});
         if (id)
             this.id(id);
@@ -1189,16 +1259,18 @@ class Img extends BetterHTMLElement {
             return this;
         }
     }
+    
+    readonly e: HTMLImageElement;
 }
 
 /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
 function elem({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string }): BetterHTMLElement;
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: TMap<string> }): BetterHTMLElement;
+function elem({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: TChildrenObj }): BetterHTMLElement;
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: TMap<string> }): BetterHTMLElement;
+function elem({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: TChildrenObj }): BetterHTMLElement;
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: TMap<string> }): BetterHTMLElement;
+function elem({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: TChildrenObj }): BetterHTMLElement;
 function elem(elemOptions): BetterHTMLElement {
     return new BetterHTMLElement(elemOptions);
 }
@@ -1219,3 +1291,29 @@ function img({id, src, cls}: TImgOptions = {}): Img {
 }
 
 
+elem({
+    id: '#news', children: {
+        mainImageContainer: '#main_image_container',
+        news: {
+            '#news': {
+                title: '.title',
+                date: '.date',
+                content: '.content'
+            }
+        },
+        radios: '#radios',
+    }
+});
+
+elem({id: '#news'}).cacheChildren({
+        mainImageContainer: '#main_image_container',
+        news: {
+            '#news': {
+                title: '.title',
+                date: '.date',
+                content: '.content'
+            }
+        },
+        radios: '#radios',
+    }
+);
