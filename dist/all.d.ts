@@ -131,7 +131,7 @@ declare class BetterHTMLElement {
     /**Get the id of the element*/
     id(): string;
     /**For each `[styleAttr, styleVal]` pair, set the `style[styleAttr]` to `styleVal`.*/
-    css(css: CssOptions): this;
+    css(css: Partial<CssOptions>): this;
     /**Remove the value of the passed style properties*/
     uncss(...removeProps: (keyof CssOptions)[]): this;
     /**@deprecated*/
@@ -157,7 +157,10 @@ declare class BetterHTMLElement {
     before(...nodes: BetterHTMLElement[] | (string | Node)[]): this;
     /**Insert `this` just before a `BetterHTMLElement` or vanilla `Node`s.*/
     insertBefore(node: BetterHTMLElement | (string | Node)): this;
-    
+    /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
+    cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this;
+    /**For each `[key, child]` tuple, `append(child)` and store it in `this[key]`. */
+    cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this;
     /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
     child<K extends HTMLTag>(selector: K): BetterHTMLElement;
     /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/

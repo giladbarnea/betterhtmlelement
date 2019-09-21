@@ -259,7 +259,7 @@ class BetterHTMLElement {
     }
     
     /**For each `[styleAttr, styleVal]` pair, set the `style[styleAttr]` to `styleVal`.*/
-    css(css: CssOptions): this {
+    css(css: Partial<CssOptions>): this {
         for (let [styleAttr, styleVal] of enumerate(css))
             this.e.style[<string>styleAttr] = styleVal;
         return this;
