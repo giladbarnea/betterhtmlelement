@@ -1,6 +1,6 @@
 type TEvent = keyof HTMLElementEventMap;
-type TEventFunctionMap<K> = {
-    [P in Extract<K, string>]?: (evt: Event) => void
+type TEventFunctionMap<K extends keyof HTMLElementEventMap> = {
+    [P in K]?: (event: HTMLElementEventMap[P]) => void;
 };
 
 type HTMLTag = keyof HTMLElementTagNameMap;
@@ -17,334 +17,37 @@ type TImgOptions = {
     src?: string;
     cls?: string;
 };
+type OmittedCssProps = "animationDirection"
+    | "animationFillMode"
+    | "animationIterationCount"
+    | "animationPlayState"
+    | "animationTimingFunction"
+    | "opacity"
+    | "padding"
+    | "paddingBottom"
+    | "paddingLeft"
+    | "paddingRight"
+    | "paddingTop"
+    | "preload"
+    | "width"
+type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 
-
-interface CssOptions {
-    alignContent?: string;
-    alignItems?: string;
-    alignSelf?: string;
-    alignmentBaseline?: string;
-    animation?: string;
-    animationDelay?: string;
+interface CssOptions extends PartialCssStyleDeclaration {
     animationDirection?: AnimationDirection;
-    animationDuration?: string;
     animationFillMode?: AnimationFillMode;
     animationIterationCount?: number;
-    animationName?: string;
     animationPlayState?: AnimationPlayState;
     animationTimingFunction?: AnimationTimingFunction;
-    backfaceVisibility?: string;
-    background?: string;
-    backgroundAttachment?: string;
-    backgroundClip?: string;
-    backgroundColor?: string;
-    backgroundImage?: string;
-    backgroundOrigin?: string;
-    backgroundPosition?: string;
-    backgroundPositionX?: string;
-    backgroundPositionY?: string;
-    backgroundRepeat?: string;
-    backgroundSize?: string;
-    baselineShift?: string;
-    border?: string;
-    borderBottom?: string;
-    borderBottomColor?: string;
-    borderBottomLeftRadius?: string;
-    borderBottomRightRadius?: string;
-    borderBottomStyle?: string;
-    borderBottomWidth?: string;
-    borderCollapse?: string;
-    borderColor?: string;
-    borderImage?: string;
-    borderImageOutset?: string;
-    borderImageRepeat?: string;
-    borderImageSlice?: string;
-    borderImageSource?: string;
-    borderImageWidth?: string;
-    borderLeft?: string;
-    borderLeftColor?: string;
-    borderLeftStyle?: string;
-    borderLeftWidth?: string;
-    borderRadius?: string;
-    borderRight?: string;
-    borderRightColor?: string;
-    borderRightStyle?: string;
-    borderRightWidth?: string;
-    borderSpacing?: string;
-    borderStyle?: string;
-    borderTop?: string;
-    borderTopColor?: string;
-    borderTopLeftRadius?: string;
-    borderTopRightRadius?: string;
-    borderTopStyle?: string;
-    borderTopWidth?: string;
-    borderWidth?: string;
-    bottom?: string;
-    boxShadow?: string;
-    boxSizing?: string;
-    breakAfter?: string;
-    breakBefore?: string;
-    breakInside?: string;
-    captionSide?: string;
-    clear?: string;
-    clip?: string;
-    clipPath?: string;
-    clipRule?: string;
-    color?: string;
-    colorInterpolationFilters?: string;
-    columnCount?: any;
-    columnFill?: string;
-    columnGap?: any;
-    columnRule?: string;
-    columnRuleColor?: any;
-    columnRuleStyle?: string;
-    columnRuleWidth?: any;
-    columnSpan?: string;
-    columnWidth?: any;
-    columns?: string;
-    content?: string;
-    counterIncrement?: string;
-    counterReset?: string;
-    cssFloat?: string;
-    cssText?: string;
-    cursor?: string;
-    direction?: string;
-    display?: string;
-    dominantBaseline?: string;
-    emptyCells?: string;
-    enableBackground?: string;
-    fill?: string;
-    fillOpacity?: string;
-    fillRule?: string;
-    filter?: string;
-    flex?: string;
-    flexBasis?: string;
-    flexDirection?: string;
-    flexFlow?: string;
-    flexGrow?: string;
-    flexShrink?: string;
-    flexWrap?: string;
-    floodColor?: string;
-    floodOpacity?: string;
-    font?: string;
-    fontFamily?: string;
-    fontFeatureSettings?: string;
-    fontSize?: string;
-    fontSizeAdjust?: string;
-    fontStretch?: string;
-    fontStyle?: string;
-    fontVariant?: string;
-    fontWeight?: string;
-    gap?: string;
-    glyphOrientationHorizontal?: string;
-    glyphOrientationVertical?: string;
-    grid?: string;
-    gridArea?: string;
-    gridAutoColumns?: string;
-    gridAutoFlow?: string;
-    gridAutoRows?: string;
-    gridColumn?: string;
-    gridColumnEnd?: string;
-    gridColumnGap?: string;
-    gridColumnStart?: string;
-    gridGap?: string;
-    gridRow?: string;
-    gridRowEnd?: string;
-    gridRowGap?: string;
-    gridRowStart?: string;
-    gridTemplate?: string;
-    gridTemplateAreas?: string;
-    gridTemplateColumns?: string;
-    gridTemplateRows?: string;
-    height?: string;
-    imeMode?: string;
-    justifyContent?: string;
-    justifyItems?: string;
-    justifySelf?: string;
-    kerning?: string;
-    layoutGrid?: string;
-    layoutGridChar?: string;
-    layoutGridLine?: string;
-    layoutGridMode?: string;
-    layoutGridType?: string;
-    left?: string;
-    readonly length?: number;
-    letterSpacing?: string;
-    lightingColor?: string;
-    lineBreak?: string;
-    lineHeight?: string;
-    listStyle?: string;
-    listStyleImage?: string;
-    listStylePosition?: string;
-    listStyleType?: string;
-    margin?: string;
-    marginBottom?: string;
-    marginLeft?: string;
-    marginRight?: string;
-    marginTop?: string;
-    marker?: string;
-    markerEnd?: string;
-    markerMid?: string;
-    markerStart?: string;
-    mask?: string;
-    maskImage?: string;
-    maxHeight?: string;
-    maxWidth?: string;
-    minHeight?: string;
-    minWidth?: string;
-    msContentZoomChaining?: string;
-    msContentZoomLimit?: string;
-    msContentZoomLimitMax?: any;
-    msContentZoomLimitMin?: any;
-    msContentZoomSnap?: string;
-    msContentZoomSnapPoints?: string;
-    msContentZoomSnapType?: string;
-    msContentZooming?: string;
-    msFlowFrom?: string;
-    msFlowInto?: string;
-    msFontFeatureSettings?: string;
-    msGridColumn?: any;
-    msGridColumnAlign?: string;
-    msGridColumnSpan?: any;
-    msGridColumns?: string;
-    msGridRow?: any;
-    msGridRowAlign?: string;
-    msGridRowSpan?: any;
-    msGridRows?: string;
-    msHighContrastAdjust?: string;
-    msHyphenateLimitChars?: string;
-    msHyphenateLimitLines?: any;
-    msHyphenateLimitZone?: any;
-    msHyphens?: string;
-    msImeAlign?: string;
-    msOverflowStyle?: string;
-    msScrollChaining?: string;
-    msScrollLimit?: string;
-    msScrollLimitXMax?: any;
-    msScrollLimitXMin?: any;
-    msScrollLimitYMax?: any;
-    msScrollLimitYMin?: any;
-    msScrollRails?: string;
-    msScrollSnapPointsX?: string;
-    msScrollSnapPointsY?: string;
-    msScrollSnapType?: string;
-    msScrollSnapX?: string;
-    msScrollSnapY?: string;
-    msScrollTranslation?: string;
-    msTextCombineHorizontal?: string;
-    msTextSizeAdjust?: any;
-    msTouchAction?: string;
-    msTouchSelect?: string;
-    msUserSelect?: string;
-    msWrapFlow?: string;
-    msWrapMargin?: any;
-    msWrapThrough?: string;
-    objectFit?: string;
-    objectPosition?: string;
     opacity?: string | number;
-    order?: string;
-    orphans?: string;
-    outline?: string;
-    outlineColor?: string;
-    outlineOffset?: string;
-    outlineStyle?: string;
-    outlineWidth?: string;
-    overflow?: string;
-    overflowX?: string;
-    overflowY?: string;
     padding?: string | number;
     paddingBottom?: string | number;
     paddingLeft?: string | number;
     paddingRight?: string | number;
     paddingTop?: string | number;
-    pageBreakAfter?: string;
-    pageBreakBefore?: string;
-    pageBreakInside?: string;
-    readonly parentRule?: CSSRule;
-    penAction?: string;
-    perspective?: string;
-    perspectiveOrigin?: string;
-    pointerEvents?: string;
-    position?: string;
     preload?: "auto" | string;
-    quotes?: string;
-    resize?: string;
-    right?: string;
-    rotate?: string;
-    rowGap?: string;
-    rubyAlign?: string;
-    rubyOverhang?: string;
-    rubyPosition?: string;
-    scale?: string;
-    scrollBehavior?: string;
-    stopColor?: string;
-    stopOpacity?: string;
-    stroke?: string;
-    strokeDasharray?: string;
-    strokeDashoffset?: string;
-    strokeLinecap?: string;
-    strokeLinejoin?: string;
-    strokeMiterlimit?: string;
-    strokeOpacity?: string;
-    strokeWidth?: string;
-    tableLayout?: string;
-    textAlign?: string;
-    textAlignLast?: string;
-    textAnchor?: string;
-    textCombineUpright?: string;
-    textDecoration?: string;
-    textIndent?: string;
-    textJustify?: string;
-    textKashida?: string;
-    textKashidaSpace?: string;
-    textOverflow?: string;
-    textShadow?: string;
-    textTransform?: string;
-    textUnderlinePosition?: string;
-    top?: string;
-    touchAction?: string;
-    transform?: string;
-    transformOrigin?: string;
-    transformStyle?: string;
-    transition?: string;
-    transitionDelay?: string;
-    transitionDuration?: string;
-    transitionProperty?: string;
-    transitionTimingFunction?: string;
-    translate?: string;
-    unicodeBidi?: string;
-    userSelect?: string;
-    verticalAlign?: string;
-    visibility?: string;
-    
-    webkitColumnBreakAfter?: string;
-    webkitColumnBreakBefore?: string;
-    webkitColumnBreakInside?: string;
-    webkitColumnCount?: any;
-    webkitColumnGap?: any;
-    webkitColumnRule?: string;
-    webkitColumnRuleColor?: any;
-    webkitColumnRuleStyle?: string;
-    webkitColumnRuleWidth?: any;
-    webkitColumnSpan?: string;
-    webkitColumnWidth?: any;
-    webkitColumns?: string;
-    
-    webkitUserModify?: string;
-    webkitUserSelect?: string;
-    webkitWritingMode?: string;
-    whiteSpace?: string;
-    widows?: string;
     width?: string | number;
-    wordBreak?: string;
-    wordSpacing?: string;
-    wordWrap?: string;
-    writingMode?: string;
-    zIndex?: string;
-    zoom?: string;
-    
-    
 }
+
 
 type CubicBezierFunction = [number, number, number, number];
 type Jumpterm = 'jump-start' | 'jump-end' | 'jump-none' | 'jump-both' | 'start' | 'end';
@@ -414,7 +117,8 @@ interface AnimateOptions {
 
 type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
 
-// TODO: make BetterHTMLElement<T>, for use in eg child function
+// TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
+// maybe use https://www.typescriptlang.org/docs/handbook/utility-types.html#thistypet
 class BetterHTMLElement {
     protected readonly _htmlElement: HTMLElement;
     private readonly _isSvg: boolean = false;
@@ -569,6 +273,7 @@ class BetterHTMLElement {
         return this.css(css);
     }
     
+    /**@deprecated*/
     is(element: BetterHTMLElement) {
         // https://api.jquery.com/is/
         throw new Error("NOT IMPLEMENTED");
@@ -590,10 +295,12 @@ class BetterHTMLElement {
         if (cls === undefined) {
             return Array.from(this.e.classList);
         } else {
-            if (this._isSvg)
+            if (this._isSvg) {
+                // @ts-ignore
                 this.e.classList = [cls];
-            else
+            } else {
                 this.e.className = cls;
+            }
             return this;
         }
     }
@@ -689,10 +396,20 @@ class BetterHTMLElement {
     
     
     /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
-    cacheAppend(keyChildObj: TMap<BetterHTMLElement>): this {
-        for (let [key, child] of enumerate(keyChildObj)) {
-            this.append(child);
-            this[key] = child;
+    cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this
+    /**For each `[key, child]` tuple, `append(child)` and store it in `this[key]`. */
+    cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this
+    cacheAppend(keyChildPairs) {
+        const _cacheAppend = (_key: string, _child: BetterHTMLElement) => {
+            this.append(_child);
+            this[_key] = _child;
+        };
+        if (Array.isArray(keyChildPairs)) {
+            for (let [key, child] of keyChildPairs)
+                _cacheAppend(key, child);
+        } else {
+            for (let [key, child] of enumerate(keyChildPairs))
+                _cacheAppend(key, child);
         }
         return this;
     }
@@ -713,10 +430,22 @@ class BetterHTMLElement {
         return this;
     }
     
+    
     /**Return a `BetterHTMLElement` list of all children */
-    children(): BetterHTMLElement[] {
-        
-        const childrenVanilla = <HTMLElement[]>Array.from(this.e.children);
+    children(): BetterHTMLElement[];
+    /**Return a `BetterHTMLElement` list of all children selected by `selector` */
+    children<K extends HTMLTag>(selector: K): BetterHTMLElement[];
+    /**Return a `BetterHTMLElement` list of all children selected by `selector` */
+    children(selector: string | HTMLTag): BetterHTMLElement[];
+    children(selector?) {
+        let childrenVanilla;
+        let childrenCollection;
+        if (selector === undefined) {
+            childrenCollection = this.e.children;
+        } else {
+            childrenCollection = this.e.querySelectorAll(selector);
+        }
+        childrenVanilla = <HTMLElement[]>Array.from(childrenCollection);
         const toElem = (c: HTMLElement) => new BetterHTMLElement({htmlElement: c});
         return childrenVanilla.map(toElem);
     }
@@ -798,36 +527,44 @@ class BetterHTMLElement {
         return this;
     }
     
-    // TODO: recursively yield children (unlike .children(), this doesn't return only the first level)
+    // TODO: recursively yield children
+    //  (unlike .children(), this doesn't return only the first level)
+    /**@deprecated*/
     find() {
         // https://api.jquery.com/find/
         throw new Error("NOT IMPLEMENTED")
     }
     
+    /**@deprecated*/
     first() {
         // https://api.jquery.com/first/
         // this.e.firstChild
         throw new Error("NOT IMPLEMENTED")
     }
     
+    /**@deprecated*/
     last() {
         // https://api.jquery.com/last/
         // this.e.lastChild
         throw new Error("NOT IMPLEMENTED")
     }
     
+    /**@deprecated*/
     next() {
         throw new Error("NOT IMPLEMENTED")
     }
     
+    /**@deprecated*/
     not() {
         throw new Error("NOT IMPLEMENTED")
     }
     
+    /**@deprecated*/
     parent() {
         throw new Error("NOT IMPLEMENTED")
     }
     
+    /**@deprecated*/
     parents() {
         throw new Error("NOT IMPLEMENTED")
     }
@@ -847,6 +584,7 @@ class BetterHTMLElement {
         return this;
     }
     
+    /**@deprecated*/
     one() {
         throw new Error("NOT IMPLEMENTED")
     }
@@ -861,27 +599,29 @@ class BetterHTMLElement {
 	mouseup	    touchend    pointerup
 	*/
     /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
-    touchstart(fn: (ev: Event) => any, options?: AddEventListenerOptions): this {
-        this.e.addEventListener('touchstart', function _f(ev: Event) {
+    touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this {
+        this.e.addEventListener('touchstart', function _f(ev: TouchEvent) {
             ev.preventDefault(); // otherwise "touchmove" is triggered
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener('touchstart', _f);
         }, options);
+        // TODO: this._listeners, or use this.on(
         return this;
     }
     
     /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
-    pointerdown(fn: (event: Event) => any, options?: AddEventListenerOptions): this {
+    pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this {
         
         let action;
         try {
+            // TODO: check if PointerEvent exists instead of try/catch
             // @ts-ignore
             action = window.PointerEvent ? 'pointerdown' : 'mousedown'; // safari doesn't support pointerdown
         } catch (e) {
             action = 'mousedown'
         }
-        const _f = function _f(ev: Event): void {
+        const _f = function _f(ev: PointerEvent | MouseEvent): void {
             ev.preventDefault();
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
@@ -895,22 +635,20 @@ class BetterHTMLElement {
     /**Simulate a click of the element. Useful for `<a>` elements.*/
     click(): this;
     /**Add a `click` event listener. You should probably use `pointerdown()` if on desktop, or `touchstart()` if on mobile.*/
-    click(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    click(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
     click(fn?, options?) {
         if (fn === undefined) {
             this.e.click();
             return this;
         } else {
             return this.on({click: fn}, options);
-            // this.e.addEventListener('click', fn, options);
-            // return this;
         }
     }
     
     /**Blur (unfocus) the element.*/
     blur(): this;
     /**Add a `blur` event listener*/
-    blur(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    blur(fn: (event: FocusEvent) => any, options?: AddEventListenerOptions): this;
     blur(fn?, options?) {
         if (fn === undefined) {
             this.e.blur();
@@ -923,7 +661,7 @@ class BetterHTMLElement {
     /**Focus the element.*/
     focus(): this;
     /**Add a `focus` event listener*/
-    focus(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    focus(fn: (event: FocusEvent) => any, options?: AddEventListenerOptions): this;
     focus(fn?, options?) {
         if (fn === undefined) {
             this.e.focus();
@@ -940,14 +678,14 @@ class BetterHTMLElement {
     }
     
     /**Add a `contextmenu` event listener*/
-    contextmenu(fn: (event: Event) => any, options?: AddEventListenerOptions): this {
+    contextmenu(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this {
         return this.on({contextmenu: fn}, options);
     }
     
     /**Simulate a double click of the element.*/
     dblclick(): this;
     /**Add a `dblclick` event listener*/
-    dblclick(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    dblclick(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
     dblclick(fn?, options?) {
         if (fn === undefined) {
             const dblclick = new MouseEvent('dblclick', {
@@ -965,8 +703,11 @@ class BetterHTMLElement {
     /**Simulate a mouseenter event to the element.*/
     mouseenter(): this;
     /**Add a `mouseenter` event listener*/
-    mouseenter(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    mouseenter(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
     mouseenter(fn?, options?) {
+        // mouseover: also child elements
+        // mouseenter: only bound element
+        
         if (fn === undefined) {
             const mouseenter = new MouseEvent('mouseenter', {
                 'view': window,
@@ -991,17 +732,19 @@ class BetterHTMLElement {
             return this.on({keydown: fn}, options)
     }
     
+    /**@deprecated*/
     keyup() {
         // https://api.jquery.com/keyup/
         throw new Error("NOT IMPLEMENTED")
     }
     
+    /**@deprecated*/
     keypress() {
         // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED")
     }
     
-    
+    /**@deprecated*/
     hover() {
         // https://api.jquery.com/hover/
         // binds to both mouseenter and mouseleave
@@ -1009,16 +752,23 @@ class BetterHTMLElement {
         throw new Error("NOT IMPLEMENTED")
     }
     
+    /**@deprecated*/
     mousedown() {
         // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED")
     }
     
+    /**@deprecated*/
     mouseleave() {
         // https://api.jquery.com/keypress/
+        //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
+        // This means that mouseleave is fired when the pointer has exited the element and all of its descendants,
+        // whereas mouseout is fired when the pointer leaves the element or leaves one of the element's descendants
+        // (even if the pointer is still within the element).
         throw new Error("NOT IMPLEMENTED")
     }
     
+    /**@deprecated*/
     mousemove() {
         // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED")
@@ -1030,22 +780,28 @@ class BetterHTMLElement {
     /**Add a `mouseout` event listener*/
     mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
     mouseout(fn?, options?) {
+        //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
+        // This means that mouseleave is fired when the pointer has exited the element and all of its descendants,
+        // whereas mouseout is fired when the pointer leaves the element or leaves one of the element's descendants
+        // (even if the pointer is still within the element).
         if (fn === undefined) throw new Error("NOT IMPLEMENTED");
         else
             return this.on({mouseout: fn}, options)
     }
     
     /**Simulate a mouseover event to the element.*/
-    // @ts-ignore
     mouseover(): this;
     /**Add a `mouseover` event listener*/
     mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
     mouseover(fn?, options?) {
+        // mouseover: also child elements
+        // mouseenter: only bound element
         if (fn === undefined) throw new Error("NOT IMPLEMENTED");
         else
             return this.on({mouseover: fn}, options)
     }
     
+    /**@deprecated*/
     mouseup() {
         // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED")
@@ -1217,7 +973,19 @@ class Div extends BetterHTMLElement {
     
     /**Create a Div element. Optionally set its id, text or cls.*/
     constructor({id, text, cls}: TSubElemOptions = {}) {
-        super({tag: "div", text, cls});
+        super({tag: 'div', text, cls});
+        if (id)
+            this.id(id);
+    }
+}
+
+class Paragraph extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLParagraphElement;
+    readonly e: HTMLParagraphElement;
+    
+    /**Create a Paragraph element. Optionally set its id, text or cls.*/
+    constructor({id, text, cls}: TSubElemOptions = {}) {
+        super({tag: 'p', text, cls});
         if (id)
             this.id(id);
     }
@@ -1290,30 +1058,7 @@ function img({id, src, cls}: TImgOptions = {}): Img {
     return new Img({id, src, cls});
 }
 
-
-elem({
-    id: '#news', children: {
-        mainImageContainer: '#main_image_container',
-        news: {
-            '#news': {
-                title: '.title',
-                date: '.date',
-                content: '.content'
-            }
-        },
-        radios: '#radios',
-    }
-});
-
-elem({id: '#news'}).cacheChildren({
-        mainImageContainer: '#main_image_container',
-        news: {
-            '#news': {
-                title: '.title',
-                date: '.date',
-                content: '.content'
-            }
-        },
-        radios: '#radios',
-    }
-);
+/**Create an Paragraph element. Optionally set its id, text or cls.*/
+function paragraph({id, text, cls}: TSubElemOptions = {}): Paragraph {
+    return new Paragraph({id, text, cls});
+}

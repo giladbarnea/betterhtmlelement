@@ -27,7 +27,8 @@ class BadArgumentsAmountError extends Error {
     }
 }
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
-// TODO: make BetterHTMLElement<T>, for use in eg child function
+// TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
+// maybe use https://www.typescriptlang.org/docs/handbook/utility-types.html#thistypet
 class BetterHTMLElement {
     constructor(elemOptions) {
         this._isSvg = false;
@@ -136,6 +137,7 @@ class BetterHTMLElement {
             css[prop] = '';
         return this.css(css);
     }
+    /**@deprecated*/
     is(element) {
         // https://api.jquery.com/is/
         throw new Error("NOT IMPLEMENTED");
@@ -145,10 +147,13 @@ class BetterHTMLElement {
             return Array.from(this.e.classList);
         }
         else {
-            if (this._isSvg)
+            if (this._isSvg) {
+                // @ts-ignore
                 this.e.classList = [cls];
-            else
+            }
+            else {
                 this.e.className = cls;
+            }
             return this;
         }
     }
@@ -230,11 +235,18 @@ class BetterHTMLElement {
             node.before(this.e);
         return this;
     }
-    /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
-    cacheAppend(keyChildObj) {
-        for (let [key, child] of enumerate(keyChildObj)) {
-            this.append(child);
-            this[key] = child;
+    cacheAppend(keyChildPairs) {
+        const _cacheAppend = (_key, _child) => {
+            this.append(_child);
+            this[_key] = _child;
+        };
+        if (Array.isArray(keyChildPairs)) {
+            for (let [key, child] of keyChildPairs)
+                _cacheAppend(key, child);
+        }
+        else {
+            for (let [key, child] of enumerate(keyChildPairs))
+                _cacheAppend(key, child);
         }
         return this;
     }
@@ -245,9 +257,16 @@ class BetterHTMLElement {
         this.e.replaceChild(newChild, oldChild);
         return this;
     }
-    /**Return a `BetterHTMLElement` list of all children */
-    children() {
-        const childrenVanilla = Array.from(this.e.children);
+    children(selector) {
+        let childrenVanilla;
+        let childrenCollection;
+        if (selector === undefined) {
+            childrenCollection = this.e.children;
+        }
+        else {
+            childrenCollection = this.e.querySelectorAll(selector);
+        }
+        childrenVanilla = Array.from(childrenCollection);
         const toElem = (c) => new BetterHTMLElement({ htmlElement: c });
         return childrenVanilla.map(toElem);
     }
@@ -281,30 +300,38 @@ class BetterHTMLElement {
         this.e.remove();
         return this;
     }
-    // TODO: recursively yield children (unlike .children(), this doesn't return only the first level)
+    // TODO: recursively yield children
+    //  (unlike .children(), this doesn't return only the first level)
+    /**@deprecated*/
     find() {
         // https://api.jquery.com/find/
         throw new Error("NOT IMPLEMENTED");
     }
+    /**@deprecated*/
     first() {
         // https://api.jquery.com/first/
         // this.e.firstChild
         throw new Error("NOT IMPLEMENTED");
     }
+    /**@deprecated*/
     last() {
         // https://api.jquery.com/last/
         // this.e.lastChild
         throw new Error("NOT IMPLEMENTED");
     }
+    /**@deprecated*/
     next() {
         throw new Error("NOT IMPLEMENTED");
     }
+    /**@deprecated*/
     not() {
         throw new Error("NOT IMPLEMENTED");
     }
+    /**@deprecated*/
     parent() {
         throw new Error("NOT IMPLEMENTED");
     }
+    /**@deprecated*/
     parents() {
         throw new Error("NOT IMPLEMENTED");
     }
@@ -320,6 +347,7 @@ class BetterHTMLElement {
         }
         return this;
     }
+    /**@deprecated*/
     one() {
         throw new Error("NOT IMPLEMENTED");
     }
@@ -340,12 +368,14 @@ class BetterHTMLElement {
             if (options && options.once) // TODO: maybe native options.once is enough
                 this.removeEventListener('touchstart', _f);
         }, options);
+        // TODO: this._listeners, or use this.on(
         return this;
     }
     /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
     pointerdown(fn, options) {
         let action;
         try {
+            // TODO: check if PointerEvent exists instead of try/catch
             // @ts-ignore
             action = window.PointerEvent ? 'pointerdown' : 'mousedown'; // safari doesn't support pointerdown
         }
@@ -369,8 +399,6 @@ class BetterHTMLElement {
         }
         else {
             return this.on({ click: fn }, options);
-            // this.e.addEventListener('click', fn, options);
-            // return this;
         }
     }
     blur(fn, options) {
@@ -414,6 +442,8 @@ class BetterHTMLElement {
         }
     }
     mouseenter(fn, options) {
+        // mouseover: also child elements
+        // mouseenter: only bound element
         if (fn === undefined) {
             const mouseenter = new MouseEvent('mouseenter', {
                 'view': window,
@@ -433,44 +463,61 @@ class BetterHTMLElement {
         else
             return this.on({ keydown: fn }, options);
     }
+    /**@deprecated*/
     keyup() {
         // https://api.jquery.com/keyup/
         throw new Error("NOT IMPLEMENTED");
     }
+    /**@deprecated*/
     keypress() {
         // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED");
     }
+    /**@deprecated*/
     hover() {
         // https://api.jquery.com/hover/
         // binds to both mouseenter and mouseleave
         // https://stackoverflow.com/questions/17589420/when-to-choose-mouseover-and-hover-function
         throw new Error("NOT IMPLEMENTED");
     }
+    /**@deprecated*/
     mousedown() {
         // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED");
     }
+    /**@deprecated*/
     mouseleave() {
         // https://api.jquery.com/keypress/
+        //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
+        // This means that mouseleave is fired when the pointer has exited the element and all of its descendants,
+        // whereas mouseout is fired when the pointer leaves the element or leaves one of the element's descendants
+        // (even if the pointer is still within the element).
         throw new Error("NOT IMPLEMENTED");
     }
+    /**@deprecated*/
     mousemove() {
         // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED");
     }
     mouseout(fn, options) {
+        //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
+        // This means that mouseleave is fired when the pointer has exited the element and all of its descendants,
+        // whereas mouseout is fired when the pointer leaves the element or leaves one of the element's descendants
+        // (even if the pointer is still within the element).
         if (fn === undefined)
             throw new Error("NOT IMPLEMENTED");
         else
             return this.on({ mouseout: fn }, options);
     }
     mouseover(fn, options) {
+        // mouseover: also child elements
+        // mouseenter: only bound element
         if (fn === undefined)
             throw new Error("NOT IMPLEMENTED");
         else
             return this.on({ mouseover: fn }, options);
     }
+    /**@deprecated*/
     mouseup() {
         // https://api.jquery.com/keypress/
         throw new Error("NOT IMPLEMENTED");
@@ -623,7 +670,15 @@ customElements.define('better-html-element', BetterHTMLElement);
 class Div extends BetterHTMLElement {
     /**Create a Div element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls } = {}) {
-        super({ tag: "div", text, cls });
+        super({ tag: 'div', text, cls });
+        if (id)
+            this.id(id);
+    }
+}
+class Paragraph extends BetterHTMLElement {
+    /**Create a Paragraph element. Optionally set its id, text or cls.*/
+    constructor({ id, text, cls } = {}) {
+        super({ tag: 'p', text, cls });
         if (id)
             this.id(id);
     }
@@ -670,30 +725,10 @@ function div({ id, text, cls } = {}) {
 function img({ id, src, cls } = {}) {
     return new Img({ id, src, cls });
 }
-elem({
-    id: '#news', children: {
-        mainImageContainer: '#main_image_container',
-        news: {
-            '#news': {
-                title: '.title',
-                date: '.date',
-                content: '.content'
-            }
-        },
-        radios: '#radios',
-    }
-});
-elem({ id: '#news' }).cacheChildren({
-    mainImageContainer: '#main_image_container',
-    news: {
-        '#news': {
-            title: '.title',
-            date: '.date',
-            content: '.content'
-        }
-    },
-    radios: '#radios',
-});
+/**Create an Paragraph element. Optionally set its id, text or cls.*/
+function paragraph({ id, text, cls } = {}) {
+    return new Paragraph({ id, text, cls });
+}
 function* enumerate(obj) {
     if (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function') {
         let i = 0;
