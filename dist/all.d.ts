@@ -85,6 +85,8 @@ interface AnimateOptions {
     timingFunction?: AnimationTimingFunction;
 }
 declare type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
+declare type TFunction = (s: string) => boolean;
+declare function isFunction(fn: TFunction): fn is TFunction;
 declare class BetterHTMLElement {
     protected readonly _htmlElement: HTMLElement;
     private readonly _isSvg;
@@ -138,13 +140,21 @@ declare class BetterHTMLElement {
     is(element: BetterHTMLElement): void;
     /**`.className = cls`*/
     class(cls: string): this;
+    /**Return the first class that matches `cls` predicate.*/
+    class(cls: Function): string;
     /**Return a string array of the element's classes (not a classList)*/
     class(): string[];
     addClass(cls: string, ...clses: string[]): this;
-    removeClass(cls: string, ...clses: string[]): this;
+    removeClass(cls: TFunction, ...clses: TFunction[]): this;
+    removeClass(cls: string, clses?: string[]): this;
+    replaceClass(oldToken: TFunction, newToken: string): this;
     replaceClass(oldToken: string, newToken: string): this;
+    toggleClass(cls: TFunction, force?: boolean): this;
     toggleClass(cls: string, force?: boolean): this;
+    /**Returns `this.e.classList.contains(cls)` */
     hasClass(cls: string): boolean;
+    /**Returns whether `this` has a class that matches passed function */
+    hasClass(cls: TFunction): boolean;
     /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s just after `this`.*/
     after(...nodes: BetterHTMLElement[] | (string | Node)[]): this;
     /**Insert `this` just after a `BetterHTMLElement` or vanilla `Node`s.*/

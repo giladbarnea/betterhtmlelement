@@ -116,6 +116,11 @@ interface AnimateOptions {
 }
 
 type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
+type TFunction = (s: string) => boolean
+
+function isFunction(fn: TFunction): fn is TFunction {
+    return fn && {}.toString.call(fn) === '[object Function]'
+}
 
 // TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
 // maybe use https://www.typescriptlang.org/docs/handbook/utility-types.html#thistypet
@@ -289,11 +294,15 @@ class BetterHTMLElement {
     // ***  Classes
     /**`.className = cls`*/
     class(cls: string): this;
+    /**Return the first class that matches `cls` predicate.*/
+    class(cls: Function): string;
     /**Return a string array of the element's classes (not a classList)*/
     class(): string[];
     class(cls?) {
         if (cls === undefined) {
             return Array.from(this.e.classList);
+        } else if (isFunction(cls)) {
+            return Array.from(this.e.classList).find(cls);
         } else {
             if (this._isSvg) {
                 // @ts-ignore
@@ -312,25 +321,52 @@ class BetterHTMLElement {
         return this;
     }
     
-    removeClass(cls: string, ...clses: string[]): this {
-        this.e.classList.remove(cls);
-        for (let c of clses)
-            this.e.classList.remove(c);
+    removeClass(cls: TFunction, ...clses: TFunction[]): this;
+    removeClass(cls: string, clses?: string[]): this;
+    removeClass(cls, ...clses) {
+        if (isFunction(cls)) {
+            this.e.classList.remove(this.class(cls));
+            for (let c of <TFunction[]>clses)
+                this.e.classList.remove(this.class(c));
+        } else {
+            this.e.classList.remove(cls);
+            for (let c of clses)
+                this.e.classList.remove(c);
+        }
         return this;
     }
     
-    replaceClass(oldToken: string, newToken: string): this {
-        this.e.classList.replace(oldToken, newToken);
+    replaceClass(oldToken: TFunction, newToken: string): this;
+    replaceClass(oldToken: string, newToken: string): this
+    replaceClass(oldToken, newToken) {
+        if (isFunction(oldToken)) {
+            this.e.classList.replace(this.class(oldToken), newToken);
+        } else {
+            this.e.classList.replace(oldToken, newToken);
+        }
         return this;
     }
     
-    toggleClass(cls: string, force?: boolean): this {
-        this.e.classList.toggle(cls, force);
+    toggleClass(cls: TFunction, force?: boolean): this
+    toggleClass(cls: string, force?: boolean): this
+    toggleClass(cls, force) {
+        if (isFunction(cls))
+            this.e.classList.toggle(this.class(cls), force);
+        else
+            this.e.classList.toggle(cls, force);
         return this;
     }
     
-    hasClass(cls: string): boolean {
-        return this.e.classList.contains(cls);
+    /**Returns `this.e.classList.contains(cls)` */
+    hasClass(cls: string): boolean
+    /**Returns whether `this` has a class that matches passed function */
+    hasClass(cls: TFunction): boolean
+    hasClass(cls) {
+        if (isFunction(cls)) {
+            return this.class(cls) !== undefined;
+        } else {
+            return this.e.classList.contains(cls);
+        }
     }
     
     // ***  Nodes
@@ -501,7 +537,8 @@ class BetterHTMLElement {
     cacheChildren(keySelectorObj) {
         for (let [key, selector] of enumerate(keySelectorObj)) {
             if (typeof selector === 'object') {
-                // only first because multiple selectors for single key aren't supported (ie can't do {right: {.right: {...}, .right2: {...}})
+                // only first because multiple selectors for single key aren't supported
+                // (ie can't do {right: {.right: {...}, .right2: {...}})
                 let [subselector, subkeyselectorsObj] = Object.entries(selector)[0];
                 this[key] = this.child(subselector);
                 this[key].cacheChildren(subkeyselectorsObj)

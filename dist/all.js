@@ -27,6 +27,9 @@ class BadArgumentsAmountError extends Error {
     }
 }
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
+function isFunction(fn) {
+    return fn && {}.toString.call(fn) === '[object Function]';
+}
 // TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
 // maybe use https://www.typescriptlang.org/docs/handbook/utility-types.html#thistypet
 class BetterHTMLElement {
@@ -146,6 +149,9 @@ class BetterHTMLElement {
         if (cls === undefined) {
             return Array.from(this.e.classList);
         }
+        else if (isFunction(cls)) {
+            return Array.from(this.e.classList).find(cls);
+        }
         else {
             if (this._isSvg) {
                 // @ts-ignore
@@ -164,21 +170,41 @@ class BetterHTMLElement {
         return this;
     }
     removeClass(cls, ...clses) {
-        this.e.classList.remove(cls);
-        for (let c of clses)
-            this.e.classList.remove(c);
+        if (isFunction(cls)) {
+            this.e.classList.remove(this.class(cls));
+            for (let c of clses)
+                this.e.classList.remove(this.class(c));
+        }
+        else {
+            this.e.classList.remove(cls);
+            for (let c of clses)
+                this.e.classList.remove(c);
+        }
         return this;
     }
     replaceClass(oldToken, newToken) {
-        this.e.classList.replace(oldToken, newToken);
+        if (isFunction(oldToken)) {
+            this.e.classList.replace(this.class(oldToken), newToken);
+        }
+        else {
+            this.e.classList.replace(oldToken, newToken);
+        }
         return this;
     }
     toggleClass(cls, force) {
-        this.e.classList.toggle(cls, force);
+        if (isFunction(cls))
+            this.e.classList.toggle(this.class(cls), force);
+        else
+            this.e.classList.toggle(cls, force);
         return this;
     }
     hasClass(cls) {
-        return this.e.classList.contains(cls);
+        if (isFunction(cls)) {
+            return this.class(cls) !== undefined;
+        }
+        else {
+            return this.e.classList.contains(cls);
+        }
     }
     // ***  Nodes
     /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s just after `this`.*/
@@ -277,7 +303,8 @@ class BetterHTMLElement {
     cacheChildren(keySelectorObj) {
         for (let [key, selector] of enumerate(keySelectorObj)) {
             if (typeof selector === 'object') {
-                // only first because multiple selectors for single key aren't supported (ie can't do {right: {.right: {...}, .right2: {...}})
+                // only first because multiple selectors for single key aren't supported
+                // (ie can't do {right: {.right: {...}, .right2: {...}})
                 let [subselector, subkeyselectorsObj] = Object.entries(selector)[0];
                 this[key] = this.child(subselector);
                 this[key].cacheChildren(subkeyselectorsObj);
