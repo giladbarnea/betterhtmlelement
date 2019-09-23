@@ -7,16 +7,19 @@ declare type TEventFunctionMap<K extends keyof HTMLElementEventMap> = {
 };
 declare type HTMLTag = keyof HTMLElementTagNameMap;
 declare type QuerySelector = HTMLTag | string;
-declare type TSubElemOptions = {
+interface BaseElemConstructor {
     id?: string;
+    cls?: string;
+}
+interface SubElemConstructor extends BaseElemConstructor {
     text?: string;
-    cls?: string;
-};
-declare type TImgOptions = {
-    id?: string;
+}
+interface ImgConstructor extends BaseElemConstructor {
     src?: string;
-    cls?: string;
-};
+}
+interface AnchorConstructor extends SubElemConstructor {
+    href?: string;
+}
 declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
 declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 interface CssOptions extends PartialCssStyleDeclaration {
@@ -322,27 +325,37 @@ declare class Div extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLDivElement;
     readonly e: HTMLDivElement;
     /**Create a Div element. Optionally set its id, text or cls.*/
-    constructor({ id, text, cls }?: TSubElemOptions);
+    constructor({ id, text, cls }?: SubElemConstructor);
 }
 declare class Paragraph extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLParagraphElement;
     readonly e: HTMLParagraphElement;
     /**Create a Paragraph element. Optionally set its id, text or cls.*/
-    constructor({ id, text, cls }?: TSubElemOptions);
+    constructor({ id, text, cls }?: SubElemConstructor);
 }
 declare class Span extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLSpanElement;
     readonly e: HTMLSpanElement;
     /**Create a Span element. Optionally set its id, text or cls.*/
-    constructor({ id, text, cls }?: TSubElemOptions);
+    constructor({ id, text, cls }?: SubElemConstructor);
 }
 declare class Img extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLImageElement;
     /**Create an Img element. Optionally set its id, src or cls.*/
-    constructor({ id, src, cls }: TImgOptions);
+    constructor({ id, src, cls }: ImgConstructor);
     src(src: string): this;
     src(): string;
     readonly e: HTMLImageElement;
+}
+declare class Anchor extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLAnchorElement;
+    readonly e: HTMLAnchorElement;
+    /**Create an Anchor element. Optionally set its id, text, href or cls.*/
+    constructor({ id, text, cls, href }?: AnchorConstructor);
+    href(): string;
+    href(val: string): this;
+    target(): string;
+    target(val: string): this;
 }
 /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
 declare function elem({ tag, text, cls }: {
@@ -372,13 +385,15 @@ declare function elem({ htmlElement, text, cls, children }: {
     children?: TChildrenObj;
 }): BetterHTMLElement;
 /**Create an Span element. Optionally set its id, text or cls.*/
-declare function span({ id, text, cls }?: TSubElemOptions): Span;
+declare function span({ id, text, cls }?: SubElemConstructor): Span;
 /**Create an Div element. Optionally set its id, text or cls.*/
-declare function div({ id, text, cls }?: TSubElemOptions): Div;
+declare function div({ id, text, cls }?: SubElemConstructor): Div;
 /**Create an Img element. Optionally set its id, src or cls.*/
-declare function img({ id, src, cls }?: TImgOptions): Img;
-/**Create an Paragraph element. Optionally set its id, text or cls.*/
-declare function paragraph({ id, text, cls }?: TSubElemOptions): Paragraph;
+declare function img({ id, src, cls }?: ImgConstructor): Img;
+/**Create a Paragraph element. Optionally set its id, text or cls.*/
+declare function paragraph({ id, text, cls }?: SubElemConstructor): Paragraph;
+/**Create an Anchor element. Optionally set its id, text, href or cls.*/
+declare function anchor({ id, text, cls, href }?: AnchorConstructor): Anchor;
 interface TMap<T> {
     [s: string]: T;
 }

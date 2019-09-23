@@ -737,6 +737,28 @@ class Img extends BetterHTMLElement {
         }
     }
 }
+class Anchor extends BetterHTMLElement {
+    /**Create an Anchor element. Optionally set its id, text, href or cls.*/
+    constructor({ id, text, cls, href } = {}) {
+        super({ tag: 'a', text, cls });
+        if (id)
+            this.id(id);
+        if (href)
+            this.href(href);
+    }
+    href(val) {
+        if (val === undefined)
+            return this.attr('href');
+        else
+            return this.attr({ href: val });
+    }
+    target(val) {
+        if (val === undefined)
+            return this.attr('target');
+        else
+            return this.attr({ target: val });
+    }
+}
 function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
@@ -752,9 +774,13 @@ function div({ id, text, cls } = {}) {
 function img({ id, src, cls } = {}) {
     return new Img({ id, src, cls });
 }
-/**Create an Paragraph element. Optionally set its id, text or cls.*/
+/**Create a Paragraph element. Optionally set its id, text or cls.*/
 function paragraph({ id, text, cls } = {}) {
     return new Paragraph({ id, text, cls });
+}
+/**Create an Anchor element. Optionally set its id, text, href or cls.*/
+function anchor({ id, text, cls, href } = {}) {
+    return new Anchor({ id, text, cls, href });
 }
 function* enumerate(obj) {
     if (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function') {

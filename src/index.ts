@@ -6,17 +6,23 @@ type TEventFunctionMap<K extends keyof HTMLElementEventMap> = {
 type HTMLTag = keyof HTMLElementTagNameMap;
 type QuerySelector = HTMLTag | string;
 
+interface BaseElemConstructor {
+    id?: string;
+    cls?: string;
+}
 
-type TSubElemOptions = {
-    id?: string;
+interface SubElemConstructor extends BaseElemConstructor {
     text?: string;
-    cls?: string;
-};
-type TImgOptions = {
-    id?: string;
+}
+
+interface ImgConstructor extends BaseElemConstructor {
     src?: string;
-    cls?: string;
-};
+}
+
+interface AnchorConstructor extends SubElemConstructor {
+    href?: string;
+}
+
 type OmittedCssProps = "animationDirection"
     | "animationFillMode"
     | "animationIterationCount"
@@ -1009,7 +1015,7 @@ class Div extends BetterHTMLElement {
     readonly e: HTMLDivElement;
     
     /**Create a Div element. Optionally set its id, text or cls.*/
-    constructor({id, text, cls}: TSubElemOptions = {}) {
+    constructor({id, text, cls}: SubElemConstructor = {}) {
         super({tag: 'div', text, cls});
         if (id)
             this.id(id);
@@ -1021,7 +1027,7 @@ class Paragraph extends BetterHTMLElement {
     readonly e: HTMLParagraphElement;
     
     /**Create a Paragraph element. Optionally set its id, text or cls.*/
-    constructor({id, text, cls}: TSubElemOptions = {}) {
+    constructor({id, text, cls}: SubElemConstructor = {}) {
         super({tag: 'p', text, cls});
         if (id)
             this.id(id);
@@ -1033,7 +1039,7 @@ class Span extends BetterHTMLElement {
     readonly e: HTMLSpanElement;
     
     /**Create a Span element. Optionally set its id, text or cls.*/
-    constructor({id, text, cls}: TSubElemOptions = {}) {
+    constructor({id, text, cls}: SubElemConstructor = {}) {
         super({tag: 'span', text, cls});
         if (id)
             this.id(id);
@@ -1045,7 +1051,7 @@ class Img extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLImageElement;
     
     /**Create an Img element. Optionally set its id, src or cls.*/
-    constructor({id, src, cls}: TImgOptions) {
+    constructor({id, src, cls}: ImgConstructor) {
         super({tag: 'img', cls});
         if (id)
             this.id(id);
@@ -1068,6 +1074,39 @@ class Img extends BetterHTMLElement {
     readonly e: HTMLImageElement;
 }
 
+class Anchor extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLAnchorElement;
+    readonly e: HTMLAnchorElement;
+    
+    /**Create an Anchor element. Optionally set its id, text, href or cls.*/
+    constructor({id, text, cls, href}: AnchorConstructor = {}) {
+        super({tag: 'a', text, cls});
+        if (id)
+            this.id(id);
+        if (href)
+            this.href(href)
+        
+    }
+    
+    href(): string
+    href(val: string): this
+    href(val?) {
+        if (val === undefined)
+            return this.attr('href');
+        else
+            return this.attr({href: val})
+    }
+    
+    target(): string
+    target(val: string): this
+    target(val?) {
+        if (val === undefined)
+            return this.attr('target');
+        else
+            return this.attr({target: val})
+    }
+}
+
 /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
 function elem({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string }): BetterHTMLElement;
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
@@ -1081,21 +1120,26 @@ function elem(elemOptions): BetterHTMLElement {
 }
 
 /**Create an Span element. Optionally set its id, text or cls.*/
-function span({id, text, cls}: TSubElemOptions = {}): Span {
+function span({id, text, cls}: SubElemConstructor = {}): Span {
     return new Span({id, text, cls});
 }
 
 /**Create an Div element. Optionally set its id, text or cls.*/
-function div({id, text, cls}: TSubElemOptions = {}): Div {
+function div({id, text, cls}: SubElemConstructor = {}): Div {
     return new Div({id, text, cls});
 }
 
 /**Create an Img element. Optionally set its id, src or cls.*/
-function img({id, src, cls}: TImgOptions = {}): Img {
+function img({id, src, cls}: ImgConstructor = {}): Img {
     return new Img({id, src, cls});
 }
 
-/**Create an Paragraph element. Optionally set its id, text or cls.*/
-function paragraph({id, text, cls}: TSubElemOptions = {}): Paragraph {
+/**Create a Paragraph element. Optionally set its id, text or cls.*/
+function paragraph({id, text, cls}: SubElemConstructor = {}): Paragraph {
     return new Paragraph({id, text, cls});
+}
+
+/**Create an Anchor element. Optionally set its id, text, href or cls.*/
+function anchor({id, text, cls, href}: AnchorConstructor = {}): Anchor {
+    return new Anchor({id, text, cls, href});
 }
