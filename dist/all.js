@@ -1,11 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 class BadArgumentsAmountError extends Error {
     constructor(expectedArgsNum, passedArgs, details) {
         const requiresExactNumOfArgs = !Array.isArray(expectedArgsNum);
@@ -630,93 +622,87 @@ class BetterHTMLElement {
             return data;
     }
     // **  Fade
-    fade(dur, to) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const styles = window.getComputedStyle(this.e);
-            const transProp = styles.transitionProperty.split(', ');
-            const indexOfOpacity = transProp.indexOf('opacity');
-            // css opacity:0 => transDur[indexOfOpacity]: 0s
-            // css opacity:500ms => transDur[indexOfOpacity]: 0.5s
-            // css NO opacity => transDur[indexOfOpacity]: undefined
-            if (indexOfOpacity !== -1) {
-                const transDur = styles.transitionDuration.split(', ');
-                const opacityTransDur = transDur[indexOfOpacity];
-                const trans = styles.transition.split(', ');
-                // transition: opacity was defined in css.
-                // set transition to dur, set opacity to 0, leave the animation to native transition, wait dur and return this
-                console.warn(`fade(${dur}, ${to}), opacityTransDur !== undefined. nullifying transition. SHOULD NOT WORK`);
-                console.log(`trans:\t${trans}\ntransProp:\t${transProp}\nindexOfOpacity:\t${indexOfOpacity}\nopacityTransDur:\t${opacityTransDur}`);
-                // trans.splice(indexOfOpacity, 1, `opacity ${dur / 1000}s`);
-                trans.splice(indexOfOpacity, 1, `opacity 0s`);
-                console.log(`after, trans: ${trans}`);
-                this.e.style.transition = trans.join(', ');
-                this.css({ opacity: to });
-                yield wait(dur);
-                return this;
-            }
-            // transition: opacity was NOT defined in css.
-            if (dur == 0) {
-                return this.css({ opacity: to });
-            }
-            const isFadeOut = to === 0;
-            let opacity = parseFloat(this.e.style.opacity);
-            if (opacity === undefined || isNaN(opacity)) {
-                console.warn(`fade(${dur}, ${to}) htmlElement has NO opacity at all. recursing`, {
+    async fade(dur, to) {
+        const styles = window.getComputedStyle(this.e);
+        const transProp = styles.transitionProperty.split(', ');
+        const indexOfOpacity = transProp.indexOf('opacity');
+        // css opacity:0 => transDur[indexOfOpacity]: 0s
+        // css opacity:500ms => transDur[indexOfOpacity]: 0.5s
+        // css NO opacity => transDur[indexOfOpacity]: undefined
+        if (indexOfOpacity !== -1) {
+            const transDur = styles.transitionDuration.split(', ');
+            const opacityTransDur = transDur[indexOfOpacity];
+            const trans = styles.transition.split(', ');
+            // transition: opacity was defined in css.
+            // set transition to dur, set opacity to 0, leave the animation to native transition, wait dur and return this
+            console.warn(`fade(${dur}, ${to}), opacityTransDur !== undefined. nullifying transition. SHOULD NOT WORK`);
+            console.log(`trans:\t${trans}\ntransProp:\t${transProp}\nindexOfOpacity:\t${indexOfOpacity}\nopacityTransDur:\t${opacityTransDur}`);
+            // trans.splice(indexOfOpacity, 1, `opacity ${dur / 1000}s`);
+            trans.splice(indexOfOpacity, 1, `opacity 0s`);
+            console.log(`after, trans: ${trans}`);
+            this.e.style.transition = trans.join(', ');
+            this.css({ opacity: to });
+            await wait(dur);
+            return this;
+        }
+        // transition: opacity was NOT defined in css.
+        if (dur == 0) {
+            return this.css({ opacity: to });
+        }
+        const isFadeOut = to === 0;
+        let opacity = parseFloat(this.e.style.opacity);
+        if (opacity === undefined || isNaN(opacity)) {
+            console.warn(`fade(${dur}, ${to}) htmlElement has NO opacity at all. recursing`, {
+                opacity,
+                this: this
+            });
+            return this.css({ opacity: Math.abs(1 - to) }).fade(dur, to);
+        }
+        else {
+            if (isFadeOut ? opacity <= 0 : opacity > 1) {
+                console.warn(`fade(${dur}, ${to}) opacity was beyond target opacity. returning this as is.`, {
                     opacity,
                     this: this
                 });
-                return this.css({ opacity: Math.abs(1 - to) }).fade(dur, to);
+                return this;
+            }
+        }
+        let steps = 30;
+        let opStep = 1 / steps;
+        let everyms = dur / steps;
+        if (everyms < 1) {
+            everyms = 1;
+            steps = dur;
+            opStep = 1 / steps;
+        }
+        console.log(`fade(${dur}, ${to}) had opacity, no transition. (good) opacity: ${opacity}`, {
+            steps,
+            opStep,
+            everyms
+        });
+        const reachedTo = isFadeOut ? (op) => op - opStep > 0 : (op) => op + opStep < 1;
+        const interval = setInterval(() => {
+            if (reachedTo(opacity)) {
+                if (isFadeOut)
+                    opacity -= opStep;
+                else
+                    opacity += opStep;
+                this.css({ opacity });
             }
             else {
-                if (isFadeOut ? opacity <= 0 : opacity > 1) {
-                    console.warn(`fade(${dur}, ${to}) opacity was beyond target opacity. returning this as is.`, {
-                        opacity,
-                        this: this
-                    });
-                    return this;
-                }
+                opacity = to;
+                this.css({ opacity });
+                clearInterval(interval);
             }
-            let steps = 30;
-            let opStep = 1 / steps;
-            let everyms = dur / steps;
-            if (everyms < 1) {
-                everyms = 1;
-                steps = dur;
-                opStep = 1 / steps;
-            }
-            console.log(`fade(${dur}, ${to}) had opacity, no transition. (good) opacity: ${opacity}`, {
-                steps,
-                opStep,
-                everyms
-            });
-            const reachedTo = isFadeOut ? (op) => op - opStep > 0 : (op) => op + opStep < 1;
-            const interval = setInterval(() => {
-                if (reachedTo(opacity)) {
-                    if (isFadeOut)
-                        opacity -= opStep;
-                    else
-                        opacity += opStep;
-                    this.css({ opacity });
-                }
-                else {
-                    opacity = to;
-                    this.css({ opacity });
-                    clearInterval(interval);
-                }
-            }, everyms);
-            yield wait(dur);
-            return this;
-        });
+        }, everyms);
+        await wait(dur);
+        return this;
     }
-    fadeOut(dur) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.fade(dur, 0);
-        });
+    async fadeOut(dur) {
+        return await this.fade(dur, 0);
     }
-    fadeIn(dur) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.fade(dur, 1);
-        });
+    async fadeIn(dur) {
+        return await this.fade(dur, 1);
     }
 }
 customElements.define('better-html-element', BetterHTMLElement);
