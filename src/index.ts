@@ -229,9 +229,9 @@ class BetterHTMLElement {
         return this._htmlElement;
     }
     
-    switchInternalHtmlElement(newHtmlElement: BetterHTMLElement): this
-    switchInternalHtmlElement(newHtmlElement: HTMLElement): this
-    switchInternalHtmlElement(newHtmlElement) {
+    wrapSomethingElse(newHtmlElement: BetterHTMLElement): this
+    wrapSomethingElse(newHtmlElement: HTMLElement): this
+    wrapSomethingElse(newHtmlElement) {
         if (newHtmlElement instanceof BetterHTMLElement) {
             this._htmlElement = newHtmlElement.e;
             for (let [_key, _cachedChild] of enumerate(newHtmlElement._cachedChildren)) {
@@ -239,7 +239,7 @@ class BetterHTMLElement {
             }
             if (Object.keys(this._cachedChildren).length !== Object.keys(newHtmlElement._cachedChildren).length
                 || Object.values(this._cachedChildren).length !== Object.values(newHtmlElement._cachedChildren).length) {
-                console.warn(`switchInternalHtmlElement this._cachedChildren length !== newHtmlElement._cachedChildren.length`, {
+                console.warn(`wrapSomethingElse this._cachedChildren length !== newHtmlElement._cachedChildren.length`, {
                         this: this,
                         newHtmlElement
                     }

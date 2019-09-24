@@ -124,8 +124,8 @@ declare class BetterHTMLElement {
     });
     /**Return the wrapped HTMLElement*/
     readonly e: HTMLElement;
-    switchInternalHtmlElement(newHtmlElement: BetterHTMLElement): this;
-    switchInternalHtmlElement(newHtmlElement: HTMLElement): this;
+    wrapSomethingElse(newHtmlElement: BetterHTMLElement): this;
+    wrapSomethingElse(newHtmlElement: HTMLElement): this;
     /**Set the element's innerHTML*/
     html(html: string): this;
     /**Get the element's innerHTML*/
