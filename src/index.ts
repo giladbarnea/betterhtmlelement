@@ -268,7 +268,7 @@ class BetterHTMLElement {
     }
     
     /**Set the element's innerText*/
-    text(txt: string): this;
+    text(txt: string | number): this;
     /**Get the element's innerText*/
     text(): string;
     text(txt?) {
