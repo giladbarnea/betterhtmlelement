@@ -36,6 +36,7 @@ class BetterHTMLElement {
     constructor(elemOptions) {
         this._isSvg = false;
         this._listeners = {};
+        this._cachedChildren = {};
         const { tag, id, htmlElement, text, query, children, cls } = elemOptions;
         if ([tag, id, htmlElement, query].filter(x => x).length > 1) {
             throw new BadArgumentsAmountError(1, {
@@ -99,6 +100,15 @@ class BetterHTMLElement {
     /**Return the wrapped HTMLElement*/
     get e() {
         return this._htmlElement;
+    }
+    switchInternalHtmlElement(newHtmlElement) {
+        if (newHtmlElement instanceof BetterHTMLElement) {
+            this._htmlElement = newHtmlElement.e;
+        }
+        else {
+            this._htmlElement = newHtmlElement;
+        }
+        return this;
     }
     html(html) {
         if (html === undefined) {
@@ -210,8 +220,8 @@ class BetterHTMLElement {
     /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s just after `this`.*/
     after(...nodes) {
         if (nodes[0] instanceof BetterHTMLElement)
-            for (let node of nodes)
-                this.e.after(node.e);
+            for (let bhe of nodes)
+                this.e.after(bhe.e);
         else
             for (let node of nodes)
                 this.e.after(node); // TODO: test what happens when passed strings
@@ -228,8 +238,8 @@ class BetterHTMLElement {
     /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s after the last child of `this`*/
     append(...nodes) {
         if (nodes[0] instanceof BetterHTMLElement)
-            for (let node of nodes)
-                this.e.append(node.e);
+            for (let bhe of nodes)
+                this.e.append(bhe.e);
         else
             for (let node of nodes)
                 this.e.append(node); // TODO: test what happens when passed strings
@@ -246,8 +256,8 @@ class BetterHTMLElement {
     /**Inserts one or several `BetterHTMLElement`s or vanilla `Node`s just before `this`*/
     before(...nodes) {
         if (nodes[0] instanceof BetterHTMLElement)
-            for (let node of nodes)
-                this.e.before(node.e);
+            for (let bhe of nodes)
+                this.e.before(bhe.e);
         else
             for (let node of nodes)
                 this.e.before(node); // TODO: test what happens when passed strings
@@ -261,10 +271,18 @@ class BetterHTMLElement {
             node.before(this.e);
         return this;
     }
+    replaceChild(newChild, oldChild) {
+        this.e.replaceChild(newChild, oldChild);
+        return this;
+    }
+    _cache(key, child) {
+        this[key] = child;
+        this._cachedChildren[key] = child;
+    }
     cacheAppend(keyChildPairs) {
         const _cacheAppend = (_key, _child) => {
             this.append(_child);
-            this[_key] = _child;
+            this._cache(_key, _child);
         };
         if (Array.isArray(keyChildPairs)) {
             for (let [key, child] of keyChildPairs)
@@ -278,10 +296,6 @@ class BetterHTMLElement {
     }
     child(selector) {
         return new BetterHTMLElement({ htmlElement: this.e.querySelector(selector) });
-    }
-    replaceChild(newChild, oldChild) {
-        this.e.replaceChild(newChild, oldChild);
-        return this;
     }
     children(selector) {
         let childrenVanilla;
@@ -300,17 +314,29 @@ class BetterHTMLElement {
         // @ts-ignore
         return new BetterHTMLElement({ htmlElement: this.e.cloneNode(deep) });
     }
+    /**key: string. value: either "selector string" OR {"selector string": <recurse down>}*/
     cacheChildren(keySelectorObj) {
-        for (let [key, selector] of enumerate(keySelectorObj)) {
-            if (typeof selector === 'object') {
-                // only first because multiple selectors for single key aren't supported
+        for (let [key, selectorOrObj] of enumerate(keySelectorObj)) {
+            if (typeof selectorOrObj === 'object') {
+                let entries = Object.entries(selectorOrObj);
+                if (entries[1] !== undefined) {
+                    console.warn(`cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
+                        key,
+                        "multiple selectors": entries.map(e => e[0]),
+                        selectorOrObj,
+                        this: this
+                    });
+                }
+                // only first because 1:1 for key:selector.
                 // (ie can't do {right: {.right: {...}, .right2: {...}})
-                let [subselector, subkeyselectorsObj] = Object.entries(selector)[0];
-                this[key] = this.child(subselector);
-                this[key].cacheChildren(subkeyselectorsObj);
+                let [selector, obj] = entries[0];
+                this._cache(key, this.child(selector));
+                // this[key] = this.child(selector);
+                this[key].cacheChildren(obj);
             }
             else {
-                this[key] = this.child(selector);
+                // this[key] = this.child(<QuerySelector>selectorOrObj);
+                this._cache(key, this.child(selectorOrObj));
             }
         }
         return this;

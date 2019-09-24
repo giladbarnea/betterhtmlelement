@@ -131,9 +131,10 @@ function isFunction(fn: TFunction): fn is TFunction {
 // TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
 // maybe use https://www.typescriptlang.org/docs/handbook/utility-types.html#thistypet
 class BetterHTMLElement {
-    protected readonly _htmlElement: HTMLElement;
+    protected _htmlElement: HTMLElement;
     private readonly _isSvg: boolean = false;
     private readonly _listeners: TEventFunctionMap<TEvent> = {};
+    private readonly _cachedChildren: TMap<BetterHTMLElement> = {};
     
     /*[Symbol.toPrimitive](hint) {
         console.log('from toPrimitive, hint: ', hint, '\nthis: ', this);
@@ -226,6 +227,18 @@ class BetterHTMLElement {
     /**Return the wrapped HTMLElement*/
     get e() {
         return this._htmlElement;
+    }
+    
+    switchInternalHtmlElement(newHtmlElement: BetterHTMLElement): this
+    switchInternalHtmlElement(newHtmlElement: HTMLElement): this
+    switchInternalHtmlElement(newHtmlElement) {
+        if (newHtmlElement instanceof BetterHTMLElement) {
+            this._htmlElement = newHtmlElement.e;
+        } else {
+            this._htmlElement = newHtmlElement;
+        }
+        
+        return this;
     }
     
     // ***  Basic
@@ -379,8 +392,8 @@ class BetterHTMLElement {
     /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s just after `this`.*/
     after(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
         if (nodes[0] instanceof BetterHTMLElement)
-            for (let node of <BetterHTMLElement[]>nodes)
-                this.e.after(node.e);
+            for (let bhe of <BetterHTMLElement[]>nodes)
+                this.e.after(bhe.e);
         else
             for (let node of <(string | Node)[]>nodes)
                 this.e.after(node); // TODO: test what happens when passed strings
@@ -399,8 +412,8 @@ class BetterHTMLElement {
     /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s after the last child of `this`*/
     append(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
         if (nodes[0] instanceof BetterHTMLElement)
-            for (let node of <BetterHTMLElement[]>nodes)
-                this.e.append(node.e);
+            for (let bhe of <BetterHTMLElement[]>nodes)
+                this.e.append(bhe.e);
         else
             for (let node of <(string | Node)[]>nodes)
                 this.e.append(node); // TODO: test what happens when passed strings
@@ -419,8 +432,8 @@ class BetterHTMLElement {
     /**Inserts one or several `BetterHTMLElement`s or vanilla `Node`s just before `this`*/
     before(...nodes: BetterHTMLElement[] | (string | Node)[]): this {
         if (nodes[0] instanceof BetterHTMLElement)
-            for (let node of <BetterHTMLElement[]>nodes)
-                this.e.before(node.e);
+            for (let bhe of <BetterHTMLElement[]>nodes)
+                this.e.before(bhe.e);
         else
             for (let node of <(string | Node)[]>nodes)
                 this.e.before(node); // TODO: test what happens when passed strings
@@ -436,6 +449,18 @@ class BetterHTMLElement {
         return this;
     }
     
+    // TODO: if append supports strings, so should this
+    replaceChild(newChild: Node, oldChild: Node): this;
+    replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
+    replaceChild(newChild, oldChild) {
+        this.e.replaceChild(newChild, oldChild);
+        return this;
+    }
+    
+    private _cache(key: string, child: BetterHTMLElement) {
+        this[key] = child;
+        this._cachedChildren[key] = child;
+    }
     
     /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this
@@ -444,7 +469,7 @@ class BetterHTMLElement {
     cacheAppend(keyChildPairs) {
         const _cacheAppend = (_key: string, _child: BetterHTMLElement) => {
             this.append(_child);
-            this[_key] = _child;
+            this._cache(_key, _child);
         };
         if (Array.isArray(keyChildPairs)) {
             for (let [key, child] of keyChildPairs)
@@ -462,14 +487,6 @@ class BetterHTMLElement {
     child(selector: string): BetterHTMLElement;
     child(selector) {
         return new BetterHTMLElement({htmlElement: this.e.querySelector(selector)});
-    }
-    
-    // TODO: if append supports strings, so should this
-    replaceChild(newChild: Node, oldChild: Node): this;
-    replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
-    replaceChild(newChild, oldChild) {
-        this.e.replaceChild(newChild, oldChild);
-        return this;
     }
     
     
@@ -540,16 +557,30 @@ class BetterHTMLElement {
      * navbar.home.support.pointerdown(...);
      * @see this.child*/
     cacheChildren(keySelectorObj: TRecMap<QuerySelector>): BetterHTMLElement
+    /**key: string. value: either "selector string" OR {"selector string": <recurse down>}*/
     cacheChildren(keySelectorObj) {
-        for (let [key, selector] of enumerate(keySelectorObj)) {
-            if (typeof selector === 'object') {
-                // only first because multiple selectors for single key aren't supported
+        for (let [key, selectorOrObj] of enumerate(keySelectorObj)) {
+            if (typeof selectorOrObj === 'object') {
+                let entries = Object.entries(<TMap<QuerySelector> | TRecMap<QuerySelector>>selectorOrObj);
+                if (entries[1] !== undefined) {
+                    console.warn(
+                        `cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
+                            key,
+                            "multiple selectors": entries.map(e => e[0]),
+                            selectorOrObj,
+                            this: this
+                        }
+                    );
+                }
+                // only first because 1:1 for key:selector.
                 // (ie can't do {right: {.right: {...}, .right2: {...}})
-                let [subselector, subkeyselectorsObj] = Object.entries(selector)[0];
-                this[key] = this.child(subselector);
-                this[key].cacheChildren(subkeyselectorsObj)
+                let [selector, obj] = entries[0];
+                this._cache(key, this.child(selector));
+                // this[key] = this.child(selector);
+                this[key].cacheChildren(obj)
             } else {
-                this[key] = this.child(selector);
+                // this[key] = this.child(<QuerySelector>selectorOrObj);
+                this._cache(key, this.child(<QuerySelector>selectorOrObj));
             }
         }
         return this;
