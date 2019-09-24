@@ -96,6 +96,17 @@ class BetterHTMLElement {
     switchInternalHtmlElement(newHtmlElement) {
         if (newHtmlElement instanceof BetterHTMLElement) {
             this._htmlElement = newHtmlElement.e;
+            for (let [_key, _cachedChild] of enumerate(newHtmlElement._cachedChildren)) {
+                this._cache(_key, _cachedChild);
+            }
+            if (Object.keys(this._cachedChildren).length !== Object.keys(newHtmlElement._cachedChildren).length
+                || Object.values(this._cachedChildren).length !== Object.values(newHtmlElement._cachedChildren).length) {
+                console.warn(`switchInternalHtmlElement this._cachedChildren length !== newHtmlElement._cachedChildren.length`, {
+                    this: this,
+                    newHtmlElement
+                });
+            }
+            //    TODO: _listeners
         }
         else {
             this._htmlElement = newHtmlElement;
