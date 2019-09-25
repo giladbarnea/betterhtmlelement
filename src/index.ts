@@ -1,5 +1,5 @@
 type TEvent = keyof HTMLElementEventMap;
-type TEventFunctionMap<K extends keyof HTMLElementEventMap> = {
+type TEventFunctionMap<K extends TEvent> = {
     [P in K]?: (event: HTMLElementEventMap[P]) => void;
 };
 
@@ -134,7 +134,7 @@ class BetterHTMLElement {
     protected _htmlElement: HTMLElement;
     private readonly _isSvg: boolean = false;
     private readonly _listeners: TEventFunctionMap<TEvent> = {};
-    private readonly _cachedChildren: TMap<BetterHTMLElement> = {};
+    private _cachedChildren: TMap<BetterHTMLElement> = {};
     
     /*[Symbol.toPrimitive](hint) {
         console.log('from toPrimitive, hint: ', hint, '\nthis: ', this);
@@ -151,6 +151,8 @@ class BetterHTMLElement {
         return this;
     }
     */
+    
+    // TODO: query should also be a predicate function
     /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
     constructor({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string });
     /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
@@ -162,7 +164,7 @@ class BetterHTMLElement {
     constructor(elemOptions) {
         const {tag, id, htmlElement, text, query, children, cls} = elemOptions;
         
-        if ([tag, id, htmlElement, query].filter(x => x).length > 1) {
+        if ([tag, id, htmlElement, query].filter(x => x !== undefined).length > 1) {
             throw new BadArgumentsAmountError(1, {
                 tag,
                 id,
@@ -175,7 +177,7 @@ class BetterHTMLElement {
             throw new BadArgumentsAmountError(1, {
                 tag,
                 children
-            }, 'children and tag options are mutually exclusive, since tag implies creating a new element and children implies getting an existing one.');
+            }, '"children" and "tag" options are mutually exclusive, because tag implies creating a new element and children implies getting an existing one.');
         
         if (tag) {
             if (['svg', 'path'].includes(tag.toLowerCase())) {
@@ -199,6 +201,7 @@ class BetterHTMLElement {
                 query
             })
         }
+        
         if (text !== undefined)
             this.text(text);
         if (cls !== undefined)
@@ -229,24 +232,38 @@ class BetterHTMLElement {
         return this._htmlElement;
     }
     
+    /**Sets `this._htmlElement` to `newHtmlElement._htmlElement`.
+     * Resets `this._cachedChildren` and caches `newHtmlElement._cachedChildren`.
+     * Adds event listeners from `newHtmlElement._listeners`, while keeping `this._listeners`.*/
     wrapSomethingElse(newHtmlElement: BetterHTMLElement): this
+    /**Sets `this._htmlElement` to `newHtmlElement`.
+     * Keeps `this._listeners`.
+     * NOTE: this reinitializes `this._cachedChildren` and all event listeners belonging to `newHtmlElement` are lost. Pass a `BetterHTMLElement` to keep them.*/
     wrapSomethingElse(newHtmlElement: HTMLElement): this
     wrapSomethingElse(newHtmlElement) {
+        this._cachedChildren = {};
         if (newHtmlElement instanceof BetterHTMLElement) {
             this._htmlElement = newHtmlElement.e;
             for (let [_key, _cachedChild] of enumerate(newHtmlElement._cachedChildren)) {
                 this._cache(_key, _cachedChild)
             }
-            if (Object.keys(this._cachedChildren).length !== Object.keys(newHtmlElement._cachedChildren).length
-                || Object.values(this._cachedChildren).length !== Object.values(newHtmlElement._cachedChildren).length) {
+            if (
+                Object.keys(this._cachedChildren).length
+                !== Object.keys(newHtmlElement._cachedChildren).length
+                ||
+                Object.values(this._cachedChildren).filter(v => v !== undefined).length
+                !== Object.values(newHtmlElement._cachedChildren).filter(v => v !== undefined).length
+            ) {
                 console.warn(`wrapSomethingElse this._cachedChildren length !== newHtmlElement._cachedChildren.length`, {
                         this: this,
                         newHtmlElement
                     }
                 )
             }
-            //    TODO: _listeners
+            this.on({...this._listeners, ...newHtmlElement._listeners,});
         } else {
+            // No way to get newHtmlElement event listeners besides hacking Element.prototype
+            this.on(this._listeners);
             this._htmlElement = newHtmlElement;
         }
         
