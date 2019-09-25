@@ -135,7 +135,7 @@ declare class BetterHTMLElement {
     /**Sets `this._htmlElement` to `newHtmlElement`.
      * Keeps `this._listeners`.
      * NOTE: this reinitializes `this._cachedChildren` and all event listeners belonging to `newHtmlElement` are lost. Pass a `BetterHTMLElement` to keep them.*/
-    wrapSomethingElse(newHtmlElement: HTMLElement): this;
+    wrapSomethingElse(newHtmlElement: Node): this;
     /**Set the element's innerHTML*/
     html(html: string): this;
     /**Get the element's innerHTML*/

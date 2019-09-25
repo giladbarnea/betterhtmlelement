@@ -239,10 +239,11 @@ class BetterHTMLElement {
     /**Sets `this._htmlElement` to `newHtmlElement`.
      * Keeps `this._listeners`.
      * NOTE: this reinitializes `this._cachedChildren` and all event listeners belonging to `newHtmlElement` are lost. Pass a `BetterHTMLElement` to keep them.*/
-    wrapSomethingElse(newHtmlElement: HTMLElement): this
+    wrapSomethingElse(newHtmlElement: Node): this
     wrapSomethingElse(newHtmlElement) {
         this._cachedChildren = {};
         if (newHtmlElement instanceof BetterHTMLElement) {
+            this._htmlElement.replaceWith(newHtmlElement.e);
             this._htmlElement = newHtmlElement.e;
             for (let [_key, _cachedChild] of enumerate(newHtmlElement._cachedChildren)) {
                 this._cache(_key, _cachedChild)
@@ -264,6 +265,7 @@ class BetterHTMLElement {
         } else {
             // No way to get newHtmlElement event listeners besides hacking Element.prototype
             this.on(this._listeners);
+            this._htmlElement.replaceWith(newHtmlElement);
             this._htmlElement = newHtmlElement;
         }
         
