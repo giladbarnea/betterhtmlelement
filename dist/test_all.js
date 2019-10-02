@@ -1,4 +1,4 @@
-function extend(sup, base) {
+/*function extend(sup, base) {
 	// var descriptor = Object.getOwnPropertyDescriptor(
 	// 	base.prototype, 'constructor'
 	// );
@@ -81,21 +81,7 @@ const MyHTMLElement = extend(HTMLElement, function (elemOptions) {
 				}}`);
 			this.cacheChildren(children);
 		}
-		// Object.assign(this, proxy);
-		/*const that = this;
-		return new Proxy(this, {
-			 get(target: BetterHTMLElement, p: string | number | symbol, receiver: any): any {
-				  // console.log('logging');
-				  // console.log('target: ', target,
-				  //     '\nthat: ', that,
-				  //     '\ntypeof(that): ', typeof (that),
-				  //     '\np: ', p,
-				  //     '\nreceiver: ', receiver,
-				  //     '\nthis: ', this);
-				  return that[p];
-			 }
-		})
-		*/
+
 	}
 );
 const e = new MyHTMLElement({ tag: 'DIV' });
@@ -110,3 +96,5 @@ const e = new MyHTMLElement({ tag: 'DIV' });
 // console.log(e.innerHTML);
 console.log('appending');
 document.body.append(e);
+
+*/

@@ -28,6 +28,7 @@ function isFunction(fn) {
 }
 // TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
 // maybe use https://www.typescriptlang.org/docs/handbook/utility-types.html#thistypet
+// extends HTMLElement: https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/upgrade#Examples
 class BetterHTMLElement {
     constructor(elemOptions) {
         this._isSvg = false;
@@ -42,12 +43,12 @@ class BetterHTMLElement {
                 query
             });
         }
-        if (tag && children)
+        if (tag !== undefined && children !== undefined)
             throw new BadArgumentsAmountError(1, {
                 tag,
                 children
             }, '"children" and "tag" options are mutually exclusive, because tag implies creating a new element and children implies getting an existing one.');
-        if (tag) {
+        if (tag !== undefined) {
             if (['svg', 'path'].includes(tag.toLowerCase())) {
                 this._isSvg = true;
                 this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
@@ -57,11 +58,11 @@ class BetterHTMLElement {
                 this._htmlElement = document.createElement(tag);
             }
         }
-        else if (id)
+        else if (id !== undefined)
             this._htmlElement = document.getElementById(id);
-        else if (query)
+        else if (query !== undefined)
             this._htmlElement = document.querySelector(query);
-        else if (htmlElement)
+        else if (htmlElement !== undefined)
             this._htmlElement = htmlElement;
         else {
             throw new BadArgumentsAmountError(1, {
@@ -152,11 +153,15 @@ class BetterHTMLElement {
             return this;
         }
     }
-    /**For each `[styleAttr, styleVal]` pair, set the `style[styleAttr]` to `styleVal`.*/
     css(css) {
-        for (let [styleAttr, styleVal] of enumerate(css))
-            this.e.style[styleAttr] = styleVal;
-        return this;
+        if (typeof css === 'string') {
+            return this.e.style[css];
+        }
+        else {
+            for (let [styleAttr, styleVal] of enumerate(css))
+                this.e.style[styleAttr] = styleVal;
+            return this;
+        }
     }
     /**Remove the value of the passed style properties*/
     uncss(...removeProps) {
@@ -232,17 +237,25 @@ class BetterHTMLElement {
         }
     }
     // ***  Nodes
-    /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s just after `this`.*/
+    /**Insert at least one `node` just after `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     after(...nodes) {
-        if (nodes[0] instanceof BetterHTMLElement)
-            for (let bhe of nodes)
+        for (let node of nodes) {
+            if (node instanceof BetterHTMLElement)
+                this.e.after(node.e);
+            else
+                this.e.after(node);
+        }
+        return this;
+        /*if (nodes[0] instanceof BetterHTMLElement)
+            for (let bhe of <BetterHTMLElement[]>nodes)
                 this.e.after(bhe.e);
         else
-            for (let node of nodes)
+            for (let node of <(string | Node)[]>nodes)
                 this.e.after(node); // TODO: test what happens when passed strings
         return this;
+        */
     }
-    /**Insert `this` just after a `BetterHTMLElement` or vanilla `Node`s.*/
+    /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
     insertAfter(node) {
         if (node instanceof BetterHTMLElement)
             node.e.after(this.e);
@@ -250,15 +263,22 @@ class BetterHTMLElement {
             node.after(this.e);
         return this;
     }
-    /**Insert one or several `BetterHTMLElement`s or vanilla `Node`s after the last child of `this`*/
+    /**Insert at least one `node` after the last child of `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     append(...nodes) {
-        if (nodes[0] instanceof BetterHTMLElement)
-            for (let bhe of nodes)
+        for (let node of nodes) {
+            if (node instanceof BetterHTMLElement)
+                this.e.append(node.e);
+            else
+                this.e.append(node);
+        }
+        return this;
+        /*if (nodes[0] instanceof BetterHTMLElement)
+            for (let bhe of <BetterHTMLElement[]>nodes)
                 this.e.append(bhe.e);
         else
-            for (let node of nodes)
+            for (let node of <(string | Node)[]>nodes)
                 this.e.append(node); // TODO: test what happens when passed strings
-        return this;
+        return this;*/
     }
     /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
     appendTo(node) {
@@ -268,17 +288,24 @@ class BetterHTMLElement {
             node.append(this.e);
         return this;
     }
-    /**Inserts one or several `BetterHTMLElement`s or vanilla `Node`s just before `this`*/
+    /**Insert at least one `node` just before `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     before(...nodes) {
-        if (nodes[0] instanceof BetterHTMLElement)
-            for (let bhe of nodes)
+        for (let node of nodes) {
+            if (node instanceof BetterHTMLElement)
+                this.e.before(node.e);
+            else
+                this.e.before(node);
+        }
+        return this;
+        /*if (nodes[0] instanceof BetterHTMLElement)
+            for (let bhe of <BetterHTMLElement[]>nodes)
                 this.e.before(bhe.e);
         else
-            for (let node of nodes)
+            for (let node of <(string | Node)[]>nodes)
                 this.e.before(node); // TODO: test what happens when passed strings
-        return this;
+        return this;*/
     }
-    /**Insert `this` just before a `BetterHTMLElement` or vanilla `Node`s.*/
+    /**Insert `this` just before a `BetterHTMLElement` or a vanilla `Node`s.*/
     insertBefore(node) {
         if (node instanceof BetterHTMLElement)
             node.e.before(this.e);
@@ -639,7 +666,7 @@ class BetterHTMLElement {
     data(key, parse = true) {
         // TODO: jquery doesn't affect data-* attrs in DOM. https://api.jquery.com/data/
         const data = this.e.getAttribute(`data-${key}`);
-        if (parse)
+        if (parse === true)
             return JSON.parse(data);
         else
             return data;
@@ -706,7 +733,7 @@ class BetterHTMLElement {
         const reachedTo = isFadeOut ? (op) => op - opStep > 0 : (op) => op + opStep < 1;
         const interval = setInterval(() => {
             if (reachedTo(opacity)) {
-                if (isFadeOut)
+                if (isFadeOut === true)
                     opacity -= opStep;
                 else
                     opacity += opStep;
@@ -728,12 +755,11 @@ class BetterHTMLElement {
         return await this.fade(dur, 1);
     }
 }
-customElements.define('better-html-element', BetterHTMLElement);
 class Div extends BetterHTMLElement {
     /**Create a Div element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls } = {}) {
         super({ tag: 'div', text, cls });
-        if (id)
+        if (id !== undefined)
             this.id(id);
     }
 }
@@ -741,7 +767,7 @@ class Paragraph extends BetterHTMLElement {
     /**Create a Paragraph element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls } = {}) {
         super({ tag: 'p', text, cls });
-        if (id)
+        if (id !== undefined)
             this.id(id);
     }
 }
@@ -749,7 +775,7 @@ class Span extends BetterHTMLElement {
     /**Create a Span element. Optionally set its id, text or cls.*/
     constructor({ id, text, cls } = {}) {
         super({ tag: 'span', text, cls });
-        if (id)
+        if (id !== undefined)
             this.id(id);
     }
 }
@@ -757,9 +783,9 @@ class Img extends BetterHTMLElement {
     /**Create an Img element. Optionally set its id, src or cls.*/
     constructor({ id, src, cls }) {
         super({ tag: 'img', cls });
-        if (id)
+        if (id !== undefined)
             this.id(id);
-        if (src)
+        if (src !== undefined)
             this._htmlElement.src = src;
     }
     src(src) {
@@ -776,9 +802,9 @@ class Anchor extends BetterHTMLElement {
     /**Create an Anchor element. Optionally set its id, text, href or cls.*/
     constructor({ id, text, cls, href } = {}) {
         super({ tag: 'a', text, cls });
-        if (id)
+        if (id !== undefined)
             this.id(id);
-        if (href)
+        if (href !== undefined)
             this.href(href);
     }
     href(val) {
@@ -794,6 +820,24 @@ class Anchor extends BetterHTMLElement {
             return this.attr({ target: val });
     }
 }
+/*class Svg extends BetterHTMLElement{
+    protected readonly _htmlElement: SVGElement;
+    constructor({id, cls,htmlElement}: SvgConstructor) {
+        super({tag: 'svg', cls});
+        if (id)
+            this.id(id);
+        if (src)
+            this._htmlElement.src = src;
+        
+    }
+}
+*/
+customElements.define('better-html-element', BetterHTMLElement);
+customElements.define('better-div', Div, { extends: 'div' });
+customElements.define('better-p', Paragraph, { extends: 'p' });
+customElements.define('better-span', Span, { extends: 'span' });
+customElements.define('better-img', Img, { extends: 'img' });
+customElements.define('better-a', Anchor, { extends: 'a' });
 function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
@@ -817,20 +861,43 @@ function paragraph({ id, text, cls } = {}) {
 function anchor({ id, text, cls, href } = {}) {
     return new Anchor({ id, text, cls, href });
 }
-function* enumerate(obj) {
+/*function enumerate<T>(obj: T[]): IterableIterator<[number, T]>;
+function enumerate<T>(obj: IterableIterator<T>): IterableIterator<[number, T]>;
+function enumerate<T>(obj: T): IterableIterator<[keyof T, T[keyof T]]>;
+*/
+function enumerate(obj) {
+    let array = [];
     if (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function') {
         let i = 0;
         for (let x of obj) {
-            yield [i, x];
+            array.push([i, x]);
         }
     }
     else {
         for (let prop in obj) {
-            yield [prop, obj[prop]];
+            array.push([prop, obj[prop]]);
         }
     }
+    return array;
 }
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+// child extends sup
+function extend(sup, child) {
+    child.prototype = sup.prototype;
+    const handler = {
+        construct
+    };
+    // "new BoyCls"
+    function construct(_, argArray) {
+        const obj = new child;
+        sup.apply(obj, argArray); // calls PersonCtor. Sets name
+        child.apply(obj, argArray); // calls BoyCtor. Sets age
+        return obj;
+    }
+    // @ts-ignore
+    const proxy = new Proxy(child, handler);
+    return proxy;
 }
 //# sourceMappingURL=all.js.map
