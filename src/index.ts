@@ -23,9 +23,6 @@ interface AnchorConstructor extends SubElemConstructor {
     href?: string;
 }
 
-interface SvgConstructor extends BaseElemConstructor {
-    htmlElement?: SVGElement;
-}
 
 type OmittedCssProps = "animationDirection"
     | "animationFillMode"
@@ -106,24 +103,6 @@ interface TransformOptions {
 
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
-interface AnimateOptions {
-    delay?: string;
-    direction?: AnimationDirection;
-    duration: string;
-    fillMode?: AnimationFillMode;
-    iterationCount?: number;
-    name: string;
-    playState?: AnimationPlayState;
-    /** Also accepts:
-     * cubic-bezier(p1, p2, p3, p4)
-     * 'ease' == 'cubic-bezier(0.25, 0.1, 0.25, 1.0)'
-     * 'linear' == 'cubic-bezier(0.0, 0.0, 1.0, 1.0)'
-     * 'ease-in' == 'cubic-bezier(0.42, 0, 1.0, 1.0)'
-     * 'ease-out' == 'cubic-bezier(0, 0, 0.58, 1.0)'
-     * 'ease-in-out' == 'cubic-bezier(0.42, 0, 0.58, 1.0)'
-     * */
-    timingFunction?: AnimationTimingFunction;
-}
 
 type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
 type TFunction = (s: string) => boolean
@@ -249,9 +228,13 @@ class BetterHTMLElement {
     }
     
     // ***  Basic
-    /**Set the element's innerHTML*/
+    /**Set the element's innerHTML.
+     * @example
+     * myelem.html("Hello World");*/
     html(html: string): this;
-    /**Get the element's innerHTML*/
+    /**Get the element's innerHTML
+     * @example
+     * myelem.html();   // Returns the element's `innerHTML`*/
     html(): string;
     html(html?) {
         if (html === undefined) {
@@ -262,9 +245,13 @@ class BetterHTMLElement {
         }
     }
     
-    /**Set the element's innerText*/
+    /**Set the element's innerText
+     * @example
+     * myelem.text("Hello World");*/
     text(txt: string | number): this;
-    /**Get the element's innerText*/
+    /**Get the element's innerText
+     * @example
+     * myelem.text();   // Returns the element's `innerText`*/
     text(): string;
     text(txt?) {
         if (txt === undefined) {
