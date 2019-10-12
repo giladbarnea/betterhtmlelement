@@ -24,9 +24,6 @@ interface ImgConstructor extends BaseElemConstructor {
 interface AnchorConstructor extends SubElemConstructor {
     href?: string;
 }
-interface SvgConstructor extends BaseElemConstructor {
-    htmlElement?: SVGElement;
-}
 declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
 declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 interface CssOptions extends PartialCssStyleDeclaration {
@@ -76,24 +73,6 @@ interface TransformOptions {
     translateZ?: string;
 }
 declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
-interface AnimateOptions {
-    delay?: string;
-    direction?: AnimationDirection;
-    duration: string;
-    fillMode?: AnimationFillMode;
-    iterationCount?: number;
-    name: string;
-    playState?: AnimationPlayState;
-    /** Also accepts:
-     * cubic-bezier(p1, p2, p3, p4)
-     * 'ease' == 'cubic-bezier(0.25, 0.1, 0.25, 1.0)'
-     * 'linear' == 'cubic-bezier(0.0, 0.0, 1.0, 1.0)'
-     * 'ease-in' == 'cubic-bezier(0.42, 0, 1.0, 1.0)'
-     * 'ease-out' == 'cubic-bezier(0, 0, 0.58, 1.0)'
-     * 'ease-in-out' == 'cubic-bezier(0.42, 0, 0.58, 1.0)'
-     * */
-    timingFunction?: AnimationTimingFunction;
-}
 declare type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
 declare type TFunction = (s: string) => boolean;
 declare function isFunction(fn: TFunction): fn is TFunction;
@@ -139,13 +118,21 @@ declare class BetterHTMLElement {
      * Keeps `this._listeners`.
      * NOTE: this reinitializes `this._cachedChildren` and all event listeners belonging to `newHtmlElement` are lost. Pass a `BetterHTMLElement` to keep them.*/
     wrapSomethingElse(newHtmlElement: Node): this;
-    /**Set the element's innerHTML*/
+    /**Set the element's innerHTML.
+     * @example
+     * myelem.html("Hello World");*/
     html(html: string): this;
-    /**Get the element's innerHTML*/
+    /**Get the element's innerHTML
+     * @example
+     * myelem.html();   // Returns the element's `innerHTML`*/
     html(): string;
-    /**Set the element's innerText*/
+    /**Set the element's innerText
+     * @example
+     * myelem.text("Hello World");*/
     text(txt: string | number): this;
-    /**Get the element's innerText*/
+    /**Get the element's innerText
+     * @example
+     * myelem.text();   // Returns the element's `innerText`*/
     text(): string;
     /**Set the id of the element*/
     id(id: string): this;
@@ -157,8 +144,6 @@ declare class BetterHTMLElement {
     css(css: string): string;
     /**Remove the value of the passed style properties*/
     uncss(...removeProps: (keyof CssOptions)[]): this;
-    /**@deprecated*/
-    is(element: BetterHTMLElement): void;
     /**`.className = cls`*/
     class(cls: string): this;
     /**Return the first class that matches `cls` predicate.*/
@@ -253,23 +238,7 @@ declare class BetterHTMLElement {
     empty(): this;
     /**Remove element from DOM*/
     remove(): this;
-    /**@deprecated*/
-    find(): void;
-    /**@deprecated*/
-    first(): void;
-    /**@deprecated*/
-    last(): void;
-    /**@deprecated*/
-    next(): void;
-    /**@deprecated*/
-    not(): void;
-    /**@deprecated*/
-    parent(): void;
-    /**@deprecated*/
-    parents(): void;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
-    /**@deprecated*/
-    one(): void;
     /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
     /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
@@ -298,35 +267,15 @@ declare class BetterHTMLElement {
     mouseenter(): this;
     /**Add a `mouseenter` event listener*/
     mouseenter(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    /**Simulate a keydown event to the element.*/
-    keydown(): this;
     /**Add a `keydown` event listener*/
     keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this;
-    /**@deprecated*/
-    keyup(): void;
-    /**@deprecated*/
-    keypress(): void;
-    /**@deprecated*/
-    hover(): void;
-    /**@deprecated*/
-    mousedown(): void;
-    /**@deprecated*/
-    mouseleave(): void;
-    /**@deprecated*/
-    mousemove(): void;
-    /**Simulate a mouseout event to the element.*/
-    mouseout(): this;
     /**Add a `mouseout` event listener*/
     mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    /**Simulate a mouseover event to the element.*/
-    mouseover(): this;
     /**Add a `mouseover` event listener*/
     mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    /**@deprecated*/
-    mouseup(): void;
-    transform(options: TransformOptions): Promise<unknown>;
     /** Remove the event listener of `event`, if exists.*/
     off(event: TEvent): this;
+    /** Remove ALL event listeners of `this`.*/
     allOff(): this;
     /** For each `[attr, val]` pair, apply `setAttribute`*/
     attr(attrValPairs: TMap<string>): this;
@@ -336,9 +285,6 @@ declare class BetterHTMLElement {
     removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this;
     /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/
     data(key: string, parse?: boolean): string | TMap<string>;
-    fade(dur: number, to: 0 | 1): Promise<this>;
-    fadeOut(dur: number): Promise<this>;
-    fadeIn(dur: number): Promise<this>;
 }
 declare class Div extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLDivElement;
@@ -421,6 +367,7 @@ interface TRecMap<T> {
     [s: string]: T | TRecMap<T>;
     [s: number]: T | TRecMap<T>;
 }
-declare function enumerate(obj: any): any[];
+declare function enumerate<T>(obj: T[]): [number, T][];
+declare function enumerate<T>(obj: T): [keyof T, T[keyof T]][];
 declare function wait(ms: number): Promise<any>;
 declare function extend(sup: any, child: any): any;
