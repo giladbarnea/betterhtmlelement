@@ -4,6 +4,8 @@ declare class BadArgumentsAmountError extends Error {
     constructor(expectedArgsNum: number, passedArgs: object, details?: string);
     /**@param expectedArgsNum - Being a 2-tuple and not a number, implies function requires between this and that number of args*/
     constructor(expectedArgsNum: [number, number], passedArgs: object, details?: string);
+    static getArgNamesValues(argsWithValues: object): string;
+    static getArgsWithValues(passedArgs: object): object;
 }
 declare type TEvent = keyof HTMLElementEventMap;
 declare type TEventFunctionMap<K extends TEvent> = {
@@ -421,6 +423,7 @@ interface TRecMap<T> {
     [s: string]: T | TRecMap<T>;
     [s: number]: T | TRecMap<T>;
 }
-declare function enumerate(obj: any): any[];
+declare function enumerate<T>(obj: T[]): [number, T][];
+declare function enumerate<T>(obj: T): [keyof T, T[keyof T]][];
 declare function wait(ms: number): Promise<any>;
 declare function extend(sup: any, child: any): any;
