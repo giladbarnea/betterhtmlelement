@@ -2,15 +2,8 @@
 class BadArgumentsAmountError extends Error {
     constructor(expectedArgsNum, passedArgs, details) {
         const requiresExactNumOfArgs = !Array.isArray(expectedArgsNum);
-        const argsWithValues = {};
-        for (let [argname, argval] of Object.entries(passedArgs)) {
-            if (argval !== undefined)
-                argsWithValues[argname] = argval;
-        }
-        const argNamesValues = Object.entries(argsWithValues)
-            // @ts-ignore
-            .flatMap(([argname, argval]) => `${argname}: ${argval}`)
-            .join('", "');
+        const argsWithValues = BadArgumentsAmountError.getArgsWithValues(passedArgs);
+        const argNamesValues = BadArgumentsAmountError.getArgNamesValues(argsWithValues);
         let message;
         if (requiresExactNumOfArgs) {
             message = `Didn't receive exactly ${expectedArgsNum} arg. `;
@@ -20,6 +13,20 @@ class BadArgumentsAmountError extends Error {
         }
         message += `Instead, out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
         super(message);
+    }
+    static getArgNamesValues(argsWithValues) {
+        return Object.entries(argsWithValues)
+            // @ts-ignore
+            .flatMap(([argname, argval]) => `${argname}: ${argval}`)
+            .join('", "');
+    }
+    static getArgsWithValues(passedArgs) {
+        const argsWithValues = {};
+        for (let [argname, argval] of Object.entries(passedArgs)) {
+            if (argval !== undefined)
+                argsWithValues[argname] = argval;
+        }
+        return argsWithValues;
     }
 }
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';

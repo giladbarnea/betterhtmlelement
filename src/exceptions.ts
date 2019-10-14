@@ -6,16 +6,8 @@ class BadArgumentsAmountError extends Error {
     constructor(expectedArgsNum: [number, number], passedArgs: object, details?: string)
     constructor(expectedArgsNum: number | [number, number], passedArgs: object, details?: string) {
         const requiresExactNumOfArgs: boolean = !Array.isArray(expectedArgsNum);
-        const argsWithValues: object = {};
-        for (let [argname, argval] of Object.entries(passedArgs)) {
-            if (argval !== undefined)
-                argsWithValues[argname] = argval;
-        }
-        
-        const argNamesValues: string = Object.entries(argsWithValues)
-        // @ts-ignore
-            .flatMap(([argname, argval]) => `${argname}: ${argval}`)
-            .join('", "');
+        const argsWithValues = BadArgumentsAmountError.getArgsWithValues(passedArgs);
+        const argNamesValues: string = BadArgumentsAmountError.getArgNamesValues(argsWithValues);
         let message;
         if (requiresExactNumOfArgs) {
             message = `Didn't receive exactly ${expectedArgsNum} arg. `
@@ -26,7 +18,21 @@ class BadArgumentsAmountError extends Error {
         super(message);
     }
     
+    static getArgNamesValues(argsWithValues: object): string {
+        return Object.entries(argsWithValues)
+        // @ts-ignore
+            .flatMap(([argname, argval]) => `${argname}: ${argval}`)
+            .join('", "');
+    }
     
+    static getArgsWithValues(passedArgs: object) {
+        const argsWithValues: object = {};
+        for (let [argname, argval] of Object.entries(passedArgs)) {
+            if (argval !== undefined)
+                argsWithValues[argname] = argval;
+        }
+        return argsWithValues;
+    }
 }
 
 
