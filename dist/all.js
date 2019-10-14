@@ -65,12 +65,21 @@ class BetterHTMLElement {
                 this._htmlElement = document.createElement(tag);
             }
         }
-        else if (id !== undefined)
+        else if (id !== undefined) {
             this._htmlElement = document.getElementById(id);
-        else if (query !== undefined)
+            if (!this._htmlElement)
+                console.warn(`😍 Hi Morki :) You used "elem" to catch an element with id: "${id}", but this element doesn't exist.`);
+        }
+        else if (query !== undefined) {
             this._htmlElement = document.querySelector(query);
-        else if (htmlElement !== undefined)
+            if (!this._htmlElement)
+                console.warn(`😍 Hi Morki :) You used "elem" to catch an element via query: "${query}", but no element was found.`);
+        }
+        else if (htmlElement !== undefined) {
             this._htmlElement = htmlElement;
+            if (!this._htmlElement)
+                console.warn(`😍 Hi Morki :) You used "elem", passed a "htmlElement" parameter, but the contents of the parameter were empty.`);
+        }
         else {
             throw new BadArgumentsAmountError(1, {
                 tag,
