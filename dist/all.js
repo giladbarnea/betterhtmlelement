@@ -641,6 +641,10 @@ function anchor({ id, text, cls, href } = {}) {
     return new Anchor({ id, text, cls, href });
 }
 function enumerate(obj) {
+    if (obj === undefined)
+        return [];
+    if (obj === null)
+        throw new TypeError('null is not iterable');
     let array = [];
     if (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function') {
         let i = 0;
