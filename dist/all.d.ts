@@ -423,9 +423,11 @@ interface TRecMap<T> {
     [s: string]: T | TRecMap<T>;
     [s: number]: T | TRecMap<T>;
 }
+declare function isArray<T>(obj: T[]): obj is Array<T>;
 declare function enumerate(obj: undefined): [void];
 declare function enumerate(obj: null): never;
 declare function enumerate<T>(obj: T[]): [number, T][];
 declare function enumerate<T>(obj: T): [keyof T, T[keyof T]][];
 declare function wait(ms: number): Promise<any>;
+declare function isEq(obj: any, ...others: any[]): void;
 declare function extend(sup: any, child: any): any;

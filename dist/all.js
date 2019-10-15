@@ -868,13 +868,16 @@ function paragraph({ id, text, cls } = {}) {
 function anchor({ id, text, cls, href } = {}) {
     return new Anchor({ id, text, cls, href });
 }
+function isArray(obj) {
+    return obj && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+}
 function enumerate(obj) {
     if (obj === undefined)
         return [];
     if (obj === null)
         throw new TypeError('null is not iterable');
     let array = [];
-    if (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function') {
+    if (isArray(obj)) {
         let i = 0;
         for (let x of obj) {
             array.push([i, x]);
@@ -890,6 +893,10 @@ function enumerate(obj) {
 }
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+function isEq(obj, ...others) {
+    if (isArray(obj) && obj[obj.length - 1]) {
+    }
 }
 // child extends sup
 function extend(sup, child) {
