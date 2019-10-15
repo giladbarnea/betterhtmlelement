@@ -427,13 +427,23 @@ interface TRecMap<T> {
     [s: string]: T | TRecMap<T>;
     [s: number]: T | TRecMap<T>;
 }
-declare function isArray<T>(obj: T[]): obj is Array<T>;
-declare function enumerate<T>(obj: T): T extends (infer R)[] ? [number, R][] : [keyof T, T[keyof T]][];
+declare type Enumerated<T> = T extends (infer R)[] ? [number, R][] : [keyof T, T[keyof T]][];
+declare function enumerateOrig<T>(obj: T): T extends string[] ? [number, string][] : [keyof T, T[keyof T]][];
+declare function enumerate<T>(obj: T): T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [string, U][] : never;
+declare let obj0: {
+    a: boolean;
+    b: number;
+};
+declare let arr0: number[];
+declare let num0: number;
+declare let MyFoo: [string, number | boolean][];
 declare function wait(ms: number): Promise<any>;
-declare function equalsAny(obj: any, ...others: any[]): boolean;
-declare function extend(sup: any, child: any): any;
+declare function isArray<T>(obj: any): obj is Array<T>;
+declare function isEmptyArr(collection: any): boolean;
+declare function isEmptyObj(obj: any): boolean;
 declare function isObject(obj: any): boolean;
-declare function shallowProperty(key: any): (obj: any) => any;
+declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
 declare const MAX_ARRAY_INDEX: number;
-declare const getLength: (obj: any) => any;
+declare function getLength(collection: any): number;
 declare function isArrayLike(collection: any): boolean;
+declare function extend(sup: any, child: any): any;

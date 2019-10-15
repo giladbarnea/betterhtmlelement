@@ -875,15 +875,12 @@ let bar = enumerate(obj);
 for (let [k, v] of foo) {
     console.log(k, v);
 }
-function isArray(obj) {
-    return obj && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
-}
 // function enumerate(obj: undefined): [void];
-// function enumerate<T>(obj: T): never;
-// function enumerate<T>(obj: T): [keyof T, T[keyof T]][];
-// function enumerate<T>(obj: [T]): [number, T][];
-function enumerate(obj) {
-    if (obj === undefined || isObject(obj))
+// function enumerate<T>(obj: T): T extends string[]
+//     ? [number, string][]
+//     : [keyof T, T[keyof T]][] {
+function enumerateOrig(obj) {
+    if (obj === undefined || isEmptyObj(obj) || isEmptyArr(obj))
         return [];
     if (obj === null)
         throw new TypeError('null is not iterable');
@@ -902,10 +899,21 @@ function enumerate(obj) {
     }
     return array;
 }
+// declare function enumerate<T>(obj: {a:number,b:number}): [string, number][];
+// function enumerate(obj) {
+//     if (isArray(obj)) {
+//         return [[0, "hi"], ["1", "bye"]];
+//     }
+//     throw new Error('');
+// }
+let obj0 = { a: true, b: 1 };
+let arr0 = [1, 2, 3, 4];
+let num0 = 5;
+let MyFoo = enumerate(obj0);
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-function equalsAny(obj, ...others) {
+/*function equalsAny(obj: any, ...others: any[]): boolean {
     if (!others)
         throw new Error('Not even one other was passed');
     let strict = !(isArrayLike(obj) && isObject(obj[obj.length - 1]) && obj[obj.length - 1].strict == false);
@@ -915,7 +923,37 @@ function equalsAny(obj, ...others) {
             return true;
     }
     return false;
+    
 }
+*/
+function isArray(obj) {
+    return obj && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+}
+function isEmptyArr(collection) {
+    return isArray(collection) && getLength(collection) === 0;
+}
+function isEmptyObj(obj) {
+    return isObject(obj) && Object.keys(obj).length === 0;
+}
+// *  underscore.js
+function isObject(obj) {
+    return typeof obj === 'object' && !!obj;
+}
+function shallowProperty(key) {
+    return function (obj) {
+        return obj == null ? void 0 : obj[key];
+    };
+}
+const MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+function getLength(collection) {
+    return shallowProperty('length')(collection);
+}
+// const getLength = shallowProperty('length');
+function isArrayLike(collection) {
+    const length = getLength(collection);
+    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
+}
+// *  misc
 // child extends sup
 function extend(sup, child) {
     child.prototype = sup.prototype;
@@ -932,20 +970,5 @@ function extend(sup, child) {
     // @ts-ignore
     const proxy = new Proxy(child, handler);
     return proxy;
-}
-// underscore.js
-function isObject(obj) {
-    return typeof obj === 'object' && !!obj;
-}
-function shallowProperty(key) {
-    return function (obj) {
-        return obj == null ? void 0 : obj[key];
-    };
-}
-const MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
-const getLength = shallowProperty('length');
-function isArrayLike(collection) {
-    const length = getLength(collection);
-    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
 }
 //# sourceMappingURL=all.js.map
