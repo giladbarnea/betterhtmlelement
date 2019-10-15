@@ -909,7 +909,8 @@ function enumerateOrig(obj) {
 let obj0 = { a: true, b: 1 };
 let arr0 = [1, 2, 3, 4];
 let num0 = 5;
-let MyFoo = enumerate(obj0);
+let undefined0;
+let MyFoo = enumerate(undefined0);
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }

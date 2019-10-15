@@ -35,7 +35,8 @@ function enumerateOrig<T>(obj: T): T extends string[]
 // declare function enumerate<T, AT extends Array<T>>(obj: AT): [number, T][];
 declare function enumerate<T>(obj: T):
     T extends (infer U)[] ? [number, U][]
-    : T extends TMap<(infer U)> ? [string, U][] : never;
+    : T extends TMap<(infer U)> ? [keyof T, U][] : never;
+    
 // declare function enumerate<T>(obj: {a:number,b:number}): [string, number][];
 // function enumerate(obj) {
 //     if (isArray(obj)) {
@@ -46,7 +47,9 @@ declare function enumerate<T>(obj: T):
 let obj0: { a: boolean, b: number } = { a: true, b: 1 };
 let arr0: number[] = [1, 2, 3, 4];
 let num0: number = 5;
-let MyFoo = enumerate(obj0);
+let undefined0:undefined;
+let MyFoo = enumerate(undefined0);
+
 
 function wait(ms: number): Promise<any> {
     return new Promise(resolve => setTimeout(resolve, ms));

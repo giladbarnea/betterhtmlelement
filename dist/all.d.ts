@@ -429,14 +429,15 @@ interface TRecMap<T> {
 }
 declare type Enumerated<T> = T extends (infer R)[] ? [number, R][] : [keyof T, T[keyof T]][];
 declare function enumerateOrig<T>(obj: T): T extends string[] ? [number, string][] : [keyof T, T[keyof T]][];
-declare function enumerate<T>(obj: T): T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [string, U][] : never;
+declare function enumerate<T>(obj: T): T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : never;
 declare let obj0: {
     a: boolean;
     b: number;
 };
 declare let arr0: number[];
 declare let num0: number;
-declare let MyFoo: [string, number | boolean][];
+declare let undefined0: undefined;
+declare let MyFoo: [number, unknown][];
 declare function wait(ms: number): Promise<any>;
 declare function isArray<T>(obj: any): obj is Array<T>;
 declare function isEmptyArr(collection: any): boolean;
