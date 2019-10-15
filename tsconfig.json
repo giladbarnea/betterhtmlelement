@@ -20,7 +20,6 @@
 		"removeComments": false
 	},
 	"exclude": [
-		"dist/*",
-		"misc/*"
+		"dist/*"
 	]
 }
