@@ -868,22 +868,34 @@ function paragraph({ id, text, cls } = {}) {
 function anchor({ id, text, cls, href } = {}) {
     return new Anchor({ id, text, cls, href });
 }
-let arr = ["wow"];
-let obj = { wow: 5 };
-let foo = enumerate(arr);
-let bar = enumerate(obj);
-for (let [k, v] of foo) {
-    console.log(k, v);
-}
 // function enumerate(obj: undefined): [void];
-// function enumerate<T>(obj: T): T extends string[]
-//     ? [number, string][]
-//     : [keyof T, T[keyof T]][] {
-function enumerateOrig(obj) {
-    if (obj === undefined || isEmptyObj(obj) || isEmptyArr(obj))
+function enumerate(obj) {
+    // undefined    []
+    // {}           []
+    // []           []
+    // ""           []
+    // number       TypeError
+    // null         TypeError
+    // boolean      TypeError
+    // Function     TypeError
+    // "foo"        [ [0, "f"], [1, "o"], [2, "o"] ]
+    // [ "foo" ]    [ [0, "foo"] ]
+    // [ 10 ]       [ [0, 10] ]
+    // { a: "foo" } [ ["a", "foo"] ]
+    let typeofObj = typeof obj;
+    if (obj === undefined
+        || isEmptyObj(obj)
+        || isEmptyArr(obj)
+        // @ts-ignore
+        || obj === "") {
         return [];
-    if (obj === null)
-        throw new TypeError('null is not iterable');
+    }
+    if (obj === null
+        || typeofObj === "boolean"
+        || typeofObj === "number"
+        || typeofObj === "function") {
+        throw new TypeError(`${typeofObj} object is not iterable`);
+    }
     let array = [];
     if (isArray(obj)) {
         let i = 0;
@@ -899,18 +911,19 @@ function enumerateOrig(obj) {
     }
     return array;
 }
-// declare function enumerate<T>(obj: {a:number,b:number}): [string, number][];
-// function enumerate(obj) {
-//     if (isArray(obj)) {
-//         return [[0, "hi"], ["1", "bye"]];
-//     }
-//     throw new Error('');
-// }
-let obj0 = { a: true, b: 1 };
-let arr0 = [1, 2, 3, 4];
-let num0 = 5;
-let undefined0;
+/*let obj0: { a: boolean, b: number } = {a: true, b: 1};
+let arr0: number[] = [1, 2, 3, 4];
+let arr1: string[] = ["1", "2", "3", "4"];
+let num0: number = 5;
+let undefined0: undefined;
+let null0: null = null;
+let boolean0: boolean = true;
+
 let MyFoo = enumerate(undefined0);
+if (MyFoo === true) {
+    console.log('hi');
+}
+*/
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -927,6 +940,7 @@ function wait(ms) {
     
 }
 */
+// true for string
 function isArray(obj) {
     return obj && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }

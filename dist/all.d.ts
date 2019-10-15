@@ -415,10 +415,6 @@ declare function img({ id, src, cls }?: ImgConstructor): Img;
 declare function paragraph({ id, text, cls }?: SubElemConstructor): Paragraph;
 /**Create an Anchor element. Optionally set its id, text, href or cls.*/
 declare function anchor({ id, text, cls, href }?: AnchorConstructor): Anchor;
-declare let arr: string[];
-declare let obj: TMap<number>;
-declare let foo: [number, string][];
-declare let bar: [string, number][];
 interface TMap<T> {
     [s: string]: T;
     [s: number]: T;
@@ -427,17 +423,8 @@ interface TRecMap<T> {
     [s: string]: T | TRecMap<T>;
     [s: number]: T | TRecMap<T>;
 }
-declare type Enumerated<T> = T extends (infer R)[] ? [number, R][] : [keyof T, T[keyof T]][];
-declare function enumerateOrig<T>(obj: T): T extends string[] ? [number, string][] : [keyof T, T[keyof T]][];
-declare function enumerate<T>(obj: T): T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : never;
-declare let obj0: {
-    a: boolean;
-    b: number;
-};
-declare let arr0: number[];
-declare let num0: number;
-declare let undefined0: undefined;
-declare let MyFoo: [number, unknown][];
+declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
+declare function enumerate<T>(obj: T): Enumerated<T>;
 declare function wait(ms: number): Promise<any>;
 declare function isArray<T>(obj: any): obj is Array<T>;
 declare function isEmptyArr(collection: any): boolean;

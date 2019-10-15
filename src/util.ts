@@ -2,21 +2,48 @@
 
 // function enumerate<T>(obj: T): never;
 // function enumerate<T>(obj: T): [keyof T, T[keyof T]][];
-type Enumerated<T> =
-    T extends (infer R)[]
-    ? [number, R][]
-    : [keyof T, T[keyof T]][];
+
 
 // function enumerate<T>(obj: T): T extends string[]
 //     ? [number, string][]
 //     : [keyof T, T[keyof T]][] {
-function enumerateOrig<T>(obj: T): T extends string[]
-    ? [number, string][]
-    : [keyof T, T[keyof T]][] {
-    if (obj === undefined || isEmptyObj(obj) || isEmptyArr(obj))
-        return [];
-    if (obj === null)
-        throw new TypeError('null is not iterable');
+type Enumerated<T> =
+    T extends (infer U)[] ? [number, U][]
+        : T extends TMap<(infer U)> ? [keyof T, U][]
+        : T extends boolean ? never : any;
+
+function enumerate<T>(obj: T): Enumerated<T> {
+    // undefined    []
+    // {}           []
+    // []           []
+    // ""           []
+    // number       TypeError
+    // null         TypeError
+    // boolean      TypeError
+    // Function     TypeError
+    // "foo"        [ [0, "f"], [1, "o"], [2, "o"] ]
+    // [ "foo" ]    [ [0, "foo"] ]
+    // [ 10 ]       [ [0, 10] ]
+    // { a: "foo" } [ ["a", "foo"] ]
+    let typeofObj = typeof obj;
+    if (
+        obj === undefined
+        || isEmptyObj(obj)
+        || isEmptyArr(obj)
+        // @ts-ignore
+        || obj === ""
+    ) {
+        return [] as Enumerated<T>;
+    }
+    
+    if (
+        obj === null
+        || typeofObj === "boolean"
+        || typeofObj === "number"
+        || typeofObj === "function"
+    ) {
+        throw new TypeError(`${typeofObj} object is not iterable`);
+    }
     let array = [];
     if (isArray(obj)) {
         let i: number = 0;
@@ -29,26 +56,23 @@ function enumerateOrig<T>(obj: T): T extends string[]
             array.push([prop, obj[prop]]);
         }
     }
-    return array;
+    return array as Enumerated<T>;
 }
 
-// declare function enumerate<T, AT extends Array<T>>(obj: AT): [number, T][];
-declare function enumerate<T>(obj: T):
-    T extends (infer U)[] ? [number, U][]
-    : T extends TMap<(infer U)> ? [keyof T, U][] : never;
-    
-// declare function enumerate<T>(obj: {a:number,b:number}): [string, number][];
-// function enumerate(obj) {
-//     if (isArray(obj)) {
-//         return [[0, "hi"], ["1", "bye"]];
-//     }
-//     throw new Error('');
-// }
-let obj0: { a: boolean, b: number } = { a: true, b: 1 };
+
+/*let obj0: { a: boolean, b: number } = {a: true, b: 1};
 let arr0: number[] = [1, 2, 3, 4];
+let arr1: string[] = ["1", "2", "3", "4"];
 let num0: number = 5;
-let undefined0:undefined;
+let undefined0: undefined;
+let null0: null = null;
+let boolean0: boolean = true;
+
 let MyFoo = enumerate(undefined0);
+if (MyFoo === true) {
+    console.log('hi');
+}
+*/
 
 
 function wait(ms: number): Promise<any> {
@@ -69,6 +93,7 @@ function wait(ms: number): Promise<any> {
 }
 */
 
+// true for string
 function isArray<T>(obj): obj is Array<T> {
     return obj && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
@@ -113,7 +138,7 @@ function extend(sup, child) {
     const handler = {
         construct
     };
-
+    
     // "new BoyCls"
     function construct(_, argArray) {
         const obj = new child;
@@ -121,8 +146,8 @@ function extend(sup, child) {
         child.apply(obj, argArray); // calls BoyCtor. Sets age
         return obj;
     }
-
-
+    
+    
     // @ts-ignore
     const proxy = new Proxy(child, handler);
     return proxy;

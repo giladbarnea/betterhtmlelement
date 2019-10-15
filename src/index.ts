@@ -1258,10 +1258,4 @@ function anchor({id, text, cls, href}: AnchorConstructor = {}): Anchor {
     return new Anchor({id, text, cls, href});
 }
 
-let arr: string[] = ["wow"];
-let obj: TMap<number> = {wow: 5};
-let foo = enumerate(arr);
-let bar = enumerate(obj);
-for (let [k, v] of foo) {
-    console.log(k, v);
-}
+
