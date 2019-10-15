@@ -97,8 +97,6 @@ interface AnimateOptions {
     timingFunction?: AnimationTimingFunction;
 }
 declare type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
-declare type TFunction = (s: string) => boolean;
-declare function isFunction(fn: TFunction): fn is TFunction;
 declare class BetterHTMLElement {
     protected _htmlElement: HTMLElement;
     private readonly _isSvg;
@@ -164,20 +162,20 @@ declare class BetterHTMLElement {
     /**`.className = cls`*/
     class(cls: string): this;
     /**Return the first class that matches `cls` predicate.*/
-    class(cls: Function): string;
+    class(cls: TReturnBoolean): string;
     /**Return a string array of the element's classes (not a classList)*/
     class(): string[];
     addClass(cls: string, ...clses: string[]): this;
-    removeClass(cls: TFunction, ...clses: TFunction[]): this;
+    removeClass(cls: TReturnBoolean, ...clses: TReturnBoolean[]): this;
     removeClass(cls: string, clses?: string[]): this;
-    replaceClass(oldToken: TFunction, newToken: string): this;
+    replaceClass(oldToken: TReturnBoolean, newToken: string): this;
     replaceClass(oldToken: string, newToken: string): this;
-    toggleClass(cls: TFunction, force?: boolean): this;
+    toggleClass(cls: TReturnBoolean, force?: boolean): this;
     toggleClass(cls: string, force?: boolean): this;
     /**Returns `this.e.classList.contains(cls)` */
     hasClass(cls: string): boolean;
     /**Returns whether `this` has a class that matches passed function */
-    hasClass(cls: TFunction): boolean;
+    hasClass(cls: TReturnBoolean): boolean;
     /**Insert at least one `node` just after `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     after(...nodes: Array<BetterHTMLElement | Node>): this;
     /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
@@ -429,9 +427,10 @@ declare function wait(ms: number): Promise<any>;
 declare function isArray<T>(obj: any): obj is Array<T>;
 declare function isEmptyArr(collection: any): boolean;
 declare function isEmptyObj(obj: any): boolean;
+declare type TReturnBoolean = (s: string) => boolean;
+declare type AnyFunction = (...args: any[]) => any;
+declare function isFunction(fn: AnyFunction): fn is AnyFunction;
 declare function isObject(obj: any): boolean;
 declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
-declare const MAX_ARRAY_INDEX: number;
 declare function getLength(collection: any): number;
-declare function isArrayLike(collection: any): boolean;
 declare function extend(sup: any, child: any): any;

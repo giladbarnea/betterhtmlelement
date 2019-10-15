@@ -30,9 +30,6 @@ class BadArgumentsAmountError extends Error {
     }
 }
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
-function isFunction(fn) {
-    return fn && {}.toString.call(fn) === '[object Function]';
-}
 // TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
 // maybe use https://www.typescriptlang.org/docs/handbook/utility-types.html#thistypet
 // extends HTMLElement: https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/upgrade#Examples
@@ -950,6 +947,9 @@ function isEmptyArr(collection) {
 function isEmptyObj(obj) {
     return isObject(obj) && Object.keys(obj).length === 0;
 }
+function isFunction(fn) {
+    return fn && {}.toString.call(fn) === '[object Function]';
+}
 // *  underscore.js
 function isObject(obj) {
     return typeof obj === 'object' && !!obj;
@@ -959,15 +959,16 @@ function shallowProperty(key) {
         return obj == null ? void 0 : obj[key];
     };
 }
-const MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
 function getLength(collection) {
     return shallowProperty('length')(collection);
 }
-// const getLength = shallowProperty('length');
-function isArrayLike(collection) {
+/*const MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+
+function isArrayLike(collection): boolean {
     const length = getLength(collection);
     return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
 }
+*/
 // *  misc
 // child extends sup
 function extend(sup, child) {

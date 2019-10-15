@@ -106,6 +106,14 @@ function isEmptyObj(obj): boolean {
     return isObject(obj) && Object.keys(obj).length === 0
 }
 
+type TReturnBoolean = (s: string) => boolean;
+type AnyFunction = (...args: any[]) => any;
+
+function isFunction(fn: AnyFunction): fn is AnyFunction {
+    return fn && {}.toString.call(fn) === '[object Function]'
+}
+
+
 // *  underscore.js
 function isObject(obj): boolean {
     return typeof obj === 'object' && !!obj;
@@ -117,18 +125,19 @@ function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined
     };
 }
 
-const MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
 
 function getLength(collection): number {
     return shallowProperty('length')(collection)
 }
 
-// const getLength = shallowProperty('length');
+
+/*const MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
 
 function isArrayLike(collection): boolean {
     const length = getLength(collection);
     return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
 }
+*/
 
 
 // *  misc

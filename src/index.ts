@@ -126,11 +126,7 @@ interface AnimateOptions {
 }
 
 type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
-type TFunction = (s: string) => boolean
 
-function isFunction(fn: TFunction): fn is TFunction {
-    return fn && {}.toString.call(fn) === '[object Function]'
-}
 
 // TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
 // maybe use https://www.typescriptlang.org/docs/handbook/utility-types.html#thistypet
@@ -357,7 +353,7 @@ class BetterHTMLElement {
     /**`.className = cls`*/
     class(cls: string): this;
     /**Return the first class that matches `cls` predicate.*/
-    class(cls: Function): string;
+    class(cls: TReturnBoolean): string;
     /**Return a string array of the element's classes (not a classList)*/
     class(): string[];
     class(cls?) {
@@ -383,12 +379,12 @@ class BetterHTMLElement {
         return this;
     }
     
-    removeClass(cls: TFunction, ...clses: TFunction[]): this;
+    removeClass(cls: TReturnBoolean, ...clses: TReturnBoolean[]): this;
     removeClass(cls: string, clses?: string[]): this;
     removeClass(cls, ...clses) {
         if (isFunction(cls)) {
             this.e.classList.remove(this.class(cls));
-            for (let c of <TFunction[]>clses)
+            for (let c of <TReturnBoolean[]>clses)
                 this.e.classList.remove(this.class(c));
         } else {
             this.e.classList.remove(cls);
@@ -398,7 +394,7 @@ class BetterHTMLElement {
         return this;
     }
     
-    replaceClass(oldToken: TFunction, newToken: string): this;
+    replaceClass(oldToken: TReturnBoolean, newToken: string): this;
     replaceClass(oldToken: string, newToken: string): this
     replaceClass(oldToken, newToken) {
         if (isFunction(oldToken)) {
@@ -409,7 +405,7 @@ class BetterHTMLElement {
         return this;
     }
     
-    toggleClass(cls: TFunction, force?: boolean): this
+    toggleClass(cls: TReturnBoolean, force?: boolean): this
     toggleClass(cls: string, force?: boolean): this
     toggleClass(cls, force) {
         if (isFunction(cls))
@@ -422,7 +418,7 @@ class BetterHTMLElement {
     /**Returns `this.e.classList.contains(cls)` */
     hasClass(cls: string): boolean
     /**Returns whether `this` has a class that matches passed function */
-    hasClass(cls: TFunction): boolean
+    hasClass(cls: TReturnBoolean): boolean
     hasClass(cls) {
         if (isFunction(cls)) {
             return this.class(cls) !== undefined;
