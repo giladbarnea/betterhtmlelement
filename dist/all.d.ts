@@ -415,6 +415,10 @@ declare function img({ id, src, cls }?: ImgConstructor): Img;
 declare function paragraph({ id, text, cls }?: SubElemConstructor): Paragraph;
 /**Create an Anchor element. Optionally set its id, text, href or cls.*/
 declare function anchor({ id, text, cls, href }?: AnchorConstructor): Anchor;
+declare let arr: string[];
+declare let obj: TMap<number>;
+declare let foo: [number, string][];
+declare let bar: [string, number][];
 interface TMap<T> {
     [s: string]: T;
     [s: number]: T;
@@ -424,10 +428,12 @@ interface TRecMap<T> {
     [s: number]: T | TRecMap<T>;
 }
 declare function isArray<T>(obj: T[]): obj is Array<T>;
-declare function enumerate(obj: undefined): [void];
-declare function enumerate(obj: null): never;
-declare function enumerate<T>(obj: T[]): [number, T][];
-declare function enumerate<T>(obj: T): [keyof T, T[keyof T]][];
+declare function enumerate<T>(obj: T): T extends (infer R)[] ? [number, R][] : [keyof T, T[keyof T]][];
 declare function wait(ms: number): Promise<any>;
-declare function isEq(obj: any, ...others: any[]): void;
+declare function equalsAny(obj: any, ...others: any[]): boolean;
 declare function extend(sup: any, child: any): any;
+declare function isObject(obj: any): boolean;
+declare function shallowProperty(key: any): (obj: any) => any;
+declare const MAX_ARRAY_INDEX: number;
+declare const getLength: (obj: any) => any;
+declare function isArrayLike(collection: any): boolean;

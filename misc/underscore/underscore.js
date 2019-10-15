@@ -20,20 +20,21 @@
 	const previousUnderscore = root._;
 
 	// Save bytes in the minified (but not gzipped) version:
-	const ArrayProto = Array.prototype, ObjProto = Object.prototype;
+	const ArrayProto = Array.prototype;
+	const ObjProto = Object.prototype;
 	const SymbolProto = typeof Symbol !== 'undefined' ? Symbol.prototype : null;
 
 	// Create quick reference variables for speed access to core prototypes.
-	const push = ArrayProto.push,
-		slice = ArrayProto.slice,
-		toString = ObjProto.toString,
-		hasOwnProperty = ObjProto.hasOwnProperty;
+	const push = ArrayProto.push;
+	const slice = ArrayProto.slice;
+	const toString = ObjProto.toString;
+	const hasOwnProperty = ObjProto.hasOwnProperty;
 
 	// All **ECMAScript 5** native function implementations that we hope to use
 	// are declared here.
-	const nativeIsArray = Array.isArray,
-		nativeKeys = Object.keys,
-		nativeCreate = Object.create;
+	const nativeIsArray = Array.isArray;
+	const nativeKeys = Object.keys;
+	const nativeCreate = Object.create;
 
 	// Naked function reference for surrogate-prototype-swapping.
 	const Ctor = function () {};
@@ -203,9 +204,9 @@
 	// Return the results of applying the iteratee to each element.
 	_.map = _.collect = function (obj, iteratee, context) {
 		iteratee = cb(iteratee, context);
-		const keys = !isArrayLike(obj) && _.keys(obj),
-			length = (keys || obj).length,
-			results = Array(length);
+		const keys = !isArrayLike(obj) && _.keys(obj);
+		const length = (keys || obj).length;
+		const results = Array(length);
 		for (let index = 0; index < length; index++) {
 			const currentKey = keys ? keys[index] : index;
 			results[index] = iteratee(obj[currentKey], currentKey, obj);
@@ -1216,7 +1217,8 @@
 
 
 	// Internal recursive comparison function for `isEqual`.
-	let eq, deepEq;
+	let eq;
+	let deepEq;
 	eq = function (a, b, aStack, bStack) {
 		// Identical objects are equal. `0 === -0`, but they aren't identical.
 		// See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).

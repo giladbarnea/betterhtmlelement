@@ -868,11 +868,22 @@ function paragraph({ id, text, cls } = {}) {
 function anchor({ id, text, cls, href } = {}) {
     return new Anchor({ id, text, cls, href });
 }
+let arr = ["wow"];
+let obj = { wow: 5 };
+let foo = enumerate(arr);
+let bar = enumerate(obj);
+for (let [k, v] of foo) {
+    console.log(k, v);
+}
 function isArray(obj) {
     return obj && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
+// function enumerate(obj: undefined): [void];
+// function enumerate<T>(obj: T): never;
+// function enumerate<T>(obj: T): [keyof T, T[keyof T]][];
+// function enumerate<T>(obj: [T]): [number, T][];
 function enumerate(obj) {
-    if (obj === undefined)
+    if (obj === undefined || isObject(obj))
         return [];
     if (obj === null)
         throw new TypeError('null is not iterable');
@@ -894,9 +905,16 @@ function enumerate(obj) {
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-function isEq(obj, ...others) {
-    if (isArray(obj) && obj[obj.length - 1]) {
+function equalsAny(obj, ...others) {
+    if (!others)
+        throw new Error('Not even one other was passed');
+    let strict = !(isArrayLike(obj) && isObject(obj[obj.length - 1]) && obj[obj.length - 1].strict == false);
+    const _isEq = (_obj, _other) => strict ? _obj === _other : _obj == _other;
+    for (let other of others) {
+        if (_isEq(obj, other))
+            return true;
     }
+    return false;
 }
 // child extends sup
 function extend(sup, child) {
@@ -914,5 +932,20 @@ function extend(sup, child) {
     // @ts-ignore
     const proxy = new Proxy(child, handler);
     return proxy;
+}
+// underscore.js
+function isObject(obj) {
+    return typeof obj === 'object' && !!obj;
+}
+function shallowProperty(key) {
+    return function (obj) {
+        return obj == null ? void 0 : obj[key];
+    };
+}
+const MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+const getLength = shallowProperty('length');
+function isArrayLike(collection) {
+    const length = getLength(collection);
+    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
 }
 //# sourceMappingURL=all.js.map
