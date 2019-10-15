@@ -65,21 +65,12 @@ class BetterHTMLElement {
                 this._htmlElement = document.createElement(tag);
             }
         }
-        else if (id !== undefined) {
+        else if (id !== undefined)
             this._htmlElement = document.getElementById(id);
-            if (!this._htmlElement)
-                console.warn(`😍 Hi Morki :) You used "elem" to catch an element with id: "${id}", but this element doesn't exist.`);
-        }
-        else if (query !== undefined) {
+        else if (query !== undefined)
             this._htmlElement = document.querySelector(query);
-            if (!this._htmlElement)
-                console.warn(`😍 Hi Morki :) You used "elem" to catch an element via query: "${query}", but no element was found.`);
-        }
-        else if (htmlElement !== undefined) {
+        else if (htmlElement !== undefined)
             this._htmlElement = htmlElement;
-            if (!this._htmlElement)
-                console.warn(`😍 Hi Morki :) You used "elem", passed a "htmlElement" parameter, but the contents of the parameter were empty.`);
-        }
         else {
             throw new BadArgumentsAmountError(1, {
                 tag,
@@ -94,6 +85,21 @@ class BetterHTMLElement {
             this.class(cls);
         if (children !== undefined)
             this.cacheChildren(children);
+        // Object.assign(this, proxy);
+        /*const that = this;
+        return new Proxy(this, {
+            get(target: BetterHTMLElement, p: string | number | symbol, receiver: any): any {
+                // console.log('logging');
+                // console.log('target: ', target,
+                //     '\nthat: ', that,
+                //     '\ntypeof(that): ', typeof (that),
+                //     '\np: ', p,
+                //     '\nreceiver: ', receiver,
+                //     '\nthis: ', this);
+                return that[p];
+            }
+        })
+        */
     }
     /**Return the wrapped HTMLElement*/
     get e() {
@@ -171,6 +177,11 @@ class BetterHTMLElement {
             css[prop] = '';
         return this.css(css);
     }
+    /**@deprecated*/
+    is(element) {
+        // https://api.jquery.com/is/
+        throw new Error("NOT IMPLEMENTED");
+    }
     class(cls) {
         if (cls === undefined) {
             return Array.from(this.e.classList);
@@ -242,6 +253,14 @@ class BetterHTMLElement {
                 this.e.after(node);
         }
         return this;
+        /*if (nodes[0] instanceof BetterHTMLElement)
+            for (let bhe of <BetterHTMLElement[]>nodes)
+                this.e.after(bhe.e);
+        else
+            for (let node of <(string | Node)[]>nodes)
+                this.e.after(node); // TODO: test what happens when passed strings
+        return this;
+        */
     }
     /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
     insertAfter(node) {
@@ -260,6 +279,13 @@ class BetterHTMLElement {
                 this.e.append(node);
         }
         return this;
+        /*if (nodes[0] instanceof BetterHTMLElement)
+            for (let bhe of <BetterHTMLElement[]>nodes)
+                this.e.append(bhe.e);
+        else
+            for (let node of <(string | Node)[]>nodes)
+                this.e.append(node); // TODO: test what happens when passed strings
+        return this;*/
     }
     /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
     appendTo(node) {
@@ -278,6 +304,13 @@ class BetterHTMLElement {
                 this.e.before(node);
         }
         return this;
+        /*if (nodes[0] instanceof BetterHTMLElement)
+            for (let bhe of <BetterHTMLElement[]>nodes)
+                this.e.before(bhe.e);
+        else
+            for (let node of <(string | Node)[]>nodes)
+                this.e.before(node); // TODO: test what happens when passed strings
+        return this;*/
     }
     /**Insert `this` just before a `BetterHTMLElement` or a vanilla `Node`s.*/
     insertBefore(node) {
@@ -369,6 +402,41 @@ class BetterHTMLElement {
         this.e.remove();
         return this;
     }
+    // TODO: recursively yield children
+    //  (unlike .children(), this doesn't return only the first level)
+    /**@deprecated*/
+    find() {
+        // https://api.jquery.com/find/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    /**@deprecated*/
+    first() {
+        // https://api.jquery.com/first/
+        // this.e.firstChild
+        throw new Error("NOT IMPLEMENTED");
+    }
+    /**@deprecated*/
+    last() {
+        // https://api.jquery.com/last/
+        // this.e.lastChild
+        throw new Error("NOT IMPLEMENTED");
+    }
+    /**@deprecated*/
+    next() {
+        throw new Error("NOT IMPLEMENTED");
+    }
+    /**@deprecated*/
+    not() {
+        throw new Error("NOT IMPLEMENTED");
+    }
+    /**@deprecated*/
+    parent() {
+        throw new Error("NOT IMPLEMENTED");
+    }
+    /**@deprecated*/
+    parents() {
+        throw new Error("NOT IMPLEMENTED");
+    }
     // ***  Events
     on(evTypeFnPairs, options) {
         // const that = this; // "this" changes inside function _f
@@ -380,6 +448,10 @@ class BetterHTMLElement {
             this._listeners[evType] = _f;
         }
         return this;
+    }
+    /**@deprecated*/
+    one() {
+        throw new Error("NOT IMPLEMENTED");
     }
     /*
     mousedown   touchstart	pointerdown
@@ -488,26 +560,87 @@ class BetterHTMLElement {
         }
     }
     keydown(fn, options) {
-        return this.on({ keydown: fn }, options);
+        if (fn === undefined)
+            throw new Error("NOT IMPLEMENTED");
+        else
+            return this.on({ keydown: fn }, options);
+    }
+    /**@deprecated*/
+    keyup() {
+        // https://api.jquery.com/keyup/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    /**@deprecated*/
+    keypress() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    /**@deprecated*/
+    hover() {
+        // https://api.jquery.com/hover/
+        // binds to both mouseenter and mouseleave
+        // https://stackoverflow.com/questions/17589420/when-to-choose-mouseover-and-hover-function
+        throw new Error("NOT IMPLEMENTED");
+    }
+    /**@deprecated*/
+    mousedown() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    /**@deprecated*/
+    mouseleave() {
+        // https://api.jquery.com/keypress/
+        //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
+        // This means that mouseleave is fired when the pointer has exited the element and all of its descendants,
+        // whereas mouseout is fired when the pointer leaves the element or leaves one of the element's descendants
+        // (even if the pointer is still within the element).
+        throw new Error("NOT IMPLEMENTED");
+    }
+    /**@deprecated*/
+    mousemove() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED");
     }
     mouseout(fn, options) {
         //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
         // This means that mouseleave is fired when the pointer has exited the element and all of its descendants,
         // whereas mouseout is fired when the pointer leaves the element or leaves one of the element's descendants
         // (even if the pointer is still within the element).
-        return this.on({ mouseout: fn }, options);
+        if (fn === undefined)
+            throw new Error("NOT IMPLEMENTED");
+        else
+            return this.on({ mouseout: fn }, options);
     }
     mouseover(fn, options) {
         // mouseover: also child elements
         // mouseenter: only bound element
-        return this.on({ mouseover: fn }, options);
+        if (fn === undefined)
+            throw new Error("NOT IMPLEMENTED");
+        else
+            return this.on({ mouseover: fn }, options);
+    }
+    /**@deprecated*/
+    mouseup() {
+        // https://api.jquery.com/keypress/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    transform(options) {
+        let transform = '';
+        for (let [k, v] of enumerate(options)) {
+            transform += `${k}(${v}) `;
+        }
+        return new Promise(resolve => {
+            this.on({
+                transitionend: resolve
+            }, { once: true });
+            this.css({ transform });
+        });
     }
     /** Remove the event listener of `event`, if exists.*/
     off(event) {
         this.e.removeEventListener(event, this._listeners[event]);
         return this;
     }
-    /** Remove ALL event listeners of `this`.*/
     allOff() {
         for (let event in this._listeners) {
             this.off(event);
@@ -544,6 +677,89 @@ class BetterHTMLElement {
             return JSON.parse(data);
         else
             return data;
+    }
+    // **  Fade
+    async fade(dur, to) {
+        const styles = window.getComputedStyle(this.e);
+        const transProp = styles.transitionProperty.split(', ');
+        const indexOfOpacity = transProp.indexOf('opacity');
+        // css opacity:0 => transDur[indexOfOpacity]: 0s
+        // css opacity:500ms => transDur[indexOfOpacity]: 0.5s
+        // css NO opacity => transDur[indexOfOpacity]: undefined
+        if (indexOfOpacity !== -1) {
+            const transDur = styles.transitionDuration.split(', ');
+            const opacityTransDur = transDur[indexOfOpacity];
+            const trans = styles.transition.split(', ');
+            // transition: opacity was defined in css.
+            // set transition to dur, set opacity to 0, leave the animation to native transition, wait dur and return this
+            console.warn(`fade(${dur}, ${to}), opacityTransDur !== undefined. nullifying transition. SHOULD NOT WORK`);
+            console.log(`trans:\t${trans}\ntransProp:\t${transProp}\nindexOfOpacity:\t${indexOfOpacity}\nopacityTransDur:\t${opacityTransDur}`);
+            // trans.splice(indexOfOpacity, 1, `opacity ${dur / 1000}s`);
+            trans.splice(indexOfOpacity, 1, `opacity 0s`);
+            console.log(`after, trans: ${trans}`);
+            this.e.style.transition = trans.join(', ');
+            this.css({ opacity: to });
+            await wait(dur);
+            return this;
+        }
+        // transition: opacity was NOT defined in css.
+        if (dur == 0) {
+            return this.css({ opacity: to });
+        }
+        const isFadeOut = to === 0;
+        let opacity = parseFloat(this.e.style.opacity);
+        if (opacity === undefined || isNaN(opacity)) {
+            console.warn(`fade(${dur}, ${to}) htmlElement has NO opacity at all. recursing`, {
+                opacity,
+                this: this
+            });
+            return this.css({ opacity: Math.abs(1 - to) }).fade(dur, to);
+        }
+        else {
+            if (isFadeOut ? opacity <= 0 : opacity > 1) {
+                console.warn(`fade(${dur}, ${to}) opacity was beyond target opacity. returning this as is.`, {
+                    opacity,
+                    this: this
+                });
+                return this;
+            }
+        }
+        let steps = 30;
+        let opStep = 1 / steps;
+        let everyms = dur / steps;
+        if (everyms < 1) {
+            everyms = 1;
+            steps = dur;
+            opStep = 1 / steps;
+        }
+        console.log(`fade(${dur}, ${to}) had opacity, no transition. (good) opacity: ${opacity}`, {
+            steps,
+            opStep,
+            everyms
+        });
+        const reachedTo = isFadeOut ? (op) => op - opStep > 0 : (op) => op + opStep < 1;
+        const interval = setInterval(() => {
+            if (reachedTo(opacity)) {
+                if (isFadeOut === true)
+                    opacity -= opStep;
+                else
+                    opacity += opStep;
+                this.css({ opacity });
+            }
+            else {
+                opacity = to;
+                this.css({ opacity });
+                clearInterval(interval);
+            }
+        }, everyms);
+        await wait(dur);
+        return this;
+    }
+    async fadeOut(dur) {
+        return await this.fade(dur, 0);
+    }
+    async fadeIn(dur) {
+        return await this.fade(dur, 1);
     }
 }
 class Div extends BetterHTMLElement {
@@ -611,6 +827,18 @@ class Anchor extends BetterHTMLElement {
             return this.attr({ target: val });
     }
 }
+/*class Svg extends BetterHTMLElement{
+    protected readonly _htmlElement: SVGElement;
+    constructor({id, cls,htmlElement}: SvgConstructor) {
+        super({tag: 'svg', cls});
+        if (id)
+            this.id(id);
+        if (src)
+            this._htmlElement.src = src;
+        
+    }
+}
+*/
 customElements.define('better-html-element', BetterHTMLElement);
 customElements.define('better-div', Div, { extends: 'div' });
 customElements.define('better-p', Paragraph, { extends: 'p' });
