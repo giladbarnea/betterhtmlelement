@@ -456,13 +456,19 @@ class BetterHTMLElement {
         return this;
     }
     
-    /**Insert at least one `node` after the last child of `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
-    append(...nodes: Array<BetterHTMLElement | Node>): this {
+    /**Insert at least one `node` after the last child of `this`.
+     * Any `node` can be either a `BetterHTMLElement`, a vanilla `Node`,
+     * a `{someKey: BetterHTMLElement}` pairs object, or a `[someKey, BetterHTMLElement]` tuple.*/
+    append(...nodes: Array<BetterHTMLElement | Node | TMap<BetterHTMLElement> | [string, BetterHTMLElement]>): this {
         for (let node of nodes) {
             if (node instanceof BetterHTMLElement)
                 this.e.append(node.e);
-            else
+            else if (node instanceof Node)
                 this.e.append(node);
+            else if (Array.isArray(node))
+                this.cacheAppend([node]);
+            else
+                this.cacheAppend(node)
         }
         return this;
         /*if (nodes[0] instanceof BetterHTMLElement)
@@ -480,6 +486,7 @@ class BetterHTMLElement {
             node.e.append(this.e);
         else
             node.append(this.e);
+        
         return this;
     }
     
