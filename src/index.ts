@@ -1,132 +1,35 @@
-type TEvent = keyof HTMLElementEventMap;
-type TEventFunctionMap<K extends TEvent> = {
-    [P in K]?: (event: HTMLElementEventMap[P]) => void;
-};
-
-type HTMLTag = keyof HTMLElementTagNameMap;
-type QuerySelector = HTMLTag | string;
-
-interface BaseElemConstructor {
-    id?: string;
-    cls?: string;
+abstract class BaseBHE<T> {
+    protected _htmlElement: T;
+    private readonly _listeners: TEventFunctionMap<T> = {};
+    
+    /**Return the wrapped element*/
+    get e(): T {
+        return this._htmlElement;
+    }
+    
+    /**@deprecated*/
+    is(element: BetterHTMLElement) {
+        // https://api.jquery.com/is/
+        throw new Error("NOT IMPLEMENTED");
+    }
+    
+    /*
+        animate(opts: AnimateOptions) {
+            // see: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations/Tips
+            throw new Error('Not implemented');
+        }
+    */
 }
 
-interface SubElemConstructor extends BaseElemConstructor {
-    text?: string;
-}
-
-interface ImgConstructor extends BaseElemConstructor {
-    src?: string;
-}
-
-interface AnchorConstructor extends SubElemConstructor {
-    href?: string;
-}
-
-interface SvgConstructor extends BaseElemConstructor {
-    htmlElement?: SVGElement;
-}
-
-type OmittedCssProps = "animationDirection"
-    | "animationFillMode"
-    | "animationIterationCount"
-    | "animationPlayState"
-    | "animationTimingFunction"
-    | "opacity"
-    | "padding"
-    | "paddingBottom"
-    | "paddingLeft"
-    | "paddingRight"
-    | "paddingTop"
-    | "preload"
-    | "width"
-type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
-
-interface CssOptions extends PartialCssStyleDeclaration {
-    animationDirection?: AnimationDirection;
-    animationFillMode?: AnimationFillMode;
-    animationIterationCount?: number;
-    animationPlayState?: AnimationPlayState;
-    animationTimingFunction?: AnimationTimingFunction;
-    opacity?: string | number;
-    padding?: string | number;
-    paddingBottom?: string | number;
-    paddingLeft?: string | number;
-    paddingRight?: string | number;
-    paddingTop?: string | number;
-    preload?: "auto" | string;
-    width?: string | number;
-}
-
-
-type CubicBezierFunction = [number, number, number, number];
-type Jumpterm = 'jump-start' | 'jump-end' | 'jump-none' | 'jump-both' | 'start' | 'end';
-
-/**Displays an animation iteration along n stops along the transition, displaying each stop for equal lengths of time.
- * For example, if n is 5,  there are 5 steps.
- * Whether the animation holds temporarily at 0%, 20%, 40%, 60% and 80%, on the 20%, 40%, 60%, 80% and 100%, or makes 5 stops between the 0% and 100% along the animation, or makes 5 stops including the 0% and 100% marks (on the 0%, 25%, 50%, 75%, and 100%) depends on which of the following jump terms is used*/
-type StepsFunction = [number, Jumpterm];
-type AnimationTimingFunction =
-    'linear'
-    | 'ease'
-    | 'ease-in'
-    | 'ease-out'
-    | 'ease-in-out'
-    | 'step-start'
-    | 'step-end'
-    | StepsFunction
-    | CubicBezierFunction
-type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
-type AnimationFillMode = 'none' | 'forwards' | 'backwards' | 'both';
-
-interface TransformOptions {
-    matrix?: [number, number, number, number, number, number],
-    matrix3d?: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number],
-    perspective?: string, // px
-    rotate?: string, // deg
-    rotate3d?: [number, number, number, string] // [,,,deg]
-    rotateX?: string,
-    rotateY?: string,
-    rotateZ?: string,
-    scale?: number, // 1.5
-    scale3d?: [number, number, number],
-    scaleX?: [number, number, number],
-    scaleY?: [number, number, number],
-    skew?: [string, string] // deg, deg
-    skewX?: string,
-    skewY?: string,
-    translate?: [string, string], // px, px
-    translate3d?: [string, string, string],
-    translateX?: string,
-    translateY?: string,
-    translateZ?: string,
+class BetterWindow extends BaseBHE<Window> {
+    
+    
+    constructor() {
+        super();
+    }
     
     
 }
-
-const SVG_NS_URI = 'http://www.w3.org/2000/svg';
-
-interface AnimateOptions {
-    delay?: string;
-    direction?: AnimationDirection;
-    duration: string;
-    fillMode?: AnimationFillMode;
-    iterationCount?: number;
-    name: string;
-    playState?: AnimationPlayState;
-    /** Also accepts:
-     * cubic-bezier(p1, p2, p3, p4)
-     * 'ease' == 'cubic-bezier(0.25, 0.1, 0.25, 1.0)'
-     * 'linear' == 'cubic-bezier(0.0, 0.0, 1.0, 1.0)'
-     * 'ease-in' == 'cubic-bezier(0.42, 0, 1.0, 1.0)'
-     * 'ease-out' == 'cubic-bezier(0, 0, 0.58, 1.0)'
-     * 'ease-in-out' == 'cubic-bezier(0.42, 0, 0.58, 1.0)'
-     * */
-    timingFunction?: AnimationTimingFunction;
-}
-
-type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
-
 
 // TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
 // maybe use https://www.typescriptlang.org/docs/handbook/utility-types.html#thistypet
@@ -320,7 +223,7 @@ class BetterHTMLElement {
     css(css: string): string
     css(css) {
         if (typeof css === 'string') {
-            return this.e.style[css];
+            return (this.e).style[css];
         } else {
             for (let [styleAttr, styleVal] of enumerate(css))
                 this.e.style[<string>styleAttr] = styleVal;
@@ -336,18 +239,6 @@ class BetterHTMLElement {
         return this.css(css);
     }
     
-    /**@deprecated*/
-    is(element: BetterHTMLElement) {
-        // https://api.jquery.com/is/
-        throw new Error("NOT IMPLEMENTED");
-    }
-    
-    /*
-        animate(opts: AnimateOptions) {
-            // see: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations/Tips
-            throw new Error('Not implemented');
-        }
-    */
     
     // ***  Classes
     /**`.className = cls`*/
@@ -363,6 +254,7 @@ class BetterHTMLElement {
             return Array.from(this.e.classList).find(cls);
         } else {
             if (this._isSvg) {
+                
                 // @ts-ignore
                 this.e.classList = [cls];
             } else {
@@ -383,7 +275,7 @@ class BetterHTMLElement {
     removeClass(cls: string, clses?: string[]): this;
     removeClass(cls, ...clses) {
         if (isFunction(cls)) {
-            this.e.classList.remove(this.class(cls));
+            this.e.classList.remove(this.class(<TReturnBoolean>cls));
             for (let c of <TReturnBoolean[]>clses)
                 this.e.classList.remove(this.class(c));
         } else {
@@ -398,7 +290,7 @@ class BetterHTMLElement {
     replaceClass(oldToken: string, newToken: string): this
     replaceClass(oldToken, newToken) {
         if (isFunction(oldToken)) {
-            this.e.classList.replace(this.class(oldToken), newToken);
+            this.e.classList.replace(this.class(<TReturnBoolean>oldToken), newToken);
         } else {
             this.e.classList.replace(oldToken, newToken);
         }
@@ -409,7 +301,7 @@ class BetterHTMLElement {
     toggleClass(cls: string, force?: boolean): this
     toggleClass(cls, force) {
         if (isFunction(cls))
-            this.e.classList.toggle(this.class(cls), force);
+            this.e.classList.toggle(this.class(<TReturnBoolean>cls), force);
         else
             this.e.classList.toggle(cls, force);
         return this;
@@ -431,10 +323,11 @@ class BetterHTMLElement {
     /**Insert at least one `node` just after `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     after(...nodes: Array<BetterHTMLElement | Node>): this {
         for (let node of nodes) {
-            if (node instanceof BetterHTMLElement)
+            if (node instanceof BetterHTMLElement) {
                 this.e.after(node.e);
-            else
+            } else {
                 this.e.after(node);
+            }
         }
         return this;
         /*if (nodes[0] instanceof BetterHTMLElement)
@@ -449,10 +342,11 @@ class BetterHTMLElement {
     
     /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
     insertAfter(node: BetterHTMLElement | HTMLElement): this {
-        if (node instanceof BetterHTMLElement)
+        if (node instanceof BetterHTMLElement) {
             node.e.after(this.e);
-        else
+        } else {
             node.after(this.e);
+        }
         return this;
     }
     
@@ -461,23 +355,18 @@ class BetterHTMLElement {
      * a `{someKey: BetterHTMLElement}` pairs object, or a `[someKey, BetterHTMLElement]` tuple.*/
     append(...nodes: Array<BetterHTMLElement | Node | TMap<BetterHTMLElement> | [string, BetterHTMLElement]>): this {
         for (let node of nodes) {
-            if (node instanceof BetterHTMLElement)
+            if (node instanceof BetterHTMLElement) {
                 this.e.append(node.e);
-            else if (node instanceof Node)
+            } else if (node instanceof Node) {
                 this.e.append(node);
-            else if (Array.isArray(node))
+            } else if (Array.isArray(node)) {
                 this.cacheAppend([node]);
-            else
+            } else {
                 this.cacheAppend(node)
+            }
         }
         return this;
-        /*if (nodes[0] instanceof BetterHTMLElement)
-            for (let bhe of <BetterHTMLElement[]>nodes)
-                this.e.append(bhe.e);
-        else
-            for (let node of <(string | Node)[]>nodes)
-                this.e.append(node); // TODO: test what happens when passed strings
-        return this;*/
+        
     }
     
     /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
@@ -585,12 +474,13 @@ class BetterHTMLElement {
     /**For each `[key, selector]` pair, where `selector` is either an `HTMLTag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
      * @example
      * // Using `cacheChildren` directly
+     * const navbar = elem({ id: 'navbar' });
      * navbar.cacheChildren({ home: '.navbar-item-home', about: '.navbar-item-about' });
      * navbar.home.toggleClass("selected");
      * navbar.about.css(...);
      * @example
      * // Using `cacheChildren` indirectly through `children` constructor option
-     * elem({query: '#navbar', children: { home: '.navbar-item-home', about: '.navbar-item-about' }});
+     * const navbar = elem({ id: 'navbar', children: { home: '.navbar-item-home', about: '.navbar-item-about' }});
      * navbar.home.toggleClass("selected");
      * navbar.about.css(...);
      * @see this.child*/
@@ -599,6 +489,7 @@ class BetterHTMLElement {
      * extract `this.child(subselector)`, store it in `this[key]`, then call `this[key].cacheChildren` passing the recursive object.
      * @example
      * // Using `cacheChildren` directly
+     * const navbar = elem({ id: 'navbar' });
      * navbar.cacheChildren({
      *      home: {
      *          '.navbar-item-home': {
@@ -612,7 +503,7 @@ class BetterHTMLElement {
      * navbar.home.support.pointerdown(...);
      * @example
      * // Using `cacheChildren` indirectly through `children` constructor option
-     * elem({query: '#navbar', children: {
+     * const navbar = elem({query: '#navbar', children: {
      *      home: {
      *          '.navbar-item-home': {
      *              news: '.navbar-subitem-news,
@@ -625,30 +516,49 @@ class BetterHTMLElement {
      * navbar.home.support.pointerdown(...);
      * @see this.child*/
     cacheChildren(keySelectorObj: TRecMap<QuerySelector>): BetterHTMLElement
+    /**For each `[key, selector]` pair, where `selector` is a `BetterHTMLElement`, store it in `this[key]`.
+     * @example
+     * // Using `cacheChildren` directly
+     * const home = elem({ query: '.navbar-item-home' });
+     * const navbar = elem({ id: 'navbar' });
+     * navbar.cacheChildren({ home });
+     * navbar.home.toggleClass("selected");
+     * @example
+     * // Using `cacheChildren` indirectly through `children` constructor option
+     * const home = elem({ query: '.navbar-item-home' });
+     * const navbar = elem({id: 'navbar', children: { home }});
+     * navbar.home.toggleClass("selected");
+     * @see this.child*/
+    cacheChildren(keySelectorObj: TRecMap<BetterHTMLElement>): BetterHTMLElement
     /**key: string. value: either "selector string" OR {"selector string": <recurse down>}*/
     cacheChildren(keySelectorObj) {
         for (let [key, selectorOrObj] of enumerate(keySelectorObj)) {
-            if (typeof selectorOrObj === 'object') {
-                let entries = Object.entries(<TMap<QuerySelector> | TRecMap<QuerySelector>>selectorOrObj);
-                if (entries[1] !== undefined) {
-                    console.warn(
-                        `cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
-                            key,
-                            "multiple selectors": entries.map(e => e[0]),
-                            selectorOrObj,
-                            this: this
-                        }
-                    );
+            let type = typeof selectorOrObj;
+            if (type === 'object') {
+                if (selectorOrObj instanceof BetterHTMLElement) {
+                    this._cache(key, selectorOrObj)
+                } else {
+                    let entries = Object.entries(<TMap<QuerySelector> | TRecMap<QuerySelector>>selectorOrObj);
+                    if (entries[1] !== undefined) {
+                        console.warn(
+                            `cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
+                                key,
+                                "multiple selectors": entries.map(e => e[0]),
+                                selectorOrObj,
+                                this: this
+                            }
+                        );
+                    }
+                    // only first because 1:1 for key:selector.
+                    // (ie can't do {right: {.right: {...}, .right2: {...}})
+                    let [selector, obj] = entries[0];
+                    this._cache(key, this.child(selector));
+                    this[key].cacheChildren(obj)
                 }
-                // only first because 1:1 for key:selector.
-                // (ie can't do {right: {.right: {...}, .right2: {...}})
-                let [selector, obj] = entries[0];
-                this._cache(key, this.child(selector));
-                // this[key] = this.child(selector);
-                this[key].cacheChildren(obj)
+            } else if (type === "string") {
+                this._cache(key, this.child(selectorOrObj));
             } else {
-                // this[key] = this.child(<QuerySelector>selectorOrObj);
-                this._cache(key, this.child(<QuerySelector>selectorOrObj));
+                console.warn(`cacheChildren, bad selectorOrObj type: "${type}". key: "${key}", value: "${selectorOrObj}". keySelectorObj:`, keySelectorObj,);
             }
         }
         return this;
@@ -730,6 +640,29 @@ class BetterHTMLElement {
     one() {
         throw new Error("NOT IMPLEMENTED")
     }
+    
+    /**Remove `event` from wrapped element's event listeners, but keep the removed listener in cache.
+     * This is useful for later unblocking*/
+    blockListener(event: TEvent): this {
+        let listener = this._listeners[event];
+        if (listener === undefined) {
+            // @ts-ignore
+            return console.warn(`blockListener(event): this._listeners[event] is undefined. event:`, event)
+        }
+        this.e.removeEventListener(event, listener);
+        return this;
+    }
+    
+    unblockListener(event: TEvent): this {
+        let listener = this._listeners[event];
+        if (listener === undefined) {
+            // @ts-ignore
+            return console.warn(`unblockListener(event): this._listeners[event] is undefined. event:`, event)
+        }
+        this.e.addEventListener(event, listener);
+        return this;
+    }
+    
     
     /*
 	mousedown   touchstart	pointerdown

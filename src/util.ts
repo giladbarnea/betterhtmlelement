@@ -1,12 +1,17 @@
-// function enumerate(obj: undefined): [void];
+function assertIsHTMLElement(val: any): asserts val is HTMLElement {
+    if (!(val instanceof HTMLElement)) {
+        console.log({val});
+        throw new TypeError(`Not instanceof HTMLElement`)
+    }
+}
 
-// function enumerate<T>(obj: T): never;
-// function enumerate<T>(obj: T): [keyof T, T[keyof T]][];
+function assertIsNode(val: any): asserts val is Node {
+    if (!(val instanceof Node)) {
+        console.log({val});
+        throw new TypeError(`Not instanceof Node`)
+    }
+}
 
-
-// function enumerate<T>(obj: T): T extends string[]
-//     ? [number, string][]
-//     : [keyof T, T[keyof T]][] {
 type Enumerated<T> =
     T extends (infer U)[] ? [number, U][]
         : T extends TMap<(infer U)> ? [keyof T, U][]
@@ -161,3 +166,5 @@ function extend(sup, child) {
     const proxy = new Proxy(child, handler);
     return proxy;
 }
+
+new BetterWindow().e;

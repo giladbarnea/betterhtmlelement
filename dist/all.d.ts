@@ -7,98 +7,8 @@ declare class BadArgumentsAmountError extends Error {
     static getArgNamesValues(argsWithValues: object): string;
     static getArgsWithValues(passedArgs: object): object;
 }
-declare type TEvent = keyof HTMLElementEventMap;
-declare type TEventFunctionMap<K extends TEvent> = {
-    [P in K]?: (event: HTMLElementEventMap[P]) => void;
-};
-declare type HTMLTag = keyof HTMLElementTagNameMap;
-declare type QuerySelector = HTMLTag | string;
-interface BaseElemConstructor {
-    id?: string;
-    cls?: string;
-}
-interface SubElemConstructor extends BaseElemConstructor {
-    text?: string;
-}
-interface ImgConstructor extends BaseElemConstructor {
-    src?: string;
-}
-interface AnchorConstructor extends SubElemConstructor {
-    href?: string;
-}
-interface SvgConstructor extends BaseElemConstructor {
-    htmlElement?: SVGElement;
-}
-declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
-declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
-interface CssOptions extends PartialCssStyleDeclaration {
-    animationDirection?: AnimationDirection;
-    animationFillMode?: AnimationFillMode;
-    animationIterationCount?: number;
-    animationPlayState?: AnimationPlayState;
-    animationTimingFunction?: AnimationTimingFunction;
-    opacity?: string | number;
-    padding?: string | number;
-    paddingBottom?: string | number;
-    paddingLeft?: string | number;
-    paddingRight?: string | number;
-    paddingTop?: string | number;
-    preload?: "auto" | string;
-    width?: string | number;
-}
-declare type CubicBezierFunction = [number, number, number, number];
-declare type Jumpterm = 'jump-start' | 'jump-end' | 'jump-none' | 'jump-both' | 'start' | 'end';
-/**Displays an animation iteration along n stops along the transition, displaying each stop for equal lengths of time.
- * For example, if n is 5,  there are 5 steps.
- * Whether the animation holds temporarily at 0%, 20%, 40%, 60% and 80%, on the 20%, 40%, 60%, 80% and 100%, or makes 5 stops between the 0% and 100% along the animation, or makes 5 stops including the 0% and 100% marks (on the 0%, 25%, 50%, 75%, and 100%) depends on which of the following jump terms is used*/
-declare type StepsFunction = [number, Jumpterm];
-declare type AnimationTimingFunction = 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'step-start' | 'step-end' | StepsFunction | CubicBezierFunction;
-declare type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
-declare type AnimationFillMode = 'none' | 'forwards' | 'backwards' | 'both';
-interface TransformOptions {
-    matrix?: [number, number, number, number, number, number];
-    matrix3d?: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number];
-    perspective?: string;
-    rotate?: string;
-    rotate3d?: [number, number, number, string];
-    rotateX?: string;
-    rotateY?: string;
-    rotateZ?: string;
-    scale?: number;
-    scale3d?: [number, number, number];
-    scaleX?: [number, number, number];
-    scaleY?: [number, number, number];
-    skew?: [string, string];
-    skewX?: string;
-    skewY?: string;
-    translate?: [string, string];
-    translate3d?: [string, string, string];
-    translateX?: string;
-    translateY?: string;
-    translateZ?: string;
-}
-declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
-interface AnimateOptions {
-    delay?: string;
-    direction?: AnimationDirection;
-    duration: string;
-    fillMode?: AnimationFillMode;
-    iterationCount?: number;
-    name: string;
-    playState?: AnimationPlayState;
-    /** Also accepts:
-     * cubic-bezier(p1, p2, p3, p4)
-     * 'ease' == 'cubic-bezier(0.25, 0.1, 0.25, 1.0)'
-     * 'linear' == 'cubic-bezier(0.0, 0.0, 1.0, 1.0)'
-     * 'ease-in' == 'cubic-bezier(0.42, 0, 1.0, 1.0)'
-     * 'ease-out' == 'cubic-bezier(0, 0, 0.58, 1.0)'
-     * 'ease-in-out' == 'cubic-bezier(0.42, 0, 0.58, 1.0)'
-     * */
-    timingFunction?: AnimationTimingFunction;
-}
-declare type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
 declare class BetterHTMLElement {
-    protected _htmlElement: HTMLElement;
+    protected _htmlElement: HTMLElementAndSomeMore;
     private readonly _isSvg;
     private readonly _listeners;
     private _cachedChildren;
@@ -124,13 +34,13 @@ declare class BetterHTMLElement {
     });
     /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
     constructor({ htmlElement, text, cls, children }: {
-        htmlElement: HTMLElement;
+        htmlElement: HTMLElementAndSomeMore;
         text?: string;
         cls?: string;
         children?: TChildrenObj;
     });
     /**Return the wrapped HTMLElement*/
-    readonly e: HTMLElement;
+    get e(): HTMLElementAndSomeMore;
     /**Sets `this._htmlElement` to `newHtmlElement._htmlElement`.
      * Resets `this._cachedChildren` and caches `newHtmlElement._cachedChildren`.
      * Adds event listeners from `newHtmlElement._listeners`, while keeping `this._listeners`.*/
@@ -211,12 +121,13 @@ declare class BetterHTMLElement {
     /**For each `[key, selector]` pair, where `selector` is either an `HTMLTag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
      * @example
      * // Using `cacheChildren` directly
+     * const navbar = elem({ id: 'navbar' });
      * navbar.cacheChildren({ home: '.navbar-item-home', about: '.navbar-item-about' });
      * navbar.home.toggleClass("selected");
      * navbar.about.css(...);
      * @example
      * // Using `cacheChildren` indirectly through `children` constructor option
-     * elem({query: '#navbar', children: { home: '.navbar-item-home', about: '.navbar-item-about' }});
+     * const navbar = elem({ id: 'navbar', children: { home: '.navbar-item-home', about: '.navbar-item-about' }});
      * navbar.home.toggleClass("selected");
      * navbar.about.css(...);
      * @see this.child*/
@@ -225,6 +136,7 @@ declare class BetterHTMLElement {
      * extract `this.child(subselector)`, store it in `this[key]`, then call `this[key].cacheChildren` passing the recursive object.
      * @example
      * // Using `cacheChildren` directly
+     * const navbar = elem({ id: 'navbar' });
      * navbar.cacheChildren({
      *      home: {
      *          '.navbar-item-home': {
@@ -238,7 +150,7 @@ declare class BetterHTMLElement {
      * navbar.home.support.pointerdown(...);
      * @example
      * // Using `cacheChildren` indirectly through `children` constructor option
-     * elem({query: '#navbar', children: {
+     * const navbar = elem({query: '#navbar', children: {
      *      home: {
      *          '.navbar-item-home': {
      *              news: '.navbar-subitem-news,
@@ -251,6 +163,20 @@ declare class BetterHTMLElement {
      * navbar.home.support.pointerdown(...);
      * @see this.child*/
     cacheChildren(keySelectorObj: TRecMap<QuerySelector>): BetterHTMLElement;
+    /**For each `[key, selector]` pair, where `selector` is a `BetterHTMLElement`, store it in `this[key]`.
+     * @example
+     * // Using `cacheChildren` directly
+     * const home = elem({ query: '.navbar-item-home' });
+     * const navbar = elem({ id: 'navbar' });
+     * navbar.cacheChildren({ home });
+     * navbar.home.toggleClass("selected");
+     * @example
+     * // Using `cacheChildren` indirectly through `children` constructor option
+     * const home = elem({ query: '.navbar-item-home' });
+     * const navbar = elem({id: 'navbar', children: { home }});
+     * navbar.home.toggleClass("selected");
+     * @see this.child*/
+    cacheChildren(keySelectorObj: TRecMap<BetterHTMLElement>): BetterHTMLElement;
     /**Remove all children from DOM*/
     empty(): this;
     /**Remove element from DOM*/
@@ -272,6 +198,10 @@ declare class BetterHTMLElement {
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
     /**@deprecated*/
     one(): void;
+    /**Remove `event` from wrapped element's event listeners, but keep the removed listener in cache.
+     * This is useful for later unblocking*/
+    blockListener(event: TEvent): this;
+    unblockListener(event: TEvent): this;
     /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
     /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
@@ -400,7 +330,7 @@ declare function elem({ query, text, cls, children }: {
 }): BetterHTMLElement;
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
 declare function elem({ htmlElement, text, cls, children }: {
-    htmlElement: HTMLElement;
+    htmlElement: HTMLElementAndSomeMore;
     text?: string;
     cls?: string;
     children?: TChildrenObj;
@@ -423,6 +353,99 @@ interface TRecMap<T> {
     [s: string]: T | TRecMap<T>;
     [s: number]: T | TRecMap<T>;
 }
+declare type TEvent = keyof HTMLElementEventMap;
+declare type TEventFunctionMap<K extends TEvent> = {
+    [P in K]?: (event: HTMLElementEventMap[P]) => void;
+};
+declare type HTMLTag = keyof HTMLElementTagNameMap;
+declare type QuerySelector = HTMLTag | string;
+declare type HTMLElementAndSomeMore = HTMLElement | Window | Document;
+interface BaseElemConstructor {
+    id?: string;
+    cls?: string;
+}
+interface SubElemConstructor extends BaseElemConstructor {
+    text?: string;
+}
+interface ImgConstructor extends BaseElemConstructor {
+    src?: string;
+}
+interface AnchorConstructor extends SubElemConstructor {
+    href?: string;
+}
+interface SvgConstructor extends BaseElemConstructor {
+    htmlElement?: SVGElement;
+}
+declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
+declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
+interface CssOptions extends PartialCssStyleDeclaration {
+    animationDirection?: AnimationDirection;
+    animationFillMode?: AnimationFillMode;
+    animationIterationCount?: number;
+    animationPlayState?: AnimationPlayState;
+    animationTimingFunction?: AnimationTimingFunction;
+    opacity?: string | number;
+    padding?: string | number;
+    paddingBottom?: string | number;
+    paddingLeft?: string | number;
+    paddingRight?: string | number;
+    paddingTop?: string | number;
+    preload?: "auto" | string;
+    width?: string | number;
+}
+declare type CubicBezierFunction = [number, number, number, number];
+declare type Jumpterm = 'jump-start' | 'jump-end' | 'jump-none' | 'jump-both' | 'start' | 'end';
+/**Displays an animation iteration along n stops along the transition, displaying each stop for equal lengths of time.
+ * For example, if n is 5,  there are 5 steps.
+ * Whether the animation holds temporarily at 0%, 20%, 40%, 60% and 80%, on the 20%, 40%, 60%, 80% and 100%, or makes 5 stops between the 0% and 100% along the animation, or makes 5 stops including the 0% and 100% marks (on the 0%, 25%, 50%, 75%, and 100%) depends on which of the following jump terms is used*/
+declare type StepsFunction = [number, Jumpterm];
+declare type AnimationTimingFunction = 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'step-start' | 'step-end' | StepsFunction | CubicBezierFunction;
+declare type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
+declare type AnimationFillMode = 'none' | 'forwards' | 'backwards' | 'both';
+interface TransformOptions {
+    matrix?: [number, number, number, number, number, number];
+    matrix3d?: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number];
+    perspective?: string;
+    rotate?: string;
+    rotate3d?: [number, number, number, string];
+    rotateX?: string;
+    rotateY?: string;
+    rotateZ?: string;
+    scale?: number;
+    scale3d?: [number, number, number];
+    scaleX?: [number, number, number];
+    scaleY?: [number, number, number];
+    skew?: [string, string];
+    skewX?: string;
+    skewY?: string;
+    translate?: [string, string];
+    translate3d?: [string, string, string];
+    translateX?: string;
+    translateY?: string;
+    translateZ?: string;
+}
+declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
+interface AnimateOptions {
+    delay?: string;
+    direction?: AnimationDirection;
+    duration: string;
+    fillMode?: AnimationFillMode;
+    iterationCount?: number;
+    name: string;
+    playState?: AnimationPlayState;
+    /** Also accepts:
+     * cubic-bezier(p1, p2, p3, p4)
+     * 'ease' == 'cubic-bezier(0.25, 0.1, 0.25, 1.0)'
+     * 'linear' == 'cubic-bezier(0.0, 0.0, 1.0, 1.0)'
+     * 'ease-in' == 'cubic-bezier(0.42, 0, 1.0, 1.0)'
+     * 'ease-out' == 'cubic-bezier(0, 0, 0.58, 1.0)'
+     * 'ease-in-out' == 'cubic-bezier(0.42, 0, 0.58, 1.0)'
+     * */
+    timingFunction?: AnimationTimingFunction;
+}
+declare type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
+declare function assertIsHTMLElement(val: any): asserts val is HTMLElement;
+declare function assertIsNode(val: any): asserts val is Node;
 declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
 declare function enumerate<T>(obj: T): Enumerated<T>;
 declare function wait(ms: number): Promise<any>;
