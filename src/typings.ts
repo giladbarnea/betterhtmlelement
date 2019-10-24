@@ -1,3 +1,5 @@
+type BHE = BetterHTMLElement;
+
 interface TMap<T> {
     [s: string]: T;
     
@@ -18,23 +20,34 @@ interface TMapNew<T> {
     
 }
 
-type TEventMap<T> = T extends HTMLElement ? HTMLElementEventMap
-    : T extends Window ? WindowEventMap
+type Enumerated<T> =
+    T extends (infer U)[] ? [number, U][]
+        : T extends TMap<(infer U)> ? [keyof T, U][]
+        : [keyof T, T[keyof T]][];
+type HTMLElementOrWindowOrDocument = HTMLElement | Window | Document;
+
+
+// EventMap<HTMLElement> = HTMLElementEventMap  = { ..., "touchstart": TouchEvent, ... }
+type EventMap<T extends HTMLElementOrWindowOrDocument> =
+    T extends HTMLElement ? HTMLElementEventMap
+        : T extends Window ? WindowEventMap
         : T extends Document ? DocumentEventMap
             : never;
-type TEvent<T> = keyof TEventMap<T>;
-// type TEvent = keyof HTMLElementEventMap;
-/*type TEventFunctionMap<K extends TEvent> = {
-    [P in K]?: (event: HTMLElementEventMap[P]) => void;
-};*/
-type TEventFunctionMap<T> = {
-    [P in TEvent<T>]?: (event: TEventMap<T>[P]) => void;
+
+// TEvent<HTMLElement> = ... | "touchstart" | ...
+type TEvent<T extends HTMLElementOrWindowOrDocument> = keyof EventMap<T>;
+
+
+// EventFunctionMap<HTMLElement> = { ..., "touchstart": (event: TouchEvent) => void, ... }
+type EventFunctionMap<T extends HTMLElementOrWindowOrDocument> = {
+    [P in TEvent<T>]?: (event: EventMap<T>[P]) => void;
 };
 
-type HTMLTag = keyof HTMLElementTagNameMap;
-type QuerySelector = HTMLTag | string;
 
-type HTMLElementAndSomeMore = HTMLElement | Window | Document;
+type Tag = keyof HTMLElementTagNameMap
+type QuerySelector = Tag | string;
+
+type ChildrenObj = TMapNew<Tag>
 
 interface BaseElemConstructor {
     id?: string;
@@ -42,7 +55,7 @@ interface BaseElemConstructor {
 }
 
 interface SubElemConstructor extends BaseElemConstructor {
-    text?: string;
+    text?: string | number;
 }
 
 interface ImgConstructor extends BaseElemConstructor {
@@ -57,11 +70,17 @@ interface SvgConstructor extends BaseElemConstructor {
     htmlElement?: SVGElement;
 }
 
-type OmittedCssProps = "animationDirection"
+type FnReturns<T> = (...args: any[]) => T;
+type AnyFunction = FnReturns<any>
+type ReturnBoolean = FnReturns<boolean>
+
+type OmittedCssProps =
+    "animationDirection"
     | "animationFillMode"
     | "animationIterationCount"
     | "animationPlayState"
     | "animationTimingFunction"
+    | "bottom"
     | "opacity"
     | "padding"
     | "paddingBottom"
@@ -69,7 +88,7 @@ type OmittedCssProps = "animationDirection"
     | "paddingRight"
     | "paddingTop"
     | "preload"
-    | "width"
+    | "width";
 type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 
 interface CssOptions extends PartialCssStyleDeclaration {
@@ -78,6 +97,7 @@ interface CssOptions extends PartialCssStyleDeclaration {
     animationIterationCount?: number;
     animationPlayState?: AnimationPlayState;
     animationTimingFunction?: AnimationTimingFunction;
+    bottom?: string | number;
     opacity?: string | number;
     padding?: string | number;
     paddingBottom?: string | number;
@@ -155,5 +175,5 @@ interface AnimateOptions {
     timingFunction?: AnimationTimingFunction;
 }
 
-type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
+
 

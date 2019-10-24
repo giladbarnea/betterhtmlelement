@@ -1,22 +1,3 @@
-function assertIsHTMLElement(val: any): asserts val is HTMLElement {
-    if (!(val instanceof HTMLElement)) {
-        console.log({val});
-        throw new TypeError(`Not instanceof HTMLElement`)
-    }
-}
-
-function assertIsNode(val: any): asserts val is Node {
-    if (!(val instanceof Node)) {
-        console.log({val});
-        throw new TypeError(`Not instanceof Node`)
-    }
-}
-
-type Enumerated<T> =
-    T extends (infer U)[] ? [number, U][]
-        : T extends TMap<(infer U)> ? [keyof T, U][]
-        : T extends boolean ? never : any;
-
 function enumerate<T>(obj: T): Enumerated<T> {
     // undefined    []
     // {}           []
@@ -35,10 +16,9 @@ function enumerate<T>(obj: T): Enumerated<T> {
         obj === undefined
         || isEmptyObj(obj)
         || isEmptyArr(obj)
-        // @ts-ignore
         || obj === ""
     ) {
-        return [] as Enumerated<T>;
+        return [] as KVPairs<T>;
     }
     
     if (
@@ -61,7 +41,7 @@ function enumerate<T>(obj: T): Enumerated<T> {
             array.push([prop, obj[prop]]);
         }
     }
-    return array as Enumerated<T>;
+    return array as KVPairs<T>;
 }
 
 
@@ -73,11 +53,10 @@ let undefined0: undefined;
 let null0: null = null;
 let boolean0: boolean = true;
 
-let MyFoo = enumerate(undefined0);
-if (MyFoo === true) {
-    console.log('hi');
-}
-*/
+let MyFoo = enumerate(arr0);
+for (let [k, v] of MyFoo) {
+
+}*/
 
 
 function wait(ms: number): Promise<any> {
@@ -97,10 +76,25 @@ function wait(ms: number): Promise<any> {
     
 }
 */
+function isFoo<T extends HTMLElementOrWindowOrDocument>(val): val is EventFunctionMap<T> {
+    return val instanceof HTMLElement;
+}
 
-// true for string
+declare function assertIsFoo<T extends HTMLElementOrWindowOrDocument>(val): asserts val is EventFunctionMap<T>;
+
+function isNode(val): val is Node {
+    return val instanceof Node
+}
+
+function isBHE(val): val is BetterHTMLElement {
+    return val instanceof BetterHTMLElement
+}
+
+declare function isMap<T>(obj): obj is TMap<T>;
+
+
 function isArray<T>(obj): obj is Array<T> {
-    return obj && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+    return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
 
 function isEmptyArr(collection): boolean {
@@ -108,11 +102,14 @@ function isEmptyArr(collection): boolean {
 }
 
 function isEmptyObj(obj): boolean {
-    return isObject(obj) && Object.keys(obj).length === 0
+    return isObject(obj) && getLength(obj) === 0
 }
 
-type TReturnBoolean = (s: string) => boolean;
-type AnyFunction = (...args: any[]) => any;
+function isEmpty(obj): boolean {
+    // undefined == null
+    if (obj == null) return true;
+    return getLength(Object.keys(obj)) === 0
+}
 
 function isFunction(fn: AnyFunction): fn is AnyFunction {
     return fn && {}.toString.call(fn) === '[object Function]'
@@ -120,13 +117,14 @@ function isFunction(fn: AnyFunction): fn is AnyFunction {
 
 
 // *  underscore.js
-function isObject(obj): boolean {
+function isObject(obj): obj is object {
     return typeof obj === 'object' && !!obj;
 }
 
-function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T] {
+// function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T] {
+function shallowProperty<T>(key: string): (obj: T) => T extends null | undefined ? undefined : T[keyof T] {
     return function (obj) {
-        return obj == null ? void 0 : obj[key];
+        return obj?.[key];
     };
 }
 
@@ -167,4 +165,29 @@ function extend(sup, child) {
     return proxy;
 }
 
-new BetterWindow().e;
+
+/*new BetterHTMLElement({tag: 'div'}).on({
+    
+    copy: () => {
+    },
+    animationend: () => {
+    },
+    hashchange: () => {
+    },
+    
+});
+new BetterWindow().on({
+    beforeprint: () => {
+    },
+    copy: () => {
+    },
+    animationend: () => {
+    },
+    hashchange: () => {
+    },
+    
+    
+});*/
+new BetterHTMLElement({id: 'lol'}).cacheChildren({hi: {wow: "a"}})
+
+

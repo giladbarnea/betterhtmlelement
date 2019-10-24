@@ -1,17 +1,31 @@
-abstract class BaseBHE<T> {
+abstract class AbstractBHE<T extends HTMLElementOrWindowOrDocument> {
     protected _htmlElement: T;
-    private readonly _listeners: TEventFunctionMap<T> = {};
+    protected readonly _listeners: EventFunctionMap<T> = {};
     
     /**Return the wrapped element*/
     get e(): T {
         return this._htmlElement;
     }
     
-    /**@deprecated*/
-    is(element: BetterHTMLElement) {
+    // ***  Events
+    on(eventFunctionMap: EventFunctionMap<T>, options?: AddEventListenerOptions): this {
+        assertIsFoo(eventFunctionMap);
+        for (let [evType, evFn] of enumerate(eventFunctionMap)) {
+            
+            const _f = function _f(evt) {
+                evFn(evt);
+            };
+            this.e.addEventListener(evType, _f, options);
+            this._listeners[evType] = _f;
+        }
+        return this;
+        
+    }
+    
+    /*is(element: BetterHTMLElement) {
         // https://api.jquery.com/is/
         throw new Error("NOT IMPLEMENTED");
-    }
+    }*/
     
     /*
         animate(opts: AnimateOptions) {
@@ -21,51 +35,125 @@ abstract class BaseBHE<T> {
     */
 }
 
-class BetterWindow extends BaseBHE<Window> {
+abstract class AbstractNode<T extends HTMLElement | Document> extends AbstractBHE<T> {
+    protected _cachedChildren: TMap<BHE> = {};
+    
+    protected _cache(key: string, child: BHE) {
+        this[key] = child;
+        this._cachedChildren[key] = child;
+    }
+    
+    // ***  Nodes
+    /**Insert at least one `node` after the last child of `this`.
+     * Any `node` can be either a `BetterHTMLElement`, a vanilla `Node`,
+     * a `{someKey: BetterHTMLElement}` pairs object, or a `[someKey, BetterHTMLElement]` tuple.*/
+    append(...nodes: Array<BHE | T | TMap<BHE> | [string, BHE]>): this {
+        for (let node of nodes) {
+            if (isBHE(node)) {
+                this.e.append(node.e);
+            } else if (isNode(node)) {
+                this.e.append(node);
+            } else if (isArray(node)) {
+                this.cacheAppend([node]); // node: [string, BHE]
+            } else {
+                this.cacheAppend(node) // node: TMap<BHE>
+            }
+        }
+        return this;
+        
+    }
+    
+    /**For each `{ "key": child }` pair, `append(child)` and store it in `this[key]`. */
+    cacheAppend(bheMap: TMap<BHE>): this
+    /**For each `[key, child]` tuple, `append(child)` and store it in `this[key]`. */
+    cacheAppend(keyBHETuples: Array<[string, BHE]>): this
+    cacheAppend(obj) {
+        const _cacheAppend = (_key: string, _child: BHE) => {
+            this.append(_child);
+            this._cache(_key, _child);
+        };
+        if (isArray<[string, BHE]>(obj)) {
+            for (let [key, child] of obj)
+                _cacheAppend(key, child);
+        } else if (isMap<BHE>(obj)) {
+            for (let [key, child] of enumerate(obj))
+                _cacheAppend(key, child);
+        }
+        return this;
+    }
+    
+    /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
+    appendTo(node: BHE | T): this {
+        if (isBHE(node))
+            node.e.append(this.e);
+        else
+            node.append(this.e);
+        
+        return this;
+    }
+    
+    replaceChild(newChild: BHE | Node, oldChild: BHE | Node): this {
+        let _newChild = isBHE(newChild) ? newChild.e : newChild;
+        let _oldChild = isBHE(oldChild) ? oldChild.e : oldChild;
+        this.e.replaceChild(_newChild, _oldChild);
+        return this;
+    }
+    
+    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
+    child(selector: Tag): BHE {
+        return new BetterHTMLElement({htmlElement: this.e.querySelector(selector)});
+    }
     
     
-    constructor() {
-        super();
+    /**Return a `BetterHTMLElement` list of children [selected by `selector`, if specified].  */
+    children(selector?: Tag): BHE[] {
+        let _childrenVanilla;
+        let _childrenCollection;
+        if (selector === undefined) {
+            _childrenCollection = this.e.children;
+        } else {
+            _childrenCollection = this.e.querySelectorAll(selector);
+        }
+        _childrenVanilla = Array.from(_childrenCollection);
+        const toElem = (c: HTMLElement) => new BetterHTMLElement({htmlElement: c});
+        return _childrenVanilla.map(toElem);
     }
     
     
 }
 
+class BetterWindow extends AbstractBHE<Window> {
+    constructor() {
+        super();
+    }
+}
+
+class BetterDocument extends AbstractNode<Document> {
+    constructor() {
+        super();
+    }
+}
+
+
 // TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
 // maybe use https://www.typescriptlang.org/docs/handbook/utility-types.html#thistypet
 // extends HTMLElement: https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/upgrade#Examples
-class BetterHTMLElement {
-    protected _htmlElement: HTMLElement;
+class BetterHTMLElement extends AbstractNode<HTMLElement> {
+    // protected _htmlElement: HTMLElement;
     private readonly _isSvg: boolean = false;
-    private readonly _listeners: TEventFunctionMap<TEvent> = {};
-    private _cachedChildren: TMap<BetterHTMLElement> = {};
     
-    /*[Symbol.toPrimitive](hint) {
-        console.log('from toPrimitive, hint: ', hint, '\nthis: ', this);
-        return this._htmlElement;
-    }
-    
-    valueOf() {
-        console.log('from valueOf, this: ', this);
-        return this;
-    }
-    
-    toString() {
-        console.log('from toString, this: ', this);
-        return this;
-    }
-    */
     
     // TODO: query should also be a predicate function
     /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
-    constructor({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string });
+    constructor({tag, text, cls}: { tag: Tag, text?: string | number, cls?: string });
     /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: TChildrenObj });
+    constructor({id, text, cls, children}: { id: string, text?: string | number, cls?: string, children?: ChildrenObj });
     /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: TChildrenObj });
+    constructor({query, text, cls, children}: { query: QuerySelector, text?: string | number, cls?: string, children?: ChildrenObj });
     /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: TChildrenObj });
+    constructor({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string | number, cls?: string, children?: ChildrenObj });
     constructor(elemOptions) {
+        super();
         const {tag, id, htmlElement, text, query, children, cls} = elemOptions;
         
         if ([tag, id, htmlElement, query].filter(x => x !== undefined).length > 1) {
@@ -113,7 +201,6 @@ class BetterHTMLElement {
         
         if (children !== undefined)
             this.cacheChildren(children);
-        
         // Object.assign(this, proxy);
         /*const that = this;
         return new Proxy(this, {
@@ -131,10 +218,6 @@ class BetterHTMLElement {
         */
     }
     
-    /**Return the wrapped HTMLElement*/
-    get e() {
-        return this._htmlElement;
-    }
     
     /**Sets `this._htmlElement` to `newHtmlElement._htmlElement`.
      * Resets `this._cachedChildren` and caches `newHtmlElement._cachedChildren`.
@@ -143,7 +226,7 @@ class BetterHTMLElement {
     /**Sets `this._htmlElement` to `newHtmlElement`.
      * Keeps `this._listeners`.
      * NOTE: this reinitializes `this._cachedChildren` and all event listeners belonging to `newHtmlElement` are lost. Pass a `BetterHTMLElement` to keep them.*/
-    wrapSomethingElse(newHtmlElement: Node): this
+    wrapSomethingElse(newHtmlElement: HTMLElement): this
     wrapSomethingElse(newHtmlElement) {
         this._cachedChildren = {};
         if (newHtmlElement instanceof BetterHTMLElement) {
@@ -244,7 +327,7 @@ class BetterHTMLElement {
     /**`.className = cls`*/
     class(cls: string): this;
     /**Return the first class that matches `cls` predicate.*/
-    class(cls: TReturnBoolean): string;
+    class(cls: ReturnBoolean): string;
     /**Return a string array of the element's classes (not a classList)*/
     class(): string[];
     class(cls?) {
@@ -254,7 +337,6 @@ class BetterHTMLElement {
             return Array.from(this.e.classList).find(cls);
         } else {
             if (this._isSvg) {
-                
                 // @ts-ignore
                 this.e.classList = [cls];
             } else {
@@ -271,12 +353,12 @@ class BetterHTMLElement {
         return this;
     }
     
-    removeClass(cls: TReturnBoolean, ...clses: TReturnBoolean[]): this;
+    removeClass(cls: ReturnBoolean, ...clses: ReturnBoolean[]): this;
     removeClass(cls: string, clses?: string[]): this;
     removeClass(cls, ...clses) {
         if (isFunction(cls)) {
-            this.e.classList.remove(this.class(<TReturnBoolean>cls));
-            for (let c of <TReturnBoolean[]>clses)
+            this.e.classList.remove(this.class(<ReturnBoolean>cls));
+            for (let c of <ReturnBoolean[]>clses)
                 this.e.classList.remove(this.class(c));
         } else {
             this.e.classList.remove(cls);
@@ -286,22 +368,22 @@ class BetterHTMLElement {
         return this;
     }
     
-    replaceClass(oldToken: TReturnBoolean, newToken: string): this;
+    replaceClass(oldToken: ReturnBoolean, newToken: string): this;
     replaceClass(oldToken: string, newToken: string): this
     replaceClass(oldToken, newToken) {
         if (isFunction(oldToken)) {
-            this.e.classList.replace(this.class(<TReturnBoolean>oldToken), newToken);
+            this.e.classList.replace(this.class(<ReturnBoolean>oldToken), newToken);
         } else {
             this.e.classList.replace(oldToken, newToken);
         }
         return this;
     }
     
-    toggleClass(cls: TReturnBoolean, force?: boolean): this
+    toggleClass(cls: ReturnBoolean, force?: boolean): this
     toggleClass(cls: string, force?: boolean): this
     toggleClass(cls, force) {
         if (isFunction(cls))
-            this.e.classList.toggle(this.class(<TReturnBoolean>cls), force);
+            this.e.classList.toggle(this.class(<ReturnBoolean>cls), force);
         else
             this.e.classList.toggle(cls, force);
         return this;
@@ -310,7 +392,7 @@ class BetterHTMLElement {
     /**Returns `this.e.classList.contains(cls)` */
     hasClass(cls: string): boolean
     /**Returns whether `this` has a class that matches passed function */
-    hasClass(cls: TReturnBoolean): boolean
+    hasClass(cls: ReturnBoolean): boolean
     hasClass(cls) {
         if (isFunction(cls)) {
             return this.class(cls) !== undefined;
@@ -330,14 +412,7 @@ class BetterHTMLElement {
             }
         }
         return this;
-        /*if (nodes[0] instanceof BetterHTMLElement)
-            for (let bhe of <BetterHTMLElement[]>nodes)
-                this.e.after(bhe.e);
-        else
-            for (let node of <(string | Node)[]>nodes)
-                this.e.after(node); // TODO: test what happens when passed strings
-        return this;
-        */
+        
     }
     
     /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
@@ -350,34 +425,6 @@ class BetterHTMLElement {
         return this;
     }
     
-    /**Insert at least one `node` after the last child of `this`.
-     * Any `node` can be either a `BetterHTMLElement`, a vanilla `Node`,
-     * a `{someKey: BetterHTMLElement}` pairs object, or a `[someKey, BetterHTMLElement]` tuple.*/
-    append(...nodes: Array<BetterHTMLElement | Node | TMap<BetterHTMLElement> | [string, BetterHTMLElement]>): this {
-        for (let node of nodes) {
-            if (node instanceof BetterHTMLElement) {
-                this.e.append(node.e);
-            } else if (node instanceof Node) {
-                this.e.append(node);
-            } else if (Array.isArray(node)) {
-                this.cacheAppend([node]);
-            } else {
-                this.cacheAppend(node)
-            }
-        }
-        return this;
-        
-    }
-    
-    /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
-    appendTo(node: BetterHTMLElement | HTMLElement): this {
-        if (node instanceof BetterHTMLElement)
-            node.e.append(this.e);
-        else
-            node.append(this.e);
-        
-        return this;
-    }
     
     /**Insert at least one `node` just before `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     before(...nodes: Array<BetterHTMLElement | Node>): this {
@@ -388,13 +435,7 @@ class BetterHTMLElement {
                 this.e.before(node);
         }
         return this;
-        /*if (nodes[0] instanceof BetterHTMLElement)
-            for (let bhe of <BetterHTMLElement[]>nodes)
-                this.e.before(bhe.e);
-        else
-            for (let node of <(string | Node)[]>nodes)
-                this.e.before(node); // TODO: test what happens when passed strings
-        return this;*/
+        
     }
     
     /**Insert `this` just before a `BetterHTMLElement` or a vanilla `Node`s.*/
@@ -406,69 +447,9 @@ class BetterHTMLElement {
         return this;
     }
     
-    // TODO: if append supports strings, so should this
-    replaceChild(newChild: Node, oldChild: Node): this;
-    replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
-    replaceChild(newChild, oldChild) {
-        this.e.replaceChild(newChild, oldChild);
-        return this;
-    }
-    
-    private _cache(key: string, child: BetterHTMLElement) {
-        this[key] = child;
-        this._cachedChildren[key] = child;
-    }
-    
-    /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
-    cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this
-    /**For each `[key, child]` tuple, `append(child)` and store it in `this[key]`. */
-    cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this
-    cacheAppend(keyChildPairs) {
-        const _cacheAppend = (_key: string, _child: BetterHTMLElement) => {
-            this.append(_child);
-            this._cache(_key, _child);
-        };
-        if (Array.isArray(keyChildPairs)) {
-            for (let [key, child] of keyChildPairs)
-                _cacheAppend(key, child);
-        } else {
-            for (let [key, child] of enumerate(keyChildPairs))
-                _cacheAppend(key, child);
-        }
-        return this;
-    }
-    
-    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child<K extends HTMLTag>(selector: K): BetterHTMLElement;
-    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child(selector: string): BetterHTMLElement;
-    child(selector) {
-        return new BetterHTMLElement({htmlElement: this.e.querySelector(selector)});
-    }
-    
-    
-    /**Return a `BetterHTMLElement` list of all children */
-    children(): BetterHTMLElement[];
-    /**Return a `BetterHTMLElement` list of all children selected by `selector` */
-    children<K extends HTMLTag>(selector: K): BetterHTMLElement[];
-    /**Return a `BetterHTMLElement` list of all children selected by `selector` */
-    children(selector: string | HTMLTag): BetterHTMLElement[];
-    children(selector?) {
-        let childrenVanilla;
-        let childrenCollection;
-        if (selector === undefined) {
-            childrenCollection = this.e.children;
-        } else {
-            childrenCollection = this.e.querySelectorAll(selector);
-        }
-        childrenVanilla = <HTMLElement[]>Array.from(childrenCollection);
-        const toElem = (c: HTMLElement) => new BetterHTMLElement({htmlElement: c});
-        return childrenVanilla.map(toElem);
-    }
-    
+    /** Returns a `BetterHTMLElement` copy of node. If deep is true, the copy also includes the node's descendants.*/
     clone(deep?: boolean): BetterHTMLElement {
-        // @ts-ignore
-        return new BetterHTMLElement({htmlElement: this.e.cloneNode(deep)});
+        return new BetterHTMLElement({htmlElement: this.e.cloneNode(deep) as HTMLElement});
     }
     
     /**For each `[key, selector]` pair, where `selector` is either an `HTMLTag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
@@ -484,7 +465,7 @@ class BetterHTMLElement {
      * navbar.home.toggleClass("selected");
      * navbar.about.css(...);
      * @see this.child*/
-    cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement
+    cacheChildren(queryMap: TMap<QuerySelector>): BHE
     /**For each `[key, selector]` pair, where `selector` is a recursive `{subselector: keySelectorObj}` object,
      * extract `this.child(subselector)`, store it in `this[key]`, then call `this[key].cacheChildren` passing the recursive object.
      * @example
@@ -515,7 +496,8 @@ class BetterHTMLElement {
      * navbar.home.news.css(...);
      * navbar.home.support.pointerdown(...);
      * @see this.child*/
-    cacheChildren(keySelectorObj: TRecMap<QuerySelector>): BetterHTMLElement
+    cacheChildren(recursiveQueryMap: TRecMap<QuerySelector>): BHE
+    cacheChildren(bheMap: TMap<BHE>): BHE
     /**For each `[key, selector]` pair, where `selector` is a `BetterHTMLElement`, store it in `this[key]`.
      * @example
      * // Using `cacheChildren` directly
@@ -529,22 +511,24 @@ class BetterHTMLElement {
      * const navbar = elem({id: 'navbar', children: { home }});
      * navbar.home.toggleClass("selected");
      * @see this.child*/
-    cacheChildren(keySelectorObj: TRecMap<BetterHTMLElement>): BetterHTMLElement
+    
+    cacheChildren(recursiveBHEMap: TRecMap<BHE>): BHE
     /**key: string. value: either "selector string" OR {"selector string": <recurse down>}*/
-    cacheChildren(keySelectorObj) {
-        for (let [key, selectorOrObj] of enumerate(keySelectorObj)) {
-            let type = typeof selectorOrObj;
-            if (type === 'object') {
-                if (selectorOrObj instanceof BetterHTMLElement) {
-                    this._cache(key, selectorOrObj)
+    cacheChildren(map) {
+        for (let [key, value] of enumerate(map)) {
+            let type = typeof value;
+            if (isObject(value)) {
+                if (isBHE(value)) {
+                    this._cache(key, value)
                 } else {
-                    let entries = Object.entries(<TMap<QuerySelector> | TRecMap<QuerySelector>>selectorOrObj);
+                    // let entries = Object.entries(<TMap<QuerySelector> | TRecMap<QuerySelector>>value);
+                    let entries = Object.entries(value);
                     if (entries[1] !== undefined) {
                         console.warn(
                             `cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
                                 key,
                                 "multiple selectors": entries.map(e => e[0]),
-                                selectorOrObj,
+                                value,
                                 this: this
                             }
                         );
@@ -556,9 +540,9 @@ class BetterHTMLElement {
                     this[key].cacheChildren(obj)
                 }
             } else if (type === "string") {
-                this._cache(key, this.child(selectorOrObj));
+                this._cache(key, this.child(value));
             } else {
-                console.warn(`cacheChildren, bad selectorOrObj type: "${type}". key: "${key}", value: "${selectorOrObj}". keySelectorObj:`, keySelectorObj,);
+                console.warn(`cacheChildren, bad value type: "${type}". key: "${key}", value: "${value}". map:`, map,);
             }
         }
         return this;
@@ -624,17 +608,6 @@ class BetterHTMLElement {
     
     // ***  Events
     
-    on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this {
-        // const that = this; // "this" changes inside function _f
-        for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
-            const _f = function _f(evt) {
-                evFn(evt);
-            };
-            this.e.addEventListener(evType, _f, options);
-            this._listeners[evType] = _f;
-        }
-        return this;
-    }
     
     /**@deprecated*/
     one() {
@@ -1158,13 +1131,13 @@ customElements.define('better-a', Anchor, {extends: 'a'});
 // customElements.define('better-svg', Svg, {extends: 'svg'});
 
 /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
-function elem({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string }): BetterHTMLElement;
+function elem({tag, text, cls}: { tag: QuerySelector, text?: string | number, cls?: string }): BetterHTMLElement;
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: TChildrenObj }): BetterHTMLElement;
+function elem({id, text, cls, children}: { id: string, text?: string | number, cls?: string, children?: ChildrenObj }): BetterHTMLElement;
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: TChildrenObj }): BetterHTMLElement;
+function elem({query, text, cls, children}: { query: QuerySelector, text?: string | number, cls?: string, children?: ChildrenObj }): BetterHTMLElement;
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: TChildrenObj }): BetterHTMLElement;
+function elem({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string | number, cls?: string, children?: ChildrenObj }): BetterHTMLElement;
 function elem(elemOptions): BetterHTMLElement {
     return new BetterHTMLElement(elemOptions);
 }
