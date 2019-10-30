@@ -7,10 +7,7 @@
 // function enumerate<T>(obj: T): T extends string[]
 //     ? [number, string][]
 //     : [keyof T, T[keyof T]][] {
-type Enumerated<T> =
-    T extends (infer U)[] ? [number, U][]
-        : T extends TMap<(infer U)> ? [keyof T, U][]
-        : T extends boolean ? never : any;
+
 
 function enumerate<T>(obj: T): Enumerated<T> {
     // undefined    []
@@ -106,8 +103,6 @@ function isEmptyObj(obj): boolean {
     return isObject(obj) && Object.keys(obj).length === 0
 }
 
-type TReturnBoolean = (s: string) => boolean;
-type AnyFunction = (...args: any[]) => any;
 
 function isFunction(fn: AnyFunction): fn is AnyFunction {
     return fn && {}.toString.call(fn) === '[object Function]'
