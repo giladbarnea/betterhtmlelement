@@ -605,6 +605,7 @@ class BetterHTMLElement {
     }
     
     /*
+    Chronology:
 	mousedown   touchstart	pointerdown
 	mouseenter		        pointerenter
 	mouseleave		        pointerleave

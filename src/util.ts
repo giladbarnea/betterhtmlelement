@@ -90,9 +90,9 @@ function wait(ms: number): Promise<any> {
 }
 */
 
-// true for string
+
 function isArray<T>(obj): obj is Array<T> {
-    return obj && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+    return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
 
 function isEmptyArr(collection): boolean {
