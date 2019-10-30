@@ -122,20 +122,22 @@ declare class BetterHTMLElement {
     /**For each `[key, selector]` pair, where `selector` is either an `HTMLTag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
      * @example
      * // Using `cacheChildren` directly
+     * const navbar = elem({ id: 'navbar' });
      * navbar.cacheChildren({ home: '.navbar-item-home', about: '.navbar-item-about' });
      * navbar.home.toggleClass("selected");
      * navbar.about.css(...);
      * @example
      * // Using `cacheChildren` indirectly through `children` constructor option
-     * elem({query: '#navbar', children: { home: '.navbar-item-home', about: '.navbar-item-about' }});
+     * const navbar = elem({ id: 'navbar', children: { home: '.navbar-item-home', about: '.navbar-item-about' }});
      * navbar.home.toggleClass("selected");
      * navbar.about.css(...);
      * @see this.child*/
-    cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement;
+    cacheChildren(queryMap: TMap<QuerySelector>): this;
     /**For each `[key, selector]` pair, where `selector` is a recursive `{subselector: keySelectorObj}` object,
      * extract `this.child(subselector)`, store it in `this[key]`, then call `this[key].cacheChildren` passing the recursive object.
      * @example
      * // Using `cacheChildren` directly
+     * const navbar = elem({ id: 'navbar' });
      * navbar.cacheChildren({
      *      home: {
      *          '.navbar-item-home': {
@@ -149,7 +151,7 @@ declare class BetterHTMLElement {
      * navbar.home.support.pointerdown(...);
      * @example
      * // Using `cacheChildren` indirectly through `children` constructor option
-     * elem({query: '#navbar', children: {
+     * const navbar = elem({query: '#navbar', children: {
      *      home: {
      *          '.navbar-item-home': {
      *              news: '.navbar-subitem-news,
@@ -161,7 +163,22 @@ declare class BetterHTMLElement {
      * navbar.home.news.css(...);
      * navbar.home.support.pointerdown(...);
      * @see this.child*/
-    cacheChildren(keySelectorObj: TRecMap<QuerySelector>): BetterHTMLElement;
+    cacheChildren(recursiveQueryMap: TRecMap<QuerySelector>): this;
+    cacheChildren(bheMap: TMap<BetterHTMLElement>): this;
+    /**For each `[key, selector]` pair, where `selector` is a `BetterHTMLElement`, store it in `this[key]`.
+     * @example
+     * // Using `cacheChildren` directly
+     * const home = elem({ query: '.navbar-item-home' });
+     * const navbar = elem({ id: 'navbar' });
+     * navbar.cacheChildren({ home });
+     * navbar.home.toggleClass("selected");
+     * @example
+     * // Using `cacheChildren` indirectly through `children` constructor option
+     * const home = elem({ query: '.navbar-item-home' });
+     * const navbar = elem({id: 'navbar', children: { home }});
+     * navbar.home.toggleClass("selected");
+     * @see this.child*/
+    cacheChildren(recursiveBHEMap: TRecMap<BetterHTMLElement>): this;
     /**Remove all children from DOM*/
     empty(): this;
     /**Remove element from DOM*/

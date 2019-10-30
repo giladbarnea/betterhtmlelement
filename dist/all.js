@@ -367,28 +367,36 @@ class BetterHTMLElement {
         return new BetterHTMLElement({ htmlElement: this.e.cloneNode(deep) });
     }
     /**key: string. value: either "selector string" OR {"selector string": <recurse down>}*/
-    cacheChildren(keySelectorObj) {
-        for (let [key, selectorOrObj] of enumerate(keySelectorObj)) {
-            if (typeof selectorOrObj === 'object') {
-                let entries = Object.entries(selectorOrObj);
-                if (entries[1] !== undefined) {
-                    console.warn(`cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
-                        key,
-                        "multiple selectors": entries.map(e => e[0]),
-                        selectorOrObj,
-                        this: this
-                    });
+    cacheChildren(map) {
+        for (let [key, value] of enumerate(map)) {
+            let type = typeof value;
+            if (isObject(value)) {
+                if (value instanceof BetterHTMLElement) {
+                    this._cache(key, value);
                 }
-                // only first because 1:1 for key:selector.
-                // (ie can't do {right: {.right: {...}, .right2: {...}})
-                let [selector, obj] = entries[0];
-                this._cache(key, this.child(selector));
-                // this[key] = this.child(selector);
-                this[key].cacheChildren(obj);
+                else {
+                    // let entries = Object.entries(<TMap<QuerySelector> | TRecMap<QuerySelector>>value);
+                    let entries = Object.entries(value);
+                    if (entries[1] !== undefined) {
+                        console.warn(`cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
+                            key,
+                            "multiple selectors": entries.map(e => e[0]),
+                            value,
+                            this: this
+                        });
+                    }
+                    // only first because 1:1 for key:selector.
+                    // (ie can't do {right: {.right: {...}, .right2: {...}})
+                    let [selector, obj] = entries[0];
+                    this._cache(key, this.child(selector));
+                    this[key].cacheChildren(obj);
+                }
+            }
+            else if (type === "string") {
+                this._cache(key, this.child(value));
             }
             else {
-                // this[key] = this.child(<QuerySelector>selectorOrObj);
-                this._cache(key, this.child(selectorOrObj));
+                console.warn(`cacheChildren, bad value type: "${type}". key: "${key}", value: "${value}". map:`, map);
             }
         }
         return this;
@@ -457,6 +465,7 @@ class BetterHTMLElement {
         throw new Error("NOT IMPLEMENTED");
     }
     /*
+    Chronology:
     mousedown   touchstart	pointerdown
     mouseenter		        pointerenter
     mouseleave		        pointerleave
@@ -948,9 +957,8 @@ function wait(ms) {
     
 }
 */
-// true for string
 function isArray(obj) {
-    return obj && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+    return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
 function isEmptyArr(collection) {
     return isArray(collection) && getLength(collection) === 0;
