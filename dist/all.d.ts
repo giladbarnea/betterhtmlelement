@@ -1,34 +1,203 @@
-/**Thrown when either too much or not enough arguments were passed. Prints what was expected and what was actually passed.*/
 declare class BadArgumentsAmountError extends Error {
-    /**@param expectedArgsNum - Being a number and not array, it implies function requires an exact number of args*/
     constructor(expectedArgsNum: number, passedArgs: object, details?: string);
-    /**@param expectedArgsNum - Being a 2-tuple and not a number, implies function requires between this and that number of args*/
     constructor(expectedArgsNum: [number, number], passedArgs: object, details?: string);
     static getArgNamesValues(argsWithValues: object): string;
     static getArgsWithValues(passedArgs: object): object;
 }
-declare type TEvent = keyof HTMLElementEventMap;
-declare type TEventFunctionMap<K extends TEvent> = {
-    [P in K]?: (event: HTMLElementEventMap[P]) => void;
-};
-declare type HTMLTag = keyof HTMLElementTagNameMap;
-declare type QuerySelector = HTMLTag | string;
-interface BaseElemConstructor {
-    id?: string;
-    cls?: string;
+declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
+declare class BetterHTMLElement {
+    protected _htmlElement: HTMLElement;
+    private readonly _isSvg;
+    private readonly _listeners;
+    private _cachedChildren;
+    constructor({ tag, text, cls }: {
+        tag: QuerySelector;
+        text?: string;
+        cls?: string;
+    });
+    constructor({ id, text, cls, children }: {
+        id: string;
+        text?: string;
+        cls?: string;
+        children?: ChildrenObj;
+    });
+    constructor({ query, text, cls, children }: {
+        query: QuerySelector;
+        text?: string;
+        cls?: string;
+        children?: ChildrenObj;
+    });
+    constructor({ htmlElement, text, cls, children }: {
+        htmlElement: HTMLElement;
+        text?: string;
+        cls?: string;
+        children?: ChildrenObj;
+    });
+    get e(): HTMLElement;
+    wrapSomethingElse(newHtmlElement: BetterHTMLElement): this;
+    wrapSomethingElse(newHtmlElement: Node): this;
+    html(html: string): this;
+    html(): string;
+    text(txt: string | number): this;
+    text(): string;
+    id(id: string): this;
+    id(): string;
+    css(css: Partial<CssOptions>): this;
+    css(css: string): string;
+    uncss(...removeProps: (keyof CssOptions)[]): this;
+    is(element: BetterHTMLElement): void;
+    class(cls: string): this;
+    class(cls: TReturnBoolean): string;
+    class(): string[];
+    addClass(cls: string, ...clses: string[]): this;
+    removeClass(cls: TReturnBoolean, ...clses: TReturnBoolean[]): this;
+    removeClass(cls: string, clses?: string[]): this;
+    replaceClass(oldToken: TReturnBoolean, newToken: string): this;
+    replaceClass(oldToken: string, newToken: string): this;
+    toggleClass(cls: TReturnBoolean, force?: boolean): this;
+    toggleClass(cls: string, force?: boolean): this;
+    hasClass(cls: string): boolean;
+    hasClass(cls: TReturnBoolean): boolean;
+    after(...nodes: Array<BetterHTMLElement | Node>): this;
+    insertAfter(node: BetterHTMLElement | HTMLElement): this;
+    append(...nodes: Array<BetterHTMLElement | Node | TMap<BetterHTMLElement> | [string, BetterHTMLElement]>): this;
+    appendTo(node: BetterHTMLElement | HTMLElement): this;
+    before(...nodes: Array<BetterHTMLElement | Node>): this;
+    insertBefore(node: BetterHTMLElement | HTMLElement): this;
+    replaceChild(newChild: Node, oldChild: Node): this;
+    replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
+    private _cache;
+    cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this;
+    cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this;
+    child<K extends HTMLTag>(selector: K): BetterHTMLElement;
+    child(selector: string): BetterHTMLElement;
+    children(): BetterHTMLElement[];
+    children<K extends HTMLTag>(selector: K): BetterHTMLElement[];
+    children(selector: string | HTMLTag): BetterHTMLElement[];
+    clone(deep?: boolean): BetterHTMLElement;
+    cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement;
+    cacheChildren(keySelectorObj: TRecMap<QuerySelector>): BetterHTMLElement;
+    empty(): this;
+    remove(): this;
+    find(): void;
+    first(): void;
+    last(): void;
+    next(): void;
+    not(): void;
+    parent(): void;
+    parents(): void;
+    on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
+    one(): void;
+    touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
+    pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this;
+    click(): this;
+    click(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+    blur(): this;
+    blur(fn: (event: FocusEvent) => any, options?: AddEventListenerOptions): this;
+    focus(): this;
+    focus(fn: (event: FocusEvent) => any, options?: AddEventListenerOptions): this;
+    change(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
+    contextmenu(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+    dblclick(): this;
+    dblclick(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+    mouseenter(): this;
+    mouseenter(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+    keydown(): this;
+    keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this;
+    keyup(): void;
+    keypress(): void;
+    hover(): void;
+    mousedown(): void;
+    mouseleave(): void;
+    mousemove(): void;
+    mouseout(): this;
+    mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+    mouseover(): this;
+    mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+    mouseup(): void;
+    transform(options: TransformOptions): Promise<unknown>;
+    off(event: TEvent): this;
+    allOff(): this;
+    attr(attrValPairs: TMap<string>): this;
+    attr(attributeName: string): string;
+    removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this;
+    data(key: string, parse?: boolean): string | TMap<string>;
+    fade(dur: number, to: 0 | 1): Promise<this>;
+    fadeOut(dur: number): Promise<this>;
+    fadeIn(dur: number): Promise<this>;
 }
-interface SubElemConstructor extends BaseElemConstructor {
+declare class Div extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLDivElement;
+    readonly e: HTMLDivElement;
+    constructor({ id, text, cls }?: SubElemConstructor);
+}
+declare class Paragraph extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLParagraphElement;
+    readonly e: HTMLParagraphElement;
+    constructor({ id, text, cls }?: SubElemConstructor);
+}
+declare class Span extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLSpanElement;
+    readonly e: HTMLSpanElement;
+    constructor({ id, text, cls }?: SubElemConstructor);
+}
+declare class Img extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLImageElement;
+    constructor({ id, src, cls }: ImgConstructor);
+    src(src: string): this;
+    src(): string;
+    readonly e: HTMLImageElement;
+}
+declare class Anchor extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLAnchorElement;
+    readonly e: HTMLAnchorElement;
+    constructor({ id, text, cls, href }?: AnchorConstructor);
+    href(): string;
+    href(val: string): this;
+    target(): string;
+    target(val: string): this;
+}
+declare function elem({ tag, text, cls }: {
+    tag: QuerySelector;
     text?: string;
-}
-interface ImgConstructor extends BaseElemConstructor {
-    src?: string;
-}
-interface AnchorConstructor extends SubElemConstructor {
-    href?: string;
-}
-interface SvgConstructor extends BaseElemConstructor {
-    htmlElement?: SVGElement;
-}
+    cls?: string;
+}): BetterHTMLElement;
+declare function elem({ id, text, cls, children }: {
+    id: string;
+    text?: string;
+    cls?: string;
+    children?: ChildrenObj;
+}): BetterHTMLElement;
+declare function elem({ query, text, cls, children }: {
+    query: QuerySelector;
+    text?: string;
+    cls?: string;
+    children?: ChildrenObj;
+}): BetterHTMLElement;
+declare function elem({ htmlElement, text, cls, children }: {
+    htmlElement: HTMLElement;
+    text?: string;
+    cls?: string;
+    children?: ChildrenObj;
+}): BetterHTMLElement;
+declare function span({ id, text, cls }?: SubElemConstructor): Span;
+declare function div({ id, text, cls }?: SubElemConstructor): Div;
+declare function img({ id, src, cls }?: ImgConstructor): Img;
+declare function paragraph({ id, text, cls }?: SubElemConstructor): Paragraph;
+declare function anchor({ id, text, cls, href }?: AnchorConstructor): Anchor;
+declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
+declare function enumerate<T>(obj: T): Enumerated<T>;
+declare function wait(ms: number): Promise<any>;
+declare function isArray<T>(obj: any): obj is Array<T>;
+declare function isEmptyArr(collection: any): boolean;
+declare function isEmptyObj(obj: any): boolean;
+declare type TReturnBoolean = (s: string) => boolean;
+declare type AnyFunction = (...args: any[]) => any;
+declare function isFunction(fn: AnyFunction): fn is AnyFunction;
+declare function isObject(obj: any): boolean;
+declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
+declare function getLength(collection: any): number;
+declare function extend(sup: any, child: any): any;
 declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
 declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 interface CssOptions extends PartialCssStyleDeclaration {
@@ -48,9 +217,6 @@ interface CssOptions extends PartialCssStyleDeclaration {
 }
 declare type CubicBezierFunction = [number, number, number, number];
 declare type Jumpterm = 'jump-start' | 'jump-end' | 'jump-none' | 'jump-both' | 'start' | 'end';
-/**Displays an animation iteration along n stops along the transition, displaying each stop for equal lengths of time.
- * For example, if n is 5,  there are 5 steps.
- * Whether the animation holds temporarily at 0%, 20%, 40%, 60% and 80%, on the 20%, 40%, 60%, 80% and 100%, or makes 5 stops between the 0% and 100% along the animation, or makes 5 stops including the 0% and 100% marks (on the 0%, 25%, 50%, 75%, and 100%) depends on which of the following jump terms is used*/
 declare type StepsFunction = [number, Jumpterm];
 declare type AnimationTimingFunction = 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'step-start' | 'step-end' | StepsFunction | CubicBezierFunction;
 declare type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
@@ -77,7 +243,6 @@ interface TransformOptions {
     translateY?: string;
     translateZ?: string;
 }
-declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
 interface AnimateOptions {
     delay?: string;
     direction?: AnimationDirection;
@@ -86,335 +251,24 @@ interface AnimateOptions {
     iterationCount?: number;
     name: string;
     playState?: AnimationPlayState;
-    /** Also accepts:
-     * cubic-bezier(p1, p2, p3, p4)
-     * 'ease' == 'cubic-bezier(0.25, 0.1, 0.25, 1.0)'
-     * 'linear' == 'cubic-bezier(0.0, 0.0, 1.0, 1.0)'
-     * 'ease-in' == 'cubic-bezier(0.42, 0, 1.0, 1.0)'
-     * 'ease-out' == 'cubic-bezier(0, 0, 0.58, 1.0)'
-     * 'ease-in-out' == 'cubic-bezier(0.42, 0, 0.58, 1.0)'
-     * */
     timingFunction?: AnimationTimingFunction;
 }
-declare type TChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
-declare class BetterHTMLElement {
-    protected _htmlElement: HTMLElement;
-    private readonly _isSvg;
-    private readonly _listeners;
-    private _cachedChildren;
-    /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
-    constructor({ tag, text, cls }: {
-        tag: QuerySelector;
-        text?: string;
-        cls?: string;
-    });
-    /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({ id, text, cls, children }: {
-        id: string;
-        text?: string;
-        cls?: string;
-        children?: TChildrenObj;
-    });
-    /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({ query, text, cls, children }: {
-        query: QuerySelector;
-        text?: string;
-        cls?: string;
-        children?: TChildrenObj;
-    });
-    /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({ htmlElement, text, cls, children }: {
-        htmlElement: HTMLElement;
-        text?: string;
-        cls?: string;
-        children?: TChildrenObj;
-    });
-    /**Return the wrapped HTMLElement*/
-    readonly e: HTMLElement;
-    /**Sets `this._htmlElement` to `newHtmlElement._htmlElement`.
-     * Resets `this._cachedChildren` and caches `newHtmlElement._cachedChildren`.
-     * Adds event listeners from `newHtmlElement._listeners`, while keeping `this._listeners`.*/
-    wrapSomethingElse(newHtmlElement: BetterHTMLElement): this;
-    /**Sets `this._htmlElement` to `newHtmlElement`.
-     * Keeps `this._listeners`.
-     * NOTE: this reinitializes `this._cachedChildren` and all event listeners belonging to `newHtmlElement` are lost. Pass a `BetterHTMLElement` to keep them.*/
-    wrapSomethingElse(newHtmlElement: Node): this;
-    /**Set the element's innerHTML*/
-    html(html: string): this;
-    /**Get the element's innerHTML*/
-    html(): string;
-    /**Set the element's innerText*/
-    text(txt: string | number): this;
-    /**Get the element's innerText*/
-    text(): string;
-    /**Set the id of the element*/
-    id(id: string): this;
-    /**Get the id of the element*/
-    id(): string;
-    /**For each `{<styleAttr>: <styleVal>}` pair, set the `style[styleAttr]` to `styleVal`.*/
-    css(css: Partial<CssOptions>): this;
-    /**Get `style[css]`*/
-    css(css: string): string;
-    /**Remove the value of the passed style properties*/
-    uncss(...removeProps: (keyof CssOptions)[]): this;
-    /**@deprecated*/
-    is(element: BetterHTMLElement): void;
-    /**`.className = cls`*/
-    class(cls: string): this;
-    /**Return the first class that matches `cls` predicate.*/
-    class(cls: TReturnBoolean): string;
-    /**Return a string array of the element's classes (not a classList)*/
-    class(): string[];
-    addClass(cls: string, ...clses: string[]): this;
-    removeClass(cls: TReturnBoolean, ...clses: TReturnBoolean[]): this;
-    removeClass(cls: string, clses?: string[]): this;
-    replaceClass(oldToken: TReturnBoolean, newToken: string): this;
-    replaceClass(oldToken: string, newToken: string): this;
-    toggleClass(cls: TReturnBoolean, force?: boolean): this;
-    toggleClass(cls: string, force?: boolean): this;
-    /**Returns `this.e.classList.contains(cls)` */
-    hasClass(cls: string): boolean;
-    /**Returns whether `this` has a class that matches passed function */
-    hasClass(cls: TReturnBoolean): boolean;
-    /**Insert at least one `node` just after `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
-    after(...nodes: Array<BetterHTMLElement | Node>): this;
-    /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
-    insertAfter(node: BetterHTMLElement | HTMLElement): this;
-    /**Insert at least one `node` after the last child of `this`.
-     * Any `node` can be either a `BetterHTMLElement`, a vanilla `Node`,
-     * a `{someKey: BetterHTMLElement}` pairs object, or a `[someKey, BetterHTMLElement]` tuple.*/
-    append(...nodes: Array<BetterHTMLElement | Node | TMap<BetterHTMLElement> | [string, BetterHTMLElement]>): this;
-    /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
-    appendTo(node: BetterHTMLElement | HTMLElement): this;
-    /**Insert at least one `node` just before `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
-    before(...nodes: Array<BetterHTMLElement | Node>): this;
-    /**Insert `this` just before a `BetterHTMLElement` or a vanilla `Node`s.*/
-    insertBefore(node: BetterHTMLElement | HTMLElement): this;
-    replaceChild(newChild: Node, oldChild: Node): this;
-    replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
-    private _cache;
-    /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
-    cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this;
-    /**For each `[key, child]` tuple, `append(child)` and store it in `this[key]`. */
-    cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this;
-    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child<K extends HTMLTag>(selector: K): BetterHTMLElement;
-    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child(selector: string): BetterHTMLElement;
-    /**Return a `BetterHTMLElement` list of all children */
-    children(): BetterHTMLElement[];
-    /**Return a `BetterHTMLElement` list of all children selected by `selector` */
-    children<K extends HTMLTag>(selector: K): BetterHTMLElement[];
-    /**Return a `BetterHTMLElement` list of all children selected by `selector` */
-    children(selector: string | HTMLTag): BetterHTMLElement[];
-    clone(deep?: boolean): BetterHTMLElement;
-    /**For each `[key, selector]` pair, where `selector` is either an `HTMLTag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
-     * @example
-     * // Using `cacheChildren` directly
-     * navbar.cacheChildren({ home: '.navbar-item-home', about: '.navbar-item-about' });
-     * navbar.home.toggleClass("selected");
-     * navbar.about.css(...);
-     * @example
-     * // Using `cacheChildren` indirectly through `children` constructor option
-     * elem({query: '#navbar', children: { home: '.navbar-item-home', about: '.navbar-item-about' }});
-     * navbar.home.toggleClass("selected");
-     * navbar.about.css(...);
-     * @see this.child*/
-    cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement;
-    /**For each `[key, selector]` pair, where `selector` is a recursive `{subselector: keySelectorObj}` object,
-     * extract `this.child(subselector)`, store it in `this[key]`, then call `this[key].cacheChildren` passing the recursive object.
-     * @example
-     * // Using `cacheChildren` directly
-     * navbar.cacheChildren({
-     *      home: {
-     *          '.navbar-item-home': {
-     *              news: '.navbar-subitem-news,
-     *              support: '.navbar-subitem-support'
-     *          }
-     *      }
-     *  });
-     * navbar.home.toggleClass("selected");
-     * navbar.home.news.css(...);
-     * navbar.home.support.pointerdown(...);
-     * @example
-     * // Using `cacheChildren` indirectly through `children` constructor option
-     * elem({query: '#navbar', children: {
-     *      home: {
-     *          '.navbar-item-home': {
-     *              news: '.navbar-subitem-news,
-     *              support: '.navbar-subitem-support'
-     *          }
-     *      }
-     *  }});
-     * navbar.home.toggleClass("selected");
-     * navbar.home.news.css(...);
-     * navbar.home.support.pointerdown(...);
-     * @see this.child*/
-    cacheChildren(keySelectorObj: TRecMap<QuerySelector>): BetterHTMLElement;
-    /**Remove all children from DOM*/
-    empty(): this;
-    /**Remove element from DOM*/
-    remove(): this;
-    /**@deprecated*/
-    find(): void;
-    /**@deprecated*/
-    first(): void;
-    /**@deprecated*/
-    last(): void;
-    /**@deprecated*/
-    next(): void;
-    /**@deprecated*/
-    not(): void;
-    /**@deprecated*/
-    parent(): void;
-    /**@deprecated*/
-    parents(): void;
-    on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
-    /**@deprecated*/
-    one(): void;
-    /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
-    touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
-    /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
-    pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this;
-    /**Simulate a click of the element. Useful for `<a>` elements.*/
-    click(): this;
-    /**Add a `click` event listener. You should probably use `pointerdown()` if on desktop, or `touchstart()` if on mobile.*/
-    click(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    /**Blur (unfocus) the element.*/
-    blur(): this;
-    /**Add a `blur` event listener*/
-    blur(fn: (event: FocusEvent) => any, options?: AddEventListenerOptions): this;
-    /**Focus the element.*/
-    focus(): this;
-    /**Add a `focus` event listener*/
-    focus(fn: (event: FocusEvent) => any, options?: AddEventListenerOptions): this;
-    /**Add a `change` event listener*/
-    change(fn: (event: Event) => any, options?: AddEventListenerOptions): this;
-    /**Add a `contextmenu` event listener*/
-    contextmenu(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    /**Simulate a double click of the element.*/
-    dblclick(): this;
-    /**Add a `dblclick` event listener*/
-    dblclick(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    /**Simulate a mouseenter event to the element.*/
-    mouseenter(): this;
-    /**Add a `mouseenter` event listener*/
-    mouseenter(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    /**Simulate a keydown event to the element.*/
-    keydown(): this;
-    /**Add a `keydown` event listener*/
-    keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this;
-    /**@deprecated*/
-    keyup(): void;
-    /**@deprecated*/
-    keypress(): void;
-    /**@deprecated*/
-    hover(): void;
-    /**@deprecated*/
-    mousedown(): void;
-    /**@deprecated*/
-    mouseleave(): void;
-    /**@deprecated*/
-    mousemove(): void;
-    /**Simulate a mouseout event to the element.*/
-    mouseout(): this;
-    /**Add a `mouseout` event listener*/
-    mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    /**Simulate a mouseover event to the element.*/
-    mouseover(): this;
-    /**Add a `mouseover` event listener*/
-    mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    /**@deprecated*/
-    mouseup(): void;
-    transform(options: TransformOptions): Promise<unknown>;
-    /** Remove the event listener of `event`, if exists.*/
-    off(event: TEvent): this;
-    allOff(): this;
-    /** For each `[attr, val]` pair, apply `setAttribute`*/
-    attr(attrValPairs: TMap<string>): this;
-    /** apply `getAttribute`*/
-    attr(attributeName: string): string;
-    /** `removeAttribute` */
-    removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this;
-    /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/
-    data(key: string, parse?: boolean): string | TMap<string>;
-    fade(dur: number, to: 0 | 1): Promise<this>;
-    fadeOut(dur: number): Promise<this>;
-    fadeIn(dur: number): Promise<this>;
-}
-declare class Div extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLDivElement;
-    readonly e: HTMLDivElement;
-    /**Create a Div element. Optionally set its id, text or cls.*/
-    constructor({ id, text, cls }?: SubElemConstructor);
-}
-declare class Paragraph extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLParagraphElement;
-    readonly e: HTMLParagraphElement;
-    /**Create a Paragraph element. Optionally set its id, text or cls.*/
-    constructor({ id, text, cls }?: SubElemConstructor);
-}
-declare class Span extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLSpanElement;
-    readonly e: HTMLSpanElement;
-    /**Create a Span element. Optionally set its id, text or cls.*/
-    constructor({ id, text, cls }?: SubElemConstructor);
-}
-declare class Img extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLImageElement;
-    /**Create an Img element. Optionally set its id, src or cls.*/
-    constructor({ id, src, cls }: ImgConstructor);
-    src(src: string): this;
-    src(): string;
-    readonly e: HTMLImageElement;
-}
-declare class Anchor extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLAnchorElement;
-    readonly e: HTMLAnchorElement;
-    /**Create an Anchor element. Optionally set its id, text, href or cls.*/
-    constructor({ id, text, cls, href }?: AnchorConstructor);
-    href(): string;
-    href(val: string): this;
-    target(): string;
-    target(val: string): this;
-}
-/**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
-declare function elem({ tag, text, cls }: {
-    tag: QuerySelector;
-    text?: string;
+interface BaseElemConstructor {
+    id?: string;
     cls?: string;
-}): BetterHTMLElement;
-/**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-declare function elem({ id, text, cls, children }: {
-    id: string;
+}
+interface SubElemConstructor extends BaseElemConstructor {
     text?: string;
-    cls?: string;
-    children?: TChildrenObj;
-}): BetterHTMLElement;
-/**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-declare function elem({ query, text, cls, children }: {
-    query: QuerySelector;
-    text?: string;
-    cls?: string;
-    children?: TChildrenObj;
-}): BetterHTMLElement;
-/**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-declare function elem({ htmlElement, text, cls, children }: {
-    htmlElement: HTMLElement;
-    text?: string;
-    cls?: string;
-    children?: TChildrenObj;
-}): BetterHTMLElement;
-/**Create an Span element. Optionally set its id, text or cls.*/
-declare function span({ id, text, cls }?: SubElemConstructor): Span;
-/**Create an Div element. Optionally set its id, text or cls.*/
-declare function div({ id, text, cls }?: SubElemConstructor): Div;
-/**Create an Img element. Optionally set its id, src or cls.*/
-declare function img({ id, src, cls }?: ImgConstructor): Img;
-/**Create a Paragraph element. Optionally set its id, text or cls.*/
-declare function paragraph({ id, text, cls }?: SubElemConstructor): Paragraph;
-/**Create an Anchor element. Optionally set its id, text, href or cls.*/
-declare function anchor({ id, text, cls, href }?: AnchorConstructor): Anchor;
+}
+interface ImgConstructor extends BaseElemConstructor {
+    src?: string;
+}
+interface AnchorConstructor extends SubElemConstructor {
+    href?: string;
+}
+interface SvgConstructor extends BaseElemConstructor {
+    htmlElement?: SVGElement;
+}
 interface TMap<T> {
     [s: string]: T;
     [s: number]: T;
@@ -423,16 +277,10 @@ interface TRecMap<T> {
     [s: string]: T | TRecMap<T>;
     [s: number]: T | TRecMap<T>;
 }
-declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
-declare function enumerate<T>(obj: T): Enumerated<T>;
-declare function wait(ms: number): Promise<any>;
-declare function isArray<T>(obj: any): obj is Array<T>;
-declare function isEmptyArr(collection: any): boolean;
-declare function isEmptyObj(obj: any): boolean;
-declare type TReturnBoolean = (s: string) => boolean;
-declare type AnyFunction = (...args: any[]) => any;
-declare function isFunction(fn: AnyFunction): fn is AnyFunction;
-declare function isObject(obj: any): boolean;
-declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
-declare function getLength(collection: any): number;
-declare function extend(sup: any, child: any): any;
+declare type TEvent = keyof HTMLElementEventMap;
+declare type TEventFunctionMap<K extends TEvent> = {
+    [P in K]?: (event: HTMLElementEventMap[P]) => void;
+};
+declare type HTMLTag = keyof HTMLElementTagNameMap;
+declare type QuerySelector = HTMLTag | string;
+declare type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;

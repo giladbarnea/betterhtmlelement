@@ -4,7 +4,7 @@
 	"description": "A Fast, intuitive, chainable wrapper for HTMLElement",
 	"main": "dist/all.js",
 	"typings": "dist/all.d.ts",
-	"": [
+	"keywords": [
 		"htmlelement",
 		"html",
 		"element",
