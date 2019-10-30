@@ -63,8 +63,6 @@ function isEmptyObj(obj): boolean {
     return isObject(obj) && Object.keys(obj).length === 0
 }
 
-type TReturnBoolean = (s: string) => boolean;
-type AnyFunction = (...args: any[]) => any;
 
 function isFunction(fn: AnyFunction): fn is AnyFunction {
     return fn && {}.toString.call(fn) === '[object Function]'
