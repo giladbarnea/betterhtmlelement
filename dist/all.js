@@ -304,24 +304,33 @@ class BetterHTMLElement {
     clone(deep) {
         return new BetterHTMLElement({ htmlElement: this.e.cloneNode(deep) });
     }
-    cacheChildren(keySelectorObj) {
-        for (let [key, selectorOrObj] of enumerate(keySelectorObj)) {
-            if (typeof selectorOrObj === 'object') {
-                let entries = Object.entries(selectorOrObj);
-                if (entries[1] !== undefined) {
-                    console.warn(`cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
-                        key,
-                        "multiple selectors": entries.map(e => e[0]),
-                        selectorOrObj,
-                        this: this
-                    });
+    cacheChildren(map) {
+        for (let [key, value] of enumerate(map)) {
+            let type = typeof value;
+            if (isObject(value)) {
+                if (value instanceof BetterHTMLElement) {
+                    this._cache(key, value);
                 }
-                let [selector, obj] = entries[0];
-                this._cache(key, this.child(selector));
-                this[key].cacheChildren(obj);
+                else {
+                    let entries = Object.entries(value);
+                    if (entries[1] !== undefined) {
+                        console.warn(`cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
+                            key,
+                            "multiple selectors": entries.map(e => e[0]),
+                            value,
+                            this: this
+                        });
+                    }
+                    let [selector, obj] = entries[0];
+                    this._cache(key, this.child(selector));
+                    this[key].cacheChildren(obj);
+                }
+            }
+            else if (type === "string") {
+                this._cache(key, this.child(value));
             }
             else {
-                this._cache(key, this.child(selectorOrObj));
+                console.warn(`cacheChildren, bad value type: "${type}". key: "${key}", value: "${value}". map:`, map);
             }
         }
         return this;

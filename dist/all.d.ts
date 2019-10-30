@@ -74,8 +74,10 @@ declare class BetterHTMLElement {
     children<K extends HTMLTag>(selector: K): BetterHTMLElement[];
     children(selector: string | HTMLTag): BetterHTMLElement[];
     clone(deep?: boolean): BetterHTMLElement;
-    cacheChildren(keySelectorObj: TMap<QuerySelector>): BetterHTMLElement;
-    cacheChildren(keySelectorObj: TRecMap<QuerySelector>): BetterHTMLElement;
+    cacheChildren(queryMap: TMap<QuerySelector>): this;
+    cacheChildren(recursiveQueryMap: TRecMap<QuerySelector>): this;
+    cacheChildren(bheMap: TMap<BetterHTMLElement>): this;
+    cacheChildren(recursiveBHEMap: TRecMap<BetterHTMLElement>): this;
     empty(): this;
     remove(): this;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
