@@ -598,7 +598,7 @@ function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 function isArray(obj) {
-    return obj && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+    return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
 function isEmptyArr(collection) {
     return isArray(collection) && getLength(collection) === 0;
