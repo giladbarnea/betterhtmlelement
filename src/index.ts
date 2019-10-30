@@ -1,31 +1,12 @@
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
 
-// TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
-// extends HTMLElement: https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/upgrade#Examples
 class BetterHTMLElement {
     protected _htmlElement: HTMLElement;
     private readonly _isSvg: boolean = false;
     private readonly _listeners: TEventFunctionMap<TEvent> = {};
     private _cachedChildren: TMap<BetterHTMLElement> = {};
     
-    /*[Symbol.toPrimitive](hint) {
-        console.log('from toPrimitive, hint: ', hint, '\nthis: ', this);
-        return this._htmlElement;
-    }
-    
-    valueOf() {
-        console.log('from valueOf, this: ', this);
-        return this;
-    }
-    
-    toString() {
-        console.log('from toString, this: ', this);
-        return this;
-    }
-    */
-    
-    // TODO: query should also be a predicate function
     /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
     constructor({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string });
     /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
@@ -56,7 +37,6 @@ class BetterHTMLElement {
             if (['svg', 'path'].includes(tag.toLowerCase())) {
                 this._isSvg = true;
                 this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
-                // this._htmlElement.setAttribute('xmlns', "http://www.w3.org/2000/svg");
             } else {
                 this._htmlElement = document.createElement(tag);
             }
@@ -83,21 +63,7 @@ class BetterHTMLElement {
         if (children !== undefined)
             this.cacheChildren(children);
         
-        // Object.assign(this, proxy);
-        /*const that = this;
-        return new Proxy(this, {
-            get(target: BetterHTMLElement, p: string | number | symbol, receiver: any): any {
-                // console.log('logging');
-                // console.log('target: ', target,
-                //     '\nthat: ', that,
-                //     '\ntypeof(that): ', typeof (that),
-                //     '\np: ', p,
-                //     '\nreceiver: ', receiver,
-                //     '\nthis: ', this);
-                return that[p];
-            }
-        })
-        */
+        
     }
     
     /**Return the wrapped HTMLElement*/
@@ -208,18 +174,6 @@ class BetterHTMLElement {
         return this.css(css);
     }
     
-    /**@deprecated*/
-    is(element: BetterHTMLElement) {
-        // https://api.jquery.com/is/
-        throw new Error("NOT IMPLEMENTED");
-    }
-    
-    /*
-        animate(opts: AnimateOptions) {
-            // see: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations/Tips
-            throw new Error('Not implemented');
-        }
-    */
     
     // ***  Classes
     /**`.className = cls`*/
@@ -310,14 +264,6 @@ class BetterHTMLElement {
                 this.e.after(node);
         }
         return this;
-        /*if (nodes[0] instanceof BetterHTMLElement)
-            for (let bhe of <BetterHTMLElement[]>nodes)
-                this.e.after(bhe.e);
-        else
-            for (let node of <(string | Node)[]>nodes)
-                this.e.after(node); // TODO: test what happens when passed strings
-        return this;
-        */
     }
     
     /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
@@ -344,13 +290,7 @@ class BetterHTMLElement {
                 this.cacheAppend(node)
         }
         return this;
-        /*if (nodes[0] instanceof BetterHTMLElement)
-            for (let bhe of <BetterHTMLElement[]>nodes)
-                this.e.append(bhe.e);
-        else
-            for (let node of <(string | Node)[]>nodes)
-                this.e.append(node); // TODO: test what happens when passed strings
-        return this;*/
+        
     }
     
     /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
@@ -372,13 +312,6 @@ class BetterHTMLElement {
                 this.e.before(node);
         }
         return this;
-        /*if (nodes[0] instanceof BetterHTMLElement)
-            for (let bhe of <BetterHTMLElement[]>nodes)
-                this.e.before(bhe.e);
-        else
-            for (let node of <(string | Node)[]>nodes)
-                this.e.before(node); // TODO: test what happens when passed strings
-        return this;*/
     }
     
     /**Insert `this` just before a `BetterHTMLElement` or a vanilla `Node`s.*/
@@ -390,7 +323,6 @@ class BetterHTMLElement {
         return this;
     }
     
-    // TODO: if append supports strings, so should this
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
     replaceChild(newChild, oldChild) {
@@ -530,7 +462,6 @@ class BetterHTMLElement {
     
     /**Remove all children from DOM*/
     empty(): this {
-        // TODO: is this faster than innerHTML = ""?
         while (this.e.firstChild)
             this.e.removeChild(this.e.firstChild);
         return this;
@@ -542,53 +473,10 @@ class BetterHTMLElement {
         return this;
     }
     
-    // TODO: recursively yield children
-    //  (unlike .children(), this doesn't return only the first level)
-    /**@deprecated*/
-    find() {
-        // https://api.jquery.com/find/
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    first() {
-        // https://api.jquery.com/first/
-        // this.e.firstChild
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    last() {
-        // https://api.jquery.com/last/
-        // this.e.lastChild
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    next() {
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    not() {
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    parent() {
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    parents() {
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
     
     // ***  Events
     
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this {
-        // const that = this; // "this" changes inside function _f
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
                 evFn(evt);
@@ -599,12 +487,9 @@ class BetterHTMLElement {
         return this;
     }
     
-    /**@deprecated*/
-    one() {
-        throw new Error("NOT IMPLEMENTED")
-    }
     
     /*
+    Chronology:
 	mousedown   touchstart	pointerdown
 	mouseenter		        pointerenter
 	mouseleave		        pointerleave
@@ -736,111 +621,39 @@ class BetterHTMLElement {
         }
     }
     
-    /**Simulate a keydown event to the element.*/
-    // @ts-ignore
-    keydown(): this;
+    
     /**Add a `keydown` event listener*/
-    keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this;
-    keydown(fn?, options?) {
-        if (fn === undefined) throw new Error("NOT IMPLEMENTED");
-        else
-            return this.on({keydown: fn}, options)
+    keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this {
+        return this.on({keydown: fn}, options)
     }
     
-    /**@deprecated*/
-    keyup() {
-        // https://api.jquery.com/keyup/
-        throw new Error("NOT IMPLEMENTED")
-    }
     
-    /**@deprecated*/
-    keypress() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    hover() {
-        // https://api.jquery.com/hover/
-        // binds to both mouseenter and mouseleave
-        // https://stackoverflow.com/questions/17589420/when-to-choose-mouseover-and-hover-function
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    mousedown() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    mouseleave() {
-        // https://api.jquery.com/keypress/
-        //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
-        // This means that mouseleave is fired when the pointer has exited the element and all of its descendants,
-        // whereas mouseout is fired when the pointer leaves the element or leaves one of the element's descendants
-        // (even if the pointer is still within the element).
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    mousemove() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**Simulate a mouseout event to the element.*/
-    // @ts-ignore
-    mouseout(): this;
     /**Add a `mouseout` event listener*/
-    mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    mouseout(fn?, options?) {
+    mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this {
         //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
         // This means that mouseleave is fired when the pointer has exited the element and all of its descendants,
         // whereas mouseout is fired when the pointer leaves the element or leaves one of the element's descendants
         // (even if the pointer is still within the element).
-        if (fn === undefined) throw new Error("NOT IMPLEMENTED");
-        else
-            return this.on({mouseout: fn}, options)
+        return this.on({mouseout: fn}, options)
     }
     
-    /**Simulate a mouseover event to the element.*/
-    mouseover(): this;
+    
     /**Add a `mouseover` event listener*/
-    mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    mouseover(fn?, options?) {
+    mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this {
         // mouseover: also child elements
         // mouseenter: only bound element
-        if (fn === undefined) throw new Error("NOT IMPLEMENTED");
-        else
-            return this.on({mouseover: fn}, options)
+        return this.on({mouseover: fn}, options)
     }
     
-    /**@deprecated*/
-    mouseup() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    transform(options: TransformOptions) {
-        let transform: string = '';
-        for (let [k, v] of enumerate(options)) {
-            transform += `${k}(${v}) `
-        }
-        return new Promise(resolve => {
-            this.on({
-                transitionend: resolve
-            }, {once: true});
-            this.css({transform})
-        })
-    }
     
     /** Remove the event listener of `event`, if exists.*/
     off(event: TEvent): this {
+        // TODO: Should remove listener from this._listeners?
         this.e.removeEventListener(event, this._listeners[event]);
         return this;
     }
     
+    /** Remove all event listeners in `_listeners`*/
     allOff(): this {
         for (let event in this._listeners) {
             this.off(<TEvent>event);
@@ -886,94 +699,6 @@ class BetterHTMLElement {
             return JSON.parse(data);
         else
             return data
-    }
-    
-    // **  Fade
-    async fade(dur: number, to: 0 | 1): Promise<this> {
-        const styles = window.getComputedStyle(this.e);
-        const transProp = styles.transitionProperty.split(', ');
-        const indexOfOpacity = transProp.indexOf('opacity');
-        // css opacity:0 => transDur[indexOfOpacity]: 0s
-        // css opacity:500ms => transDur[indexOfOpacity]: 0.5s
-        // css NO opacity => transDur[indexOfOpacity]: undefined
-        if (indexOfOpacity !== -1) {
-            const transDur = styles.transitionDuration.split(', ');
-            const opacityTransDur = transDur[indexOfOpacity];
-            const trans = styles.transition.split(', ');
-            // transition: opacity was defined in css.
-            // set transition to dur, set opacity to 0, leave the animation to native transition, wait dur and return this
-            console.warn(`fade(${dur}, ${to}), opacityTransDur !== undefined. nullifying transition. SHOULD NOT WORK`);
-            console.log(`trans:\t${trans}\ntransProp:\t${transProp}\nindexOfOpacity:\t${indexOfOpacity}\nopacityTransDur:\t${opacityTransDur}`);
-            // trans.splice(indexOfOpacity, 1, `opacity ${dur / 1000}s`);
-            trans.splice(indexOfOpacity, 1, `opacity 0s`);
-            console.log(`after, trans: ${trans}`);
-            this.e.style.transition = trans.join(', ');
-            this.css({opacity: to});
-            await wait(dur);
-            return this;
-        }
-        // transition: opacity was NOT defined in css.
-        if (dur == 0) {
-            return this.css({opacity: to});
-        }
-        const isFadeOut = to === 0;
-        let opacity = parseFloat(this.e.style.opacity);
-        
-        if (opacity === undefined || isNaN(opacity)) {
-            console.warn(`fade(${dur}, ${to}) htmlElement has NO opacity at all. recursing`, {
-                opacity,
-                this: this
-            });
-            return this.css({opacity: Math.abs(1 - to)}).fade(dur, to)
-        } else {
-            
-            if (isFadeOut ? opacity <= 0 : opacity > 1) {
-                console.warn(`fade(${dur}, ${to}) opacity was beyond target opacity. returning this as is.`, {
-                    opacity,
-                    this: this
-                });
-                return this;
-            }
-        }
-        
-        let steps = 30;
-        let opStep = 1 / steps;
-        let everyms = dur / steps;
-        if (everyms < 1) {
-            everyms = 1;
-            steps = dur;
-            opStep = 1 / steps;
-        }
-        console.log(`fade(${dur}, ${to}) had opacity, no transition. (good) opacity: ${opacity}`, {
-            steps,
-            opStep,
-            everyms
-        });
-        const reachedTo = isFadeOut ? (op) => op - opStep > 0 : (op) => op + opStep < 1;
-        const interval = setInterval(() => {
-            if (reachedTo(opacity)) {
-                if (isFadeOut === true)
-                    opacity -= opStep;
-                else
-                    opacity += opStep;
-                this.css({opacity});
-            } else {
-                opacity = to;
-                this.css({opacity});
-                clearInterval(interval);
-            }
-        }, everyms);
-        await wait(dur);
-        return this;
-    }
-    
-    async fadeOut(dur: number): Promise<this> {
-        return await this.fade(dur, 0);
-    }
-    
-    
-    async fadeIn(dur: number): Promise<this> {
-        return await this.fade(dur, 1);
     }
     
     
@@ -1076,18 +801,7 @@ class Anchor extends BetterHTMLElement {
     }
 }
 
-/*class Svg extends BetterHTMLElement{
-    protected readonly _htmlElement: SVGElement;
-    constructor({id, cls,htmlElement}: SvgConstructor) {
-        super({tag: 'svg', cls});
-        if (id)
-            this.id(id);
-        if (src)
-            this._htmlElement.src = src;
-        
-    }
-}
-*/
+
 customElements.define('better-html-element', BetterHTMLElement);
 customElements.define('better-div', Div, {extends: 'div'});
 customElements.define('better-p', Paragraph, {extends: 'p'});

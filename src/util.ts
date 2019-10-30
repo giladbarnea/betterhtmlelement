@@ -1,17 +1,3 @@
-// function enumerate(obj: undefined): [void];
-
-// function enumerate<T>(obj: T): never;
-// function enumerate<T>(obj: T): [keyof T, T[keyof T]][];
-
-
-// function enumerate<T>(obj: T): T extends string[]
-//     ? [number, string][]
-//     : [keyof T, T[keyof T]][] {
-type Enumerated<T> =
-    T extends (infer U)[] ? [number, U][]
-        : T extends TMap<(infer U)> ? [keyof T, U][]
-        : T extends boolean ? never : any;
-
 function enumerate<T>(obj: T): Enumerated<T> {
     // undefined    []
     // {}           []
@@ -60,40 +46,12 @@ function enumerate<T>(obj: T): Enumerated<T> {
 }
 
 
-/*let obj0: { a: boolean, b: number } = {a: true, b: 1};
-let arr0: number[] = [1, 2, 3, 4];
-let arr1: string[] = ["1", "2", "3", "4"];
-let num0: number = 5;
-let undefined0: undefined;
-let null0: null = null;
-let boolean0: boolean = true;
-
-let MyFoo = enumerate(undefined0);
-if (MyFoo === true) {
-    console.log('hi');
-}
-*/
-
-
 function wait(ms: number): Promise<any> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/*function equalsAny(obj: any, ...others: any[]): boolean {
-    if (!others)
-        throw new Error('Not even one other was passed');
-    let strict = !(isArrayLike(obj) && isObject(obj[obj.length - 1]) && obj[obj.length - 1].strict == false);
-    const _isEq = (_obj, _other) => strict ? _obj === _other : _obj == _other;
-    for (let other of others) {
-        if (_isEq(obj, other))
-            return true;
-    }
-    return false;
-    
-}
-*/
 
-// true for string
+// TODO: is true for string?
 function isArray<T>(obj): obj is Array<T> {
     return obj && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
@@ -131,33 +89,3 @@ function getLength(collection): number {
 }
 
 
-/*const MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
-
-function isArrayLike(collection): boolean {
-    const length = getLength(collection);
-    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
-}
-*/
-
-
-// *  misc
-// child extends sup
-function extend(sup, child) {
-    child.prototype = sup.prototype;
-    const handler = {
-        construct
-    };
-    
-    // "new BoyCls"
-    function construct(_, argArray) {
-        const obj = new child;
-        sup.apply(obj, argArray);    // calls PersonCtor. Sets name
-        child.apply(obj, argArray); // calls BoyCtor. Sets age
-        return obj;
-    }
-    
-    
-    // @ts-ignore
-    const proxy = new Proxy(child, handler);
-    return proxy;
-}

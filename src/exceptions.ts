@@ -20,7 +20,7 @@ class BadArgumentsAmountError extends Error {
     
     static getArgNamesValues(argsWithValues: object): string {
         return Object.entries(argsWithValues)
-        // @ts-ignore
+            // @ts-ignore
             .flatMap(([argname, argval]) => `${argname}: ${argval}`)
             .join('", "');
     }

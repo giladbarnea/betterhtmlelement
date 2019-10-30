@@ -150,9 +150,6 @@ class BetterHTMLElement {
             css[prop] = '';
         return this.css(css);
     }
-    is(element) {
-        throw new Error("NOT IMPLEMENTED");
-    }
     class(cls) {
         if (cls === undefined) {
             return Array.from(this.e.classList);
@@ -338,27 +335,6 @@ class BetterHTMLElement {
         this.e.remove();
         return this;
     }
-    find() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    first() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    last() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    next() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    not() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    parent() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    parents() {
-        throw new Error("NOT IMPLEMENTED");
-    }
     on(evTypeFnPairs, options) {
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
@@ -368,9 +344,6 @@ class BetterHTMLElement {
             this._listeners[evType] = _f;
         }
         return this;
-    }
-    one() {
-        throw new Error("NOT IMPLEMENTED");
     }
     touchstart(fn, options) {
         this.e.addEventListener('touchstart', function _f(ev) {
@@ -461,55 +434,13 @@ class BetterHTMLElement {
         }
     }
     keydown(fn, options) {
-        if (fn === undefined)
-            throw new Error("NOT IMPLEMENTED");
-        else
-            return this.on({ keydown: fn }, options);
-    }
-    keyup() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    keypress() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    hover() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    mousedown() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    mouseleave() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    mousemove() {
-        throw new Error("NOT IMPLEMENTED");
+        return this.on({ keydown: fn }, options);
     }
     mouseout(fn, options) {
-        if (fn === undefined)
-            throw new Error("NOT IMPLEMENTED");
-        else
-            return this.on({ mouseout: fn }, options);
+        return this.on({ mouseout: fn }, options);
     }
     mouseover(fn, options) {
-        if (fn === undefined)
-            throw new Error("NOT IMPLEMENTED");
-        else
-            return this.on({ mouseover: fn }, options);
-    }
-    mouseup() {
-        throw new Error("NOT IMPLEMENTED");
-    }
-    transform(options) {
-        let transform = '';
-        for (let [k, v] of enumerate(options)) {
-            transform += `${k}(${v}) `;
-        }
-        return new Promise(resolve => {
-            this.on({
-                transitionend: resolve
-            }, { once: true });
-            this.css({ transform });
-        });
+        return this.on({ mouseover: fn }, options);
     }
     off(event) {
         this.e.removeEventListener(event, this._listeners[event]);
@@ -548,81 +479,6 @@ class BetterHTMLElement {
             return JSON.parse(data);
         else
             return data;
-    }
-    async fade(dur, to) {
-        const styles = window.getComputedStyle(this.e);
-        const transProp = styles.transitionProperty.split(', ');
-        const indexOfOpacity = transProp.indexOf('opacity');
-        if (indexOfOpacity !== -1) {
-            const transDur = styles.transitionDuration.split(', ');
-            const opacityTransDur = transDur[indexOfOpacity];
-            const trans = styles.transition.split(', ');
-            console.warn(`fade(${dur}, ${to}), opacityTransDur !== undefined. nullifying transition. SHOULD NOT WORK`);
-            console.log(`trans:\t${trans}\ntransProp:\t${transProp}\nindexOfOpacity:\t${indexOfOpacity}\nopacityTransDur:\t${opacityTransDur}`);
-            trans.splice(indexOfOpacity, 1, `opacity 0s`);
-            console.log(`after, trans: ${trans}`);
-            this.e.style.transition = trans.join(', ');
-            this.css({ opacity: to });
-            await wait(dur);
-            return this;
-        }
-        if (dur == 0) {
-            return this.css({ opacity: to });
-        }
-        const isFadeOut = to === 0;
-        let opacity = parseFloat(this.e.style.opacity);
-        if (opacity === undefined || isNaN(opacity)) {
-            console.warn(`fade(${dur}, ${to}) htmlElement has NO opacity at all. recursing`, {
-                opacity,
-                this: this
-            });
-            return this.css({ opacity: Math.abs(1 - to) }).fade(dur, to);
-        }
-        else {
-            if (isFadeOut ? opacity <= 0 : opacity > 1) {
-                console.warn(`fade(${dur}, ${to}) opacity was beyond target opacity. returning this as is.`, {
-                    opacity,
-                    this: this
-                });
-                return this;
-            }
-        }
-        let steps = 30;
-        let opStep = 1 / steps;
-        let everyms = dur / steps;
-        if (everyms < 1) {
-            everyms = 1;
-            steps = dur;
-            opStep = 1 / steps;
-        }
-        console.log(`fade(${dur}, ${to}) had opacity, no transition. (good) opacity: ${opacity}`, {
-            steps,
-            opStep,
-            everyms
-        });
-        const reachedTo = isFadeOut ? (op) => op - opStep > 0 : (op) => op + opStep < 1;
-        const interval = setInterval(() => {
-            if (reachedTo(opacity)) {
-                if (isFadeOut === true)
-                    opacity -= opStep;
-                else
-                    opacity += opStep;
-                this.css({ opacity });
-            }
-            else {
-                opacity = to;
-                this.css({ opacity });
-                clearInterval(interval);
-            }
-        }, everyms);
-        await wait(dur);
-        return this;
-    }
-    async fadeOut(dur) {
-        return await this.fade(dur, 0);
-    }
-    async fadeIn(dur) {
-        return await this.fade(dur, 1);
     }
 }
 class Div extends BetterHTMLElement {
@@ -763,19 +619,5 @@ function shallowProperty(key) {
 }
 function getLength(collection) {
     return shallowProperty('length')(collection);
-}
-function extend(sup, child) {
-    child.prototype = sup.prototype;
-    const handler = {
-        construct
-    };
-    function construct(_, argArray) {
-        const obj = new child;
-        sup.apply(obj, argArray);
-        child.apply(obj, argArray);
-        return obj;
-    }
-    const proxy = new Proxy(child, handler);
-    return proxy;
 }
 //# sourceMappingURL=all.js.map

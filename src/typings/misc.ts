@@ -1,3 +1,4 @@
+// TODO: why <TEvent> needed in allOff()?
 interface TMap<T> {
     [s: string]: T;
     
@@ -20,3 +21,7 @@ type HTMLTag = keyof HTMLElementTagNameMap;
 type QuerySelector = HTMLTag | string;
 
 type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
+type Enumerated<T> =
+    T extends (infer U)[] ? [number, U][]
+        : T extends TMap<(infer U)> ? [keyof T, U][]
+        : T extends boolean ? never : any;

@@ -45,7 +45,6 @@ declare class BetterHTMLElement {
     css(css: Partial<CssOptions>): this;
     css(css: string): string;
     uncss(...removeProps: (keyof CssOptions)[]): this;
-    is(element: BetterHTMLElement): void;
     class(cls: string): this;
     class(cls: TReturnBoolean): string;
     class(): string[];
@@ -79,15 +78,7 @@ declare class BetterHTMLElement {
     cacheChildren(keySelectorObj: TRecMap<QuerySelector>): BetterHTMLElement;
     empty(): this;
     remove(): this;
-    find(): void;
-    first(): void;
-    last(): void;
-    next(): void;
-    not(): void;
-    parent(): void;
-    parents(): void;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
-    one(): void;
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
     pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this;
     click(): this;
@@ -102,29 +93,15 @@ declare class BetterHTMLElement {
     dblclick(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
     mouseenter(): this;
     mouseenter(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    keydown(): this;
     keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this;
-    keyup(): void;
-    keypress(): void;
-    hover(): void;
-    mousedown(): void;
-    mouseleave(): void;
-    mousemove(): void;
-    mouseout(): this;
     mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    mouseover(): this;
     mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    mouseup(): void;
-    transform(options: TransformOptions): Promise<unknown>;
     off(event: TEvent): this;
     allOff(): this;
     attr(attrValPairs: TMap<string>): this;
     attr(attributeName: string): string;
     removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this;
     data(key: string, parse?: boolean): string | TMap<string>;
-    fade(dur: number, to: 0 | 1): Promise<this>;
-    fadeOut(dur: number): Promise<this>;
-    fadeIn(dur: number): Promise<this>;
 }
 declare class Div extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLDivElement;
@@ -185,7 +162,6 @@ declare function div({ id, text, cls }?: SubElemConstructor): Div;
 declare function img({ id, src, cls }?: ImgConstructor): Img;
 declare function paragraph({ id, text, cls }?: SubElemConstructor): Paragraph;
 declare function anchor({ id, text, cls, href }?: AnchorConstructor): Anchor;
-declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
 declare function enumerate<T>(obj: T): Enumerated<T>;
 declare function wait(ms: number): Promise<any>;
 declare function isArray<T>(obj: any): obj is Array<T>;
@@ -197,7 +173,6 @@ declare function isFunction(fn: AnyFunction): fn is AnyFunction;
 declare function isObject(obj: any): boolean;
 declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
 declare function getLength(collection: any): number;
-declare function extend(sup: any, child: any): any;
 declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
 declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 interface CssOptions extends PartialCssStyleDeclaration {
@@ -284,3 +259,4 @@ declare type TEventFunctionMap<K extends TEvent> = {
 declare type HTMLTag = keyof HTMLElementTagNameMap;
 declare type QuerySelector = HTMLTag | string;
 declare type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
+declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
