@@ -969,8 +969,20 @@ function isEmptyObj(obj) {
 function isFunction(fn) {
     // ()=>{}           true
     // function(){}     true
-    // / Function       true
-    // / Function()     true
+    // Function         true
+    // Function()       true
+    // new Function()   true
+    // Boolean          true
+    // Number           true
+    // {}               false
+    // {hi:"bye"}       false
+    // []               false
+    // Boolean()        false
+    // new Boolean()    false
+    // Number()         false
+    // new Number()     false
+    // undefined        false
+    // null             false
     let toStringed = {}.toString.call(fn);
     return !!fn && toStringed === '[object Function]';
 }
