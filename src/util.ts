@@ -103,7 +103,12 @@ function isEmptyObj(obj): boolean {
 
 
 function isFunction(fn: AnyFunction): fn is AnyFunction {
-    return fn && {}.toString.call(fn) === '[object Function]'
+    // ()=>{}           true
+    // function(){}     true
+    // / Function       true
+    // / Function()     true
+    let toStringed = {}.toString.call(fn);
+    return !!fn && toStringed === '[object Function]'
 }
 
 

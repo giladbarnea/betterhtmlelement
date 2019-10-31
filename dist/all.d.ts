@@ -354,6 +354,7 @@ declare function getLength(collection: any): number;
 declare function extend(sup: any, child: any): any;
 declare function test_isObject(): void;
 declare function test_isEmptyObject(): void;
+declare function test_isFunction(): void;
 declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
 declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 interface CssOptions extends PartialCssStyleDeclaration {
