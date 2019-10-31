@@ -629,6 +629,28 @@ class BetterHTMLElement {
         this.on(evTypeFnPairs, options);
     }
     
+    /**Remove `event` from wrapped element's event listeners, but keep the removed listener in cache.
+     * This is useful for later unblocking*/
+    blockListener(event) {
+        let listener = this._listeners[event];
+        if (listener === undefined) {
+            // @ts-ignore
+            return console.warn(`blockListener(event): this._listeners[event] is undefined. event:`, event);
+        }
+        this.e.removeEventListener(event, listener);
+        return this;
+    }
+    
+    unblockListener(event) {
+        let listener = this._listeners[event];
+        if (listener === undefined) {
+            // @ts-ignore
+            return console.warn(`unblockListener(event): this._listeners[event] is undefined. event:`, event);
+        }
+        this.e.addEventListener(event, listener);
+        return this;
+    }
+    
     /*
     Chronology:
 	mousedown   touchstart	pointerdown

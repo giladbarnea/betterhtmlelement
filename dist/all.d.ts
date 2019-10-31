@@ -199,6 +199,10 @@ declare class BetterHTMLElement {
     parents(): void;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
     one(evType: TEvent, listener: HTMLElementEventMap[TEvent], options?: AddEventListenerOptions): void;
+    /**Remove `event` from wrapped element's event listeners, but keep the removed listener in cache.
+     * This is useful for later unblocking*/
+    blockListener(event: any): void | this;
+    unblockListener(event: any): void | this;
     /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
     /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
