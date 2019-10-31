@@ -198,8 +198,7 @@ declare class BetterHTMLElement {
     /**@deprecated*/
     parents(): void;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
-    /**@deprecated*/
-    one(): void;
+    one(evType: TEvent, listener: HTMLElementEventMap[TEvent], options?: AddEventListenerOptions): void;
     /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
     /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
@@ -353,6 +352,8 @@ declare function isObject(obj: any): boolean;
 declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
 declare function getLength(collection: any): number;
 declare function extend(sup: any, child: any): any;
+declare function test_isObject(): void;
+declare function test_isEmptyObject(): void;
 declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
 declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 interface CssOptions extends PartialCssStyleDeclaration {

@@ -450,7 +450,6 @@ class BetterHTMLElement {
     }
     // ***  Events
     on(evTypeFnPairs, options) {
-        // const that = this; // "this" changes inside function _f
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
                 evFn(evt);
@@ -460,9 +459,11 @@ class BetterHTMLElement {
         }
         return this;
     }
-    /**@deprecated*/
-    one() {
-        throw new Error("NOT IMPLEMENTED");
+    one(evType, listener, options) {
+        const evTypeFnPairs = {};
+        evTypeFnPairs[evType] = listener;
+        options = options === undefined ? { once: true } : Object.assign(Object.assign({}, options), { once: true });
+        this.on(evTypeFnPairs, options);
     }
     /*
     Chronology:
@@ -899,6 +900,7 @@ function enumerate(obj) {
     // [ "foo" ]    [ [0, "foo"] ]
     // [ 10 ]       [ [0, 10] ]
     // { a: "foo" } [ ["a", "foo"] ]
+    // // ()=>{}    ?
     let typeofObj = typeof obj;
     if (obj === undefined
         || isEmptyObj(obj)
@@ -944,19 +946,6 @@ if (MyFoo === true) {
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-/*function equalsAny(obj: any, ...others: any[]): boolean {
-    if (!others)
-        throw new Error('Not even one other was passed');
-    let strict = !(isArrayLike(obj) && isObject(obj[obj.length - 1]) && obj[obj.length - 1].strict == false);
-    const _isEq = (_obj, _other) => strict ? _obj === _other : _obj == _other;
-    for (let other of others) {
-        if (_isEq(obj, other))
-            return true;
-    }
-    return false;
-    
-}
-*/
 function isArray(obj) {
     return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
@@ -964,13 +953,35 @@ function isEmptyArr(collection) {
     return isArray(collection) && getLength(collection) === 0;
 }
 function isEmptyObj(obj) {
-    return isObject(obj) && Object.keys(obj).length === 0;
+    // {}               true
+    // new Boolean()    true
+    // new Number()     true
+    // {hi:"bye"}       false
+    // []               false
+    // undefined        false
+    // null             false
+    // ()=>{}           false
+    // function(){}     false
+    // Boolean()        false
+    // Number()         false
+    return isObject(obj) && !isArray(obj) && Object.keys(obj).length === 0;
 }
 function isFunction(fn) {
     return fn && {}.toString.call(fn) === '[object Function]';
 }
 // *  underscore.js
 function isObject(obj) {
+    // {}               true
+    // {hi:"bye"}       true
+    // []               true
+    // new Boolean()    true
+    // new Number()     true
+    // undefined        false
+    // null             false
+    // ()=>{}           false
+    // function(){}     false
+    // Boolean()        false
+    // Number()         false
     return typeof obj === 'object' && !!obj;
 }
 function shallowProperty(key) {
@@ -1006,4 +1017,37 @@ function extend(sup, child) {
     const proxy = new Proxy(child, handler);
     return proxy;
 }
+// ***  util.ts
+function test_isObject() {
+    const expect_true = [{}, { hi: "bye" }, [], new Boolean(), new Number()];
+    const expect_false = [undefined, null, () => {
+        }, function () {
+        }, Boolean(), Number()];
+    for (let t of expect_true) {
+        if (isObject(t) !== true)
+            console.error(`Expected true, but isnt: `, t);
+    }
+    for (let f of expect_false) {
+        if (isObject(f) !== false)
+            console.error(`Expected false, but isnt: `, f);
+    }
+    console.log('test_isObject() all pass');
+}
+function test_isEmptyObject() {
+    const expect_true = [{}, new Boolean(), new Number()];
+    const expect_false = [undefined, null, { hi: "bye" }, [], () => {
+        }, function () {
+        }, Boolean(), Number()];
+    for (let t of expect_true) {
+        if (isEmptyObj(t) !== true)
+            console.error(`Expected true, but isnt: `, t);
+    }
+    for (let f of expect_false) {
+        if (isEmptyObj(f) !== false)
+            console.error(`Expected false, but isnt: `, f);
+    }
+    console.log('test_isEmptyObject() all pass');
+}
+test_isObject();
+test_isEmptyObject();
 //# sourceMappingURL=all.js.map

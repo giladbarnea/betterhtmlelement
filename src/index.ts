@@ -612,7 +612,6 @@ class BetterHTMLElement {
     // ***  Events
     
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this {
-        // const that = this; // "this" changes inside function _f
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
                 evFn(evt);
@@ -623,9 +622,11 @@ class BetterHTMLElement {
         return this;
     }
     
-    /**@deprecated*/
-    one() {
-        throw new Error("NOT IMPLEMENTED")
+    one(evType: TEvent, listener: HTMLElementEventMap[TEvent], options?: AddEventListenerOptions) {
+        const evTypeFnPairs = {};
+        evTypeFnPairs[evType] = listener;
+        options = options === undefined ? {once: true} : {...options, once: true};
+        this.on(evTypeFnPairs, options);
     }
     
     /*

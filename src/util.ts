@@ -22,6 +22,7 @@ function enumerate<T>(obj: T): Enumerated<T> {
     // [ "foo" ]    [ [0, "foo"] ]
     // [ 10 ]       [ [0, 10] ]
     // { a: "foo" } [ ["a", "foo"] ]
+    // // ()=>{}    ?
     let typeofObj = typeof obj;
     if (
         obj === undefined
@@ -76,20 +77,6 @@ function wait(ms: number): Promise<any> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/*function equalsAny(obj: any, ...others: any[]): boolean {
-    if (!others)
-        throw new Error('Not even one other was passed');
-    let strict = !(isArrayLike(obj) && isObject(obj[obj.length - 1]) && obj[obj.length - 1].strict == false);
-    const _isEq = (_obj, _other) => strict ? _obj === _other : _obj == _other;
-    for (let other of others) {
-        if (_isEq(obj, other))
-            return true;
-    }
-    return false;
-    
-}
-*/
-
 
 function isArray<T>(obj): obj is Array<T> {
     return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
@@ -100,7 +87,18 @@ function isEmptyArr(collection): boolean {
 }
 
 function isEmptyObj(obj): boolean {
-    return isObject(obj) && Object.keys(obj).length === 0
+    // {}               true
+    // new Boolean()    true
+    // new Number()     true
+    // {hi:"bye"}       false
+    // []               false
+    // undefined        false
+    // null             false
+    // ()=>{}           false
+    // function(){}     false
+    // Boolean()        false
+    // Number()         false
+    return isObject(obj) && !isArray(obj) && Object.keys(obj).length === 0
 }
 
 
@@ -111,6 +109,17 @@ function isFunction(fn: AnyFunction): fn is AnyFunction {
 
 // *  underscore.js
 function isObject(obj): boolean {
+    // {}               true
+    // {hi:"bye"}       true
+    // []               true
+    // new Boolean()    true
+    // new Number()     true
+    // undefined        false
+    // null             false
+    // ()=>{}           false
+    // function(){}     false
+    // Boolean()        false
+    // Number()         false
     return typeof obj === 'object' && !!obj;
 }
 

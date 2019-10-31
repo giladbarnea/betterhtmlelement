@@ -20,7 +20,16 @@
 		"removeComments": false
 	},
 	"exclude": [
-		"dist/*",
-		"misc/*"
+		"dist/",
+		"misc/"
 	]
+	/*"include": [
+		"src/index.ts",
+		"src/util.ts",
+		"src/exceptions.ts",
+		"src/typings/css.ts",
+		"src/typings/ctors.ts",
+		"src/typings/misc.ts",
+		"src/shloop/shloop.ts"
+	]*/
 }
