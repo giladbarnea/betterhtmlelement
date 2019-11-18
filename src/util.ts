@@ -43,15 +43,15 @@ function enumerate<T>(obj: T): Enumerated<T> {
         throw new TypeError(`${typeofObj} object is not iterable`);
     }
     let array = [];
-    if (isArray(obj)) {
+    if ( isArray(obj) ) {
         let i: number = 0;
-        for (let x of obj) {
-            array.push([i, x]);
+        for ( let x of obj ) {
+            array.push([ i, x ]);
             i++;
         }
     } else {
-        for (let prop in obj) {
-            array.push([prop, obj[prop]]);
+        for ( let prop in obj ) {
+            array.push([ prop, obj[prop] ]);
         }
     }
     return array as Enumerated<T>;
@@ -59,18 +59,18 @@ function enumerate<T>(obj: T): Enumerated<T> {
 
 
 /*let obj0: { a: boolean, b: number } = {a: true, b: 1};
-let arr0: number[] = [1, 2, 3, 4];
-let arr1: string[] = ["1", "2", "3", "4"];
-let num0: number = 5;
-let undefined0: undefined;
-let null0: null = null;
-let boolean0: boolean = true;
-
-let MyFoo = enumerate(undefined0);
-if (MyFoo === true) {
-    console.log('hi');
-}
-*/
+ let arr0: number[] = [1, 2, 3, 4];
+ let arr1: string[] = ["1", "2", "3", "4"];
+ let num0: number = 5;
+ let undefined0: undefined;
+ let null0: null = null;
+ let boolean0: boolean = true;
+ 
+ let MyFoo = enumerate(undefined0);
+ if (MyFoo === true) {
+ console.log('hi');
+ }
+ */
 
 
 function wait(ms: number): Promise<any> {
@@ -83,17 +83,17 @@ function wait(ms: number): Promise<any> {
  * mydiv.pointerenter( () => mydiv.pointerHovering = true; )
  * const pointerOnMydiv = await waitUntil(() => mydiv.pointerHovering, 200, 10);*/
 async function waitUntil(cond: () => boolean, timeout: number = Infinity, checkInterval: number = 20): Promise<boolean> {
-    if (checkInterval <= 0)
+    if ( checkInterval <= 0 )
         throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
-    if (checkInterval > timeout)
+    if ( checkInterval > timeout )
         throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). Has to be lower than timeout.`);
     
     const loops = timeout / checkInterval;
-    if (loops == 1)
+    if ( loops == 1 )
         console.warn(`loops == 1, you probably didn't want this to happen`);
     let count = 0;
-    while (count < loops) {
-        if (cond())
+    while ( count < loops ) {
+        if ( cond() )
             return true;
         await wait(checkInterval);
         count++;
@@ -176,12 +176,12 @@ function getLength(collection): number {
 
 
 /*const MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
-
-function isArrayLike(collection): boolean {
-    const length = getLength(collection);
-    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
-}
-*/
+ 
+ function isArrayLike(collection): boolean {
+ const length = getLength(collection);
+ return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
+ }
+ */
 
 
 // *  misc
