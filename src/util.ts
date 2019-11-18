@@ -77,6 +77,29 @@ function wait(ms: number): Promise<any> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**Check every `checkInterval` ms if `cond()` is truthy. If, within `timeout`, cond() is truthy, return `true`. Return `false` if time is out.
+ * @example
+ * // Give the user a 200ms chance to get her pointer over "mydiv". Continue immediately once she does, or after 200ms if she doesn't.
+ * mydiv.pointerenter( () => mydiv.pointerHovering = true; )
+ * const pointerOnMydiv = await waitUntil(() => mydiv.pointerHovering, 200, 10);*/
+async function waitUntil(cond: () => boolean, timeout: number = Infinity, checkInterval: number = 20): Promise<boolean> {
+    if (checkInterval <= 0)
+        throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
+    if (checkInterval > timeout)
+        throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). Has to be lower than timeout.`);
+    
+    const loops = timeout / checkInterval;
+    if (loops == 1)
+        console.warn(`loops == 1, you probably didn't want this to happen`);
+    let count = 0;
+    while (count < loops) {
+        if (cond())
+            return true;
+        await wait(checkInterval);
+        count++;
+    }
+    return false;
+}
 
 function isArray<T>(obj): obj is Array<T> {
     return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');

@@ -253,7 +253,7 @@ class BetterHTMLElement {
     }
     
     removeClass(cls: TReturnBoolean, ...clses: TReturnBoolean[]): this;
-    removeClass(cls: string, clses?: string[]): this;
+    removeClass(cls: string, ...clses: string[]): this;
     removeClass(cls, ...clses) {
         if (isFunction(cls)) {
             this.e.classList.remove(this.class(cls));
@@ -622,16 +622,16 @@ class BetterHTMLElement {
         return this;
     }
     
-    one(evType: TEvent, listener: HTMLElementEventMap[TEvent], options?: AddEventListenerOptions) {
+    one(evType: TEvent, listener: FunctionRecievesEvent<TEvent>, options?: AddEventListenerOptions): this {
         const evTypeFnPairs = {};
         evTypeFnPairs[evType] = listener;
         options = options === undefined ? {once: true} : {...options, once: true};
-        this.on(evTypeFnPairs, options);
+        return this.on(evTypeFnPairs, options);
     }
     
     /**Remove `event` from wrapped element's event listeners, but keep the removed listener in cache.
      * This is useful for later unblocking*/
-    blockListener(event) {
+    blockListener(event: TEvent) {
         let listener = this._listeners[event];
         if (listener === undefined) {
             // @ts-ignore
@@ -641,7 +641,7 @@ class BetterHTMLElement {
         return this;
     }
     
-    unblockListener(event) {
+    unblockListener(event: TEvent) {
         let listener = this._listeners[event];
         if (listener === undefined) {
             // @ts-ignore
@@ -671,6 +671,10 @@ class BetterHTMLElement {
         }, options);
         // TODO: this._listeners, or use this.on(
         return this;
+    }
+    
+    pointerenter(fn: (event: PointerEvent) => any, options?: AddEventListenerOptions): this {
+        return this.on({pointerenter: fn}, options);
     }
     
     /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */

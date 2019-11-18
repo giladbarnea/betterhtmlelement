@@ -78,7 +78,7 @@ declare class BetterHTMLElement {
     class(): string[];
     addClass(cls: string, ...clses: string[]): this;
     removeClass(cls: TReturnBoolean, ...clses: TReturnBoolean[]): this;
-    removeClass(cls: string, clses?: string[]): this;
+    removeClass(cls: string, ...clses: string[]): this;
     replaceClass(oldToken: TReturnBoolean, newToken: string): this;
     replaceClass(oldToken: string, newToken: string): this;
     toggleClass(cls: TReturnBoolean, force?: boolean): this;
@@ -198,13 +198,14 @@ declare class BetterHTMLElement {
     /**@deprecated*/
     parents(): void;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
-    one(evType: TEvent, listener: HTMLElementEventMap[TEvent], options?: AddEventListenerOptions): void;
+    one(evType: TEvent, listener: FunctionRecievesEvent<TEvent>, options?: AddEventListenerOptions): this;
     /**Remove `event` from wrapped element's event listeners, but keep the removed listener in cache.
      * This is useful for later unblocking*/
-    blockListener(event: any): void | this;
-    unblockListener(event: any): void | this;
+    blockListener(event: TEvent): void | this;
+    unblockListener(event: TEvent): void | this;
     /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
+    pointerenter(fn: (event: PointerEvent) => any, options?: AddEventListenerOptions): this;
     /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
     pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this;
     /**Simulate a click of the element. Useful for `<a>` elements.*/
@@ -348,6 +349,12 @@ declare function paragraph({ id, text, cls }?: SubElemConstructor): Paragraph;
 declare function anchor({ id, text, cls, href }?: AnchorConstructor): Anchor;
 declare function enumerate<T>(obj: T): Enumerated<T>;
 declare function wait(ms: number): Promise<any>;
+/**Check every `checkInterval` ms if `cond()` is truthy. If, within `timeout`, cond() is truthy, return `true`. Return `false` if time is out.
+ * @example
+ * // Give the user a 200ms chance to get her pointer over "mydiv". Continue immediately once she does, or after 200ms if she doesn't.
+ * mydiv.pointerenter( () => mydiv.pointerHovering = true; )
+ * const pointerOnMydiv = await waitUntil(() => mydiv.pointerHovering, 200, 10);*/
+declare function waitUntil(cond: () => boolean, timeout?: number, checkInterval?: number): Promise<boolean>;
 declare function isArray<T>(obj: any): obj is Array<T>;
 declare function isEmptyArr(collection: any): boolean;
 declare function isEmptyObj(obj: any): boolean;
@@ -450,8 +457,9 @@ interface TRecMap<T> {
     [s: number]: T | TRecMap<T>;
 }
 declare type TEvent = keyof HTMLElementEventMap;
+declare type FunctionRecievesEvent<K extends TEvent> = (event: HTMLElementEventMap[K]) => void;
 declare type TEventFunctionMap<K extends TEvent> = {
-    [P in K]?: (event: HTMLElementEventMap[P]) => void;
+    [P in K]?: FunctionRecievesEvent<P>;
 };
 declare type HTMLTag = keyof HTMLElementTagNameMap;
 declare type QuerySelector = HTMLTag | string;

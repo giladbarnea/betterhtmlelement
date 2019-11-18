@@ -12,8 +12,9 @@ interface TRecMap<T> {
 
 
 type TEvent = keyof HTMLElementEventMap;
+type FunctionRecievesEvent<K extends TEvent> = (event: HTMLElementEventMap[K]) => void;
 type TEventFunctionMap<K extends TEvent> = {
-    [P in K]?: (event: HTMLElementEventMap[P]) => void;
+    [P in K]?: FunctionRecievesEvent<P>;
 };
 
 type HTMLTag = keyof HTMLElementTagNameMap;
