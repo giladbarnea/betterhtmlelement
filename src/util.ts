@@ -101,65 +101,276 @@ async function waitUntil(cond: () => boolean, timeout: number = Infinity, checkI
     return false;
 }
 
-function isArray<T>(obj): obj is Array<T> {
-    return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+function notnot(obj) {
+    // / 0                false
+    // 1                  true
+    // ()=>{}             true
+    // function(){}       true
+    // Function           true
+    // Function()         true
+    // new Function()     true
+    // Boolean            true
+    // /  Boolean()       false
+    // new Boolean()      true
+    // new Boolean(true)  true
+    // new Boolean(false) true
+    // true               true
+    // /  false           false
+    // Number             true
+    // /  Number()        false
+    // new Number()       true
+    // new Number(0)      true
+    // new Number(1)      true
+    // / ''               false
+    // ' '                true
+    // '0'                true
+    // '1'                true
+    // {}                 true
+    // { hi : 'bye' }     true
+    // []                 true
+    // [ 1 ]              true
+    // /  undefined       false
+    // /  null            false
+    return !!obj;
+}
+
+function isArray<T>(obj): obj is Array<T> { // same as Array.isArray
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // 'foo'               false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // / [ 1 ]             true
+    // / []                true
+    // false               false
+    // function(){}        false
+    // new Boolean()       false
+    // new Boolean(false)  false
+    // new Boolean(true)   false
+    // new Function()      false
+    // new Number(0)       false
+    // new Number(1)       false
+    // new Number()        false
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // {}                  false
+    if ( !obj ) return false;
+    return typeof obj !== 'string' && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+}
+
+function isEmpty(obj: any): boolean {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // [ 1 ]               false
+    // / []                true
+    // false               false
+    // function(){}        false
+    // new Boolean()       false
+    // new Boolean(false)  false
+    // new Boolean(true)   false
+    // new Function()      false
+    // new Number(0)       false
+    // new Number(1)       false
+    // new Number()        false
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // / {}                true
+    let toStringed = {}.toString.call(obj);
+    return (toStringed === '[object Object]' || toStringed === '[object Array]') && Object.keys(obj).length == 0;
 }
 
 function isEmptyArr(collection): boolean {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // [ 1 ]               false
+    // / []                true
+    // false               false
+    // function(){}        false
+    // new Boolean()       false
+    // new Boolean(false)  false
+    // new Boolean(true)   false
+    // new Function()      false
+    // new Number(0)       false
+    // new Number(1)       false
+    // new Number()        false
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // {}                  false
     return isArray(collection) && getLength(collection) === 0
 }
 
 function isEmptyObj(obj): boolean {
-    // {}               true
-    // new Boolean()    true
-    // new Number()     true
-    // {hi:"bye"}       false
-    // []               false
-    // undefined        false
-    // null             false
-    // ()=>{}           false
-    // function(){}     false
-    // Boolean()        false
-    // Number()         false
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // [ 1 ]               false
+    // []                  false
+    // false               false
+    // function(){}        false
+    // / new Boolean()     true
+    // / new Boolean(false)true
+    // / new Boolean(true) true
+    // new Function()      false
+    // / new Number(0)     true
+    // / new Number(1)     true
+    // / new Number()      true
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // / {}                true
     return isObject(obj) && !isArray(obj) && Object.keys(obj).length === 0
 }
 
 
-function isFunction(fn: AnyFunction): fn is AnyFunction {
-    // ()=>{}           true
-    // function(){}     true
-    // Function         true
-    // Function()       true
-    // new Function()   true
-    // Boolean          true
-    // Number           true
-    // {}               false
-    // {hi:"bye"}       false
-    // []               false
-    // Boolean()        false
-    // new Boolean()    false
-    // Number()         false
-    // new Number()     false
-    // undefined        false
-    // null             false
+function isFunction<T>(fn: FunctionReturns<T>): fn is FunctionReturns<T>
+function isFunction(fn: AnyFunction): fn is AnyFunction
+function isFunction(fn) {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // / ()=>{}              true
+    // / Boolean             true
+    // Boolean()           false
+    // / Function            true
+    // / Function()          true
+    // / Number              true
+    // Number()            false
+    // [ 1 ]               false
+    // []                  false
+    // false               false
+    // / function(){}        true
+    // new Boolean()       false
+    // new Boolean(false)  false
+    // new Boolean(true)   false
+    // / new Function()      true
+    // new Number(0)       false
+    // new Number(1)       false
+    // new Number()        false
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // {}                  false
     let toStringed = {}.toString.call(fn);
     return !!fn && toStringed === '[object Function]'
+}
+
+function isTMap<T>(obj: TMap<T>): obj is TMap<T> {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // [ 1 ]             false
+    // []                false
+    // false               false
+    // function(){}        false
+    // new Boolean()     false
+    // new Boolean(false)false
+    // new Boolean(true) false
+    // new Function()      false
+    // new Number(0)     false
+    // new Number(1)     false
+    // new Number()      false
+    // null                false
+    // true                false
+    // undefined           false
+    // / { hi : 'bye' }    true
+    // / {}                true
+    return {}.toString.call(obj) == '[object Object]'
 }
 
 
 // *  underscore.js
 function isObject(obj): boolean {
-    // {}               true
-    // {hi:"bye"}       true
-    // []               true
-    // new Boolean()    true
-    // new Number()     true
-    // undefined        false
-    // null             false
-    // ()=>{}           false
-    // function(){}     false
-    // Boolean()        false
-    // Number()         false
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // / [ 1 ]             true
+    // / []                true
+    // false               false
+    // function(){}        false
+    // / new Boolean()     true
+    // / new Boolean(false)true
+    // / new Boolean(true) true
+    // new Function()      false
+    // / new Number(0)     true
+    // / new Number(1)     true
+    // / new Number()      true
+    // null                false
+    // true                false
+    // undefined           false
+    // / { hi : 'bye' }    true
+    // / {}                true
     return typeof obj === 'object' && !!obj;
 }
 
