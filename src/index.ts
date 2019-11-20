@@ -311,14 +311,7 @@ class BetterHTMLElement {
                 this.e.after(node);
         }
         return this;
-        /*if (nodes[0] instanceof BetterHTMLElement)
-         for (let bhe of <BetterHTMLElement[]>nodes)
-         this.e.after(bhe.e);
-         else
-         for (let node of <(string | Node)[]>nodes)
-         this.e.after(node); // TODO: test what happens when passed strings
-         return this;
-         */
+        
     }
     
     /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
@@ -345,13 +338,7 @@ class BetterHTMLElement {
                 this.cacheAppend(node)
         }
         return this;
-        /*if (nodes[0] instanceof BetterHTMLElement)
-         for (let bhe of <BetterHTMLElement[]>nodes)
-         this.e.append(bhe.e);
-         else
-         for (let node of <(string | Node)[]>nodes)
-         this.e.append(node); // TODO: test what happens when passed strings
-         return this;*/
+        
     }
     
     /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
@@ -373,13 +360,7 @@ class BetterHTMLElement {
                 this.e.before(node);
         }
         return this;
-        /*if (nodes[0] instanceof BetterHTMLElement)
-         for (let bhe of <BetterHTMLElement[]>nodes)
-         this.e.before(bhe.e);
-         else
-         for (let node of <(string | Node)[]>nodes)
-         this.e.before(node); // TODO: test what happens when passed strings
-         return this;*/
+        
     }
     
     /**Insert `this` just before a `BetterHTMLElement` or a vanilla `Node`s.*/
@@ -391,7 +372,6 @@ class BetterHTMLElement {
         return this;
     }
     
-    // TODO: if append supports strings, so should this
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
     replaceChild(newChild, oldChild) {
@@ -525,7 +505,6 @@ class BetterHTMLElement {
                 if ( value instanceof BetterHTMLElement ) {
                     this._cache(key, value)
                 } else {
-                    // let entries = Object.entries(<TMap<QuerySelector> | TRecMap<QuerySelector>>value);
                     let entries = Object.entries(value);
                     if ( entries[1] !== undefined ) {
                         console.warn(
@@ -1131,18 +1110,7 @@ class Anchor extends BetterHTMLElement {
     }
 }
 
-/*class Svg extends BetterHTMLElement{
- protected readonly _htmlElement: SVGElement;
- constructor({id, cls,htmlElement}: SvgConstructor) {
- super({tag: 'svg', cls});
- if (id)
- this.id(id);
- if (src)
- this._htmlElement.src = src;
- 
- }
- }
- */
+
 customElements.define('better-html-element', BetterHTMLElement);
 customElements.define('better-div', Div, { extends : 'div' });
 customElements.define('better-p', Paragraph, { extends : 'p' });
@@ -1150,7 +1118,6 @@ customElements.define('better-span', Span, { extends : 'span' });
 customElements.define('better-img', Img, { extends : 'img' });
 customElements.define('better-a', Anchor, { extends : 'a' });
 
-// customElements.define('better-svg', Svg, {extends: 'svg'});
 
 /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
 function elem({ tag, text, cls }: { tag: QuerySelector, text?: string, cls?: string }): BetterHTMLElement;
