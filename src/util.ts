@@ -134,6 +134,71 @@ function notnot(obj) {
     return !!obj;
 }
 
+function bool(val: any): boolean {
+    // 0                    false
+    // 1                    true
+    // '0'                  true
+    // '1'                  true
+    // ' '                  true
+    // ''                   false
+    // 'foo'                true
+    // ()=>{}               true
+    // Boolean              true
+    // Boolean()            false
+    // Boolean(false)       false
+    // Boolean(true)        true
+    // Function             true
+    // Function()           true
+    // Number               true
+    // Number(0)            false
+    // Number(1)            true
+    // Number()             false
+    // [ 0 ]                true
+    // [ 1 ]                true
+    // [ [] ]               true
+    // [ false ]            true
+    // [ true ]             true
+    // []                   false       unlike native
+    // document.body        true
+    // false                false
+    // function(){}         true
+    // new Boolean          false       unlike native
+    // new Boolean()        false       unlike native
+    // new Boolean(false)   false       unlike native
+    // new Boolean(true)    true
+    // new Function         true
+    // new Function()       true
+    // new Number           false       unlike native
+    // new Number(0)        false       unlike native
+    // new Number(1)        true
+    // new Number()         false       unlike native
+    // new Timeline(...)    true
+    // new class{}          false       unlike native
+    // null                 false
+    // true                 true
+    // undefined            false
+    // { hi : 'bye' }       true
+    // {}                   false       unlike native
+    
+    
+    if ( !val )
+        return false;
+    const typeofval = typeof val;
+    if ( typeofval !== 'object' ) {
+        if ( typeofval === 'function' )
+            return true;
+        else
+            return !!val;
+    }
+    // let keysLength = Object.keys(val).length;
+    let toStringed = {}.toString.call(val);
+    if ( toStringed === '[object Object]' || toStringed === '[object Array]' )
+        return Object.keys(val).length !== 0;
+    
+    // Boolean, Number, HTMLElement...
+    return !!val.valueOf();
+}
+
 function isArray<T>(obj): obj is Array<T> { // same as Array.isArray
     // 0                   false
     // 1                   false
@@ -305,6 +370,7 @@ function isFunction(fn) {
     let toStringed = {}.toString.call(fn);
     return !!fn && toStringed === '[object Function]'
 }
+
 
 function isTMap<T>(obj: TMap<T>): obj is TMap<T> {
     // 0                   false

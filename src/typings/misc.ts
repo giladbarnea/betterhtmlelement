@@ -25,6 +25,6 @@ type Enumerated<T> =
     T extends (infer U)[] ? [ number, U ][]
         : T extends TMap<(infer U)> ? [ keyof T, U ][]
         : T extends boolean ? never : any;
-type TReturnBoolean = (s: string) => boolean;
+// type TReturnBoolean = (...args: any[]) => boolean;
 type AnyFunction = (...args: any[]) => any;
 type FunctionReturns<T> = (...args: any[]) => T;

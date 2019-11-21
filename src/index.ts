@@ -60,13 +60,19 @@ class BetterHTMLElement {
             } else {
                 this._htmlElement = document.createElement(tag);
             }
-        } else if ( id !== undefined )
+        } else if ( id !== undefined ) {
             this._htmlElement = document.getElementById(id);
-        else if ( query !== undefined )
+            if ( !bool(this._htmlElement) )
+                console.warn(`Elem constructor: tried to get element by id: "${id}", but no such element exists.`)
+        } else if ( query !== undefined ) {
             this._htmlElement = document.querySelector(query);
-        else if ( htmlElement !== undefined )
+            if ( !bool(this._htmlElement) )
+                console.warn(`Elem constructor: tried to get element by query: "${query}", but no element found.`)
+        } else if ( htmlElement !== undefined ) {
             this._htmlElement = htmlElement;
-        else {
+            if ( !bool(this._htmlElement) )
+                console.warn(`Elem constructor: passed explicit htmlElement arg, but arg was falsey: ${htmlElement}`, htmlElement)
+        } else {
             throw new BadArgumentsAmountError(1, {
                 tag,
                 id,
@@ -222,10 +228,10 @@ class BetterHTMLElement {
      */
     
     // ***  Classes
+    /**Return the first class that matches `cls` predicate.*/
+    class(cls: FunctionReturns<boolean>): string;
     /**`.className = cls`*/
     class(cls: string): this;
-    /**Return the first class that matches `cls` predicate.*/
-    class(cls: TReturnBoolean): string;
     /**Return a string array of the element's classes (not a classList)*/
     class(): string[];
     class(cls?) {
@@ -252,13 +258,13 @@ class BetterHTMLElement {
         return this;
     }
     
-    removeClass(cls: TReturnBoolean): this;
+    removeClass(cls: FunctionReturns<boolean>): this;
     removeClass(cls: string, ...clses: string[]): this;
     removeClass(cls, ...clses) {
         if ( isFunction<boolean>(cls) ) {
             this.e.classList.remove(this.class(cls));
             if ( bool(clses) )
-                console.warn('removeClass, cls is TReturnBoolean, got ...clses but shouldnt have')
+                console.warn('removeClass, cls is FunctionReturns<boolean>, got ...clses but shouldnt have')
             
         } else {
             this.e.classList.remove(cls);
@@ -268,7 +274,7 @@ class BetterHTMLElement {
         return this;
     }
     
-    replaceClass(oldToken: TReturnBoolean, newToken: string): this;
+    replaceClass(oldToken: FunctionReturns<boolean>, newToken: string): this;
     replaceClass(oldToken: string, newToken: string): this
     replaceClass(oldToken, newToken) {
         if ( isFunction<boolean>(oldToken) ) {
@@ -279,7 +285,7 @@ class BetterHTMLElement {
         return this;
     }
     
-    toggleClass(cls: TReturnBoolean, force?: boolean): this
+    toggleClass(cls: FunctionReturns<boolean>, force?: boolean): this
     toggleClass(cls: string, force?: boolean): this
     toggleClass(cls, force) {
         if ( isFunction<boolean>(cls) )
@@ -292,7 +298,7 @@ class BetterHTMLElement {
     /**Returns `this.e.classList.contains(cls)` */
     hasClass(cls: string): boolean
     /**Returns whether `this` has a class that matches passed function */
-    hasClass(cls: TReturnBoolean): boolean
+    hasClass(cls: FunctionReturns<boolean>): boolean
     hasClass(cls) {
         if ( isFunction<boolean>(cls) ) {
             return this.class(cls) !== undefined;
@@ -663,7 +669,8 @@ class BetterHTMLElement {
         let action;
         // TODO: check if PointerEvent exists instead of try/catch
         try {
-            action = window.PointerEvent ? 'pointerdown' : 'mousedown'; // safari doesn't support pointerdown
+            // noinspection TypeScriptUnresolvedVariable
+            action = window.PointerEvent ? 'pointerdown' : 'mousedown'; // < iOS 9 no pointerdown support
         } catch ( e ) {
             action = 'mousedown'
         }
@@ -921,7 +928,6 @@ class BetterHTMLElement {
     
     // **  Fade
     async fade(dur: number, to: 0 | 1): Promise<this> {
-        console.warn('fade, should NOT use');
         const styles = window.getComputedStyle(this.e);
         const transProp = styles.transitionProperty.split(', ');
         const indexOfOpacity = transProp.indexOf('opacity');
@@ -1000,13 +1006,11 @@ class BetterHTMLElement {
     }
     
     async fadeOut(dur: number): Promise<this> {
-        console.warn('fadeOut, should NOT use');
         return await this.fade(dur, 0);
     }
     
     
     async fadeIn(dur: number): Promise<this> {
-        console.warn('fadeIn, should NOT use');
         return await this.fade(dur, 1);
     }
     
