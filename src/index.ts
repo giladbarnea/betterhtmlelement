@@ -6,9 +6,9 @@ class BetterHTMLElement {
     private readonly _isSvg: boolean = false;
     private readonly _listeners: TEventFunctionMap<TEvent> = {};
     private _cachedChildren: TMap<BetterHTMLElement> = {};
-    
-    /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
-    constructor({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string });
+
+    /**Create an element of `create`. Optionally, set its `text` and / or `cls`*/
+    constructor({create, text, cls}: { create: QuerySelector, text?: string, cls?: string });
     /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
     constructor({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: ChildrenObj });
     /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
@@ -16,23 +16,28 @@ class BetterHTMLElement {
     /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
     constructor({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: ChildrenObj });
     constructor(elemOptions) {
-        const {tag, id, htmlElement, text, query, children, cls} = elemOptions;
-        
-        if ([tag, id, htmlElement, query].filter(x => x !== undefined).length > 1) {
-            throw new BadArgumentsAmountError(1, {
-                tag,
+        const {create, id, htmlElement, text, query, children, cls} = elemOptions;
+
+        // ** Argument Errors
+        // * choose one: create, id, htmlElement, query
+        if ([create, id, htmlElement, query].filter(x => x !== undefined).length > 1) {
+            throw new MutuallyExclusiveArgs({
+                create,
                 id,
                 htmlElement,
                 query
             })
-            
+
         }
-        if (tag !== undefined && children !== undefined)
-            throw new BadArgumentsAmountError(1, {
-                tag,
+        // * choose one: create, children
+        if (create !== undefined && children !== undefined) {
+            throw new MutuallyExclusiveArgs({
+                create,
                 children
-            }, '"children" and "tag" options are mutually exclusive, because tag implies creating a new element and children implies getting an existing one.');
-        
+            }, '"children" and "create" options are mutually exclusive, because create implies creating a new element and children implies getting an existing one.');
+        }
+
+        /*// ** tag (CREATE element)
         if (tag !== undefined) {
             if (['svg', 'path'].includes(tag.toLowerCase())) {
                 this._isSvg = true;
@@ -40,37 +45,74 @@ class BetterHTMLElement {
             } else {
                 this._htmlElement = document.createElement(tag);
             }
-        } else if (id !== undefined)
+        } else if (id !== undefined) {
             this._htmlElement = document.getElementById(id);
-        else if (query !== undefined)
-            this._htmlElement = document.querySelector(query);
-        else if (htmlElement !== undefined)
-            this._htmlElement = htmlElement;
-        else {
-            throw new BadArgumentsAmountError(1, {
-                tag,
-                id,
-                htmlElement,
-                query
-            })
-        }
-        
-        if (text !== undefined)
+        } else {
+            if (query !== undefined) {
+                this._htmlElement = document.querySelector(query);
+            } else {
+                if (htmlElement !== undefined) {
+                    this._htmlElement = htmlElement;
+                } else {
+                    throw new MutuallyExclusiveArgs(1, {
+                        tag,
+                        id,
+                        htmlElement,
+                        query
+                    })
+                }
+            }
+        }*/
+        this._htmlElement = BetterHTMLElement._buildHtmlElement(create, id, query, htmlElement);
+        if (text !== undefined) {
             this.text(text);
-        if (cls !== undefined)
+        }
+        if (cls !== undefined) {
             this.class(cls);
-        
-        if (children !== undefined)
+        }
+
+        if (children !== undefined) {
             this.cacheChildren(children);
-        
-        
+        }
+
+
     }
-    
+
+    private static _buildHtmlElement(create, id, query, htmlElement) {
+        // ** create (CREATE element)
+        if (create !== undefined) {
+            if (['svg', 'path'].includes(create.toLowerCase())) {
+                throw new Error("Not impl");
+                this._isSvg = true;
+                this._htmlElement = document.createElementNS(SVG_NS_URI, create);
+            } else {
+                return document.createElement(create);
+            }
+        }
+        if (id !== undefined) {
+            return document.getElementById(id);
+        }
+        if (query !== undefined) {
+            return document.querySelector(query);
+        }
+        if (htmlElement !== undefined) {
+            return htmlElement;
+        }
+        throw new MutuallyExclusiveArgs({
+            create,
+            id,
+            htmlElement,
+            query
+        })
+
+
+    }
+
     /**Return the wrapped HTMLElement*/
     get e() {
         return this._htmlElement;
     }
-    
+
     /**Sets `this._htmlElement` to `newHtmlElement._htmlElement`.
      * Resets `this._cachedChildren` and caches `newHtmlElement._cachedChildren`.
      * Adds event listeners from `newHtmlElement._listeners`, while keeping `this._listeners`.*/
@@ -107,10 +149,10 @@ class BetterHTMLElement {
             this._htmlElement.replaceWith(newHtmlElement);
             this._htmlElement = newHtmlElement;
         }
-        
+
         return this;
     }
-    
+
     // ***  Basic
     /**Set the element's innerHTML*/
     html(html: string): this;
@@ -124,7 +166,7 @@ class BetterHTMLElement {
             return this;
         }
     }
-    
+
     /**Set the element's innerText*/
     text(txt: string | number): this;
     /**Get the element's innerText*/
@@ -136,9 +178,9 @@ class BetterHTMLElement {
             this.e.innerText = txt;
             return this;
         }
-        
+
     }
-    
+
     /**Set the id of the element*/
     id(id: string): this;
     /**Get the id of the element*/
@@ -151,7 +193,7 @@ class BetterHTMLElement {
             return this;
         }
     }
-    
+
     /**For each `{<styleAttr>: <styleVal>}` pair, set the `style[styleAttr]` to `styleVal`.*/
     css(css: Partial<CssOptions>): this
     /**Get `style[css]`*/
@@ -160,21 +202,23 @@ class BetterHTMLElement {
         if (typeof css === 'string') {
             return this.e.style[css];
         } else {
-            for (let [styleAttr, styleVal] of enumerate(css))
+            for (let [styleAttr, styleVal] of enumerate(css)) {
                 this.e.style[<string>styleAttr] = styleVal;
+            }
             return this;
         }
     }
-    
+
     /**Remove the value of the passed style properties*/
     uncss(...removeProps: (keyof CssOptions)[]): this {
         let css = {};
-        for (let prop of removeProps)
+        for (let prop of removeProps) {
             css[prop] = '';
+        }
         return this.css(css);
     }
-    
-    
+
+
     // ***  Classes
     /**`.className = cls`*/
     class(cls: string): this;
@@ -198,29 +242,32 @@ class BetterHTMLElement {
             return this;
         }
     }
-    
+
     addClass(cls: string, ...clses: string[]): this {
         this.e.classList.add(cls);
-        for (let c of clses)
+        for (let c of clses) {
             this.e.classList.add(c);
+        }
         return this;
     }
-    
+
     removeClass(cls: TReturnBoolean, ...clses: TReturnBoolean[]): this;
     removeClass(cls: string, clses?: string[]): this;
     removeClass(cls, ...clses) {
         if (isFunction(cls)) {
             this.e.classList.remove(this.class(cls));
-            for (let c of <TReturnBoolean[]>clses)
+            for (let c of <TReturnBoolean[]>clses) {
                 this.e.classList.remove(this.class(c));
+            }
         } else {
             this.e.classList.remove(cls);
-            for (let c of clses)
+            for (let c of clses) {
                 this.e.classList.remove(c);
+            }
         }
         return this;
     }
-    
+
     replaceClass(oldToken: TReturnBoolean, newToken: string): this;
     replaceClass(oldToken: string, newToken: string): this
     replaceClass(oldToken, newToken) {
@@ -231,17 +278,18 @@ class BetterHTMLElement {
         }
         return this;
     }
-    
+
     toggleClass(cls: TReturnBoolean, force?: boolean): this
     toggleClass(cls: string, force?: boolean): this
     toggleClass(cls, force) {
-        if (isFunction(cls))
+        if (isFunction(cls)) {
             this.e.classList.toggle(this.class(cls), force);
-        else
+        } else {
             this.e.classList.toggle(cls, force);
+        }
         return this;
     }
-    
+
     /**Returns `this.e.classList.contains(cls)` */
     hasClass(cls: string): boolean
     /**Returns whether `this` has a class that matches passed function */
@@ -253,88 +301,98 @@ class BetterHTMLElement {
             return this.e.classList.contains(cls);
         }
     }
-    
+
     // ***  Nodes
     /**Insert at least one `node` just after `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     after(...nodes: Array<BetterHTMLElement | Node>): this {
         for (let node of nodes) {
-            if (node instanceof BetterHTMLElement)
+            if (node instanceof BetterHTMLElement) {
                 this.e.after(node.e);
-            else
+            } else {
                 this.e.after(node);
+            }
         }
         return this;
     }
-    
+
     /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
     insertAfter(node: BetterHTMLElement | HTMLElement): this {
-        if (node instanceof BetterHTMLElement)
+        if (node instanceof BetterHTMLElement) {
             node.e.after(this.e);
-        else
+        } else {
             node.after(this.e);
+        }
         return this;
     }
-    
+
     /**Insert at least one `node` after the last child of `this`.
      * Any `node` can be either a `BetterHTMLElement`, a vanilla `Node`,
      * a `{someKey: BetterHTMLElement}` pairs object, or a `[someKey, BetterHTMLElement]` tuple.*/
     append(...nodes: Array<BetterHTMLElement | Node | TMap<BetterHTMLElement> | [string, BetterHTMLElement]>): this {
         for (let node of nodes) {
-            if (node instanceof BetterHTMLElement)
+            if (node instanceof BetterHTMLElement) {
                 this.e.append(node.e);
-            else if (node instanceof Node)
-                this.e.append(node);
-            else if (Array.isArray(node))
-                this.cacheAppend([node]);
-            else
-                this.cacheAppend(node)
+            } else {
+                if (node instanceof Node) {
+                    this.e.append(node);
+                } else {
+                    if (Array.isArray(node)) {
+                        this.cacheAppend([node]);
+                    } else {
+                        this.cacheAppend(node)
+                    }
+                }
+            }
         }
         return this;
-        
+
     }
-    
+
     /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
     appendTo(node: BetterHTMLElement | HTMLElement): this {
-        if (node instanceof BetterHTMLElement)
+        if (node instanceof BetterHTMLElement) {
             node.e.append(this.e);
-        else
+        } else {
             node.append(this.e);
-        
+        }
+
         return this;
     }
-    
+
     /**Insert at least one `node` just before `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     before(...nodes: Array<BetterHTMLElement | Node>): this {
         for (let node of nodes) {
-            if (node instanceof BetterHTMLElement)
+            if (node instanceof BetterHTMLElement) {
                 this.e.before(node.e);
-            else
+            } else {
                 this.e.before(node);
+            }
         }
         return this;
     }
-    
+
     /**Insert `this` just before a `BetterHTMLElement` or a vanilla `Node`s.*/
     insertBefore(node: BetterHTMLElement | HTMLElement): this {
-        if (node instanceof BetterHTMLElement)
+        if (node instanceof BetterHTMLElement) {
             node.e.before(this.e);
-        else
+        } else {
             node.before(this.e);
+        }
         return this;
     }
-    
+
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
     replaceChild(newChild, oldChild) {
         this.e.replaceChild(newChild, oldChild);
         return this;
     }
-    
+
     private _cache(key: string, child: BetterHTMLElement) {
         this[key] = child;
         this._cachedChildren[key] = child;
     }
-    
+
     /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this
     /**For each `[key, child]` tuple, `append(child)` and store it in `this[key]`. */
@@ -345,24 +403,31 @@ class BetterHTMLElement {
             this._cache(_key, _child);
         };
         if (Array.isArray(keyChildPairs)) {
-            for (let [key, child] of keyChildPairs)
+            for (let [key, child] of keyChildPairs) {
                 _cacheAppend(key, child);
+            }
         } else {
-            for (let [key, child] of enumerate(keyChildPairs))
+            for (let [key, child] of enumerate(keyChildPairs)) {
                 _cacheAppend(key, child);
+            }
         }
         return this;
     }
-    
+
     /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
     child<K extends HTMLTag>(selector: K): BetterHTMLElement;
     /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
     child(selector: string): BetterHTMLElement;
     child(selector) {
-        return new BetterHTMLElement({htmlElement: this.e.querySelector(selector)});
+        const htmlElement = this.e.querySelector(selector);
+        const tag = htmlElement.tagName.toLowerCase();
+        const bhe = bheFactory(tag, htmlElement);
+        return bhe;
+        // BetterHTMLElement({})
+        // return new BetterHTMLElement({htmlElement: htmlElement});
     }
-    
-    
+
+
     /**Return a `BetterHTMLElement` list of all children */
     children(): BetterHTMLElement[];
     /**Return a `BetterHTMLElement` list of all children selected by `selector` */
@@ -381,12 +446,12 @@ class BetterHTMLElement {
         const toElem = (c: HTMLElement) => new BetterHTMLElement({htmlElement: c});
         return childrenVanilla.map(toElem);
     }
-    
+
     clone(deep?: boolean): BetterHTMLElement {
         // @ts-ignore
         return new BetterHTMLElement({htmlElement: this.e.cloneNode(deep)});
     }
-    
+
     /**For each `[key, selector]` pair, where `selector` is either an `HTMLTag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
      * @example
      * // Using `cacheChildren` directly
@@ -446,7 +511,7 @@ class BetterHTMLElement {
      * const navbar = elem({id: 'navbar', children: { home }});
      * navbar.home.toggleClass("selected");
      * @see this.child*/
-    
+
     cacheChildren(recursiveBHEMap: TRecMap<BetterHTMLElement>): this
     /**key: string. value: either "selector string" OR {"selector string": <recurse down>}*/
     cacheChildren(map) {
@@ -481,25 +546,26 @@ class BetterHTMLElement {
             }
         }
         return this;
-        
+
     }
-    
+
     /**Remove all children from DOM*/
     empty(): this {
-        while (this.e.firstChild)
+        while (this.e.firstChild) {
             this.e.removeChild(this.e.firstChild);
+        }
         return this;
     }
-    
+
     /**Remove element from DOM*/
     remove(): this {
         this.e.remove();
         return this;
     }
-    
-    
+
+
     // ***  Events
-    
+
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this {
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
@@ -510,8 +576,8 @@ class BetterHTMLElement {
         }
         return this;
     }
-    
-    
+
+
     /*
     Chronology:
 	mousedown   touchstart	pointerdown
@@ -528,15 +594,17 @@ class BetterHTMLElement {
             ev.preventDefault(); // otherwise "touchmove" is triggered
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
+            {
                 this.removeEventListener('touchstart', _f);
+            }
         }, options);
         // TODO: this._listeners, or use this.on(
         return this;
     }
-    
+
     /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
     pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this {
-        
+
         let action;
         try {
             // TODO: check if PointerEvent exists instead of try/catch
@@ -549,13 +617,15 @@ class BetterHTMLElement {
             ev.preventDefault();
             fn(ev);
             if (options && options.once) // TODO: maybe native options.once is enough
+            {
                 this.removeEventListener(action, _f);
+            }
         };
         this.e.addEventListener(action, _f, options);
         this._listeners.pointerdown = _f;
         return this;
     }
-    
+
     /**Simulate a click of the element. Useful for `<a>` elements.*/
     click(): this;
     /**Add a `click` event listener. You should probably use `pointerdown()` if on desktop, or `touchstart()` if on mobile.*/
@@ -568,7 +638,7 @@ class BetterHTMLElement {
             return this.on({click: fn}, options);
         }
     }
-    
+
     /**Blur (unfocus) the element.*/
     blur(): this;
     /**Add a `blur` event listener*/
@@ -581,7 +651,7 @@ class BetterHTMLElement {
             return this.on({blur: fn}, options)
         }
     }
-    
+
     /**Focus the element.*/
     focus(): this;
     /**Add a `focus` event listener*/
@@ -594,18 +664,18 @@ class BetterHTMLElement {
             return this.on({focus: fn}, options)
         }
     }
-    
-    
+
+
     /**Add a `change` event listener*/
     change(fn: (event: Event) => any, options?: AddEventListenerOptions): this {
         return this.on({change: fn}, options);
     }
-    
+
     /**Add a `contextmenu` event listener*/
     contextmenu(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this {
         return this.on({contextmenu: fn}, options);
     }
-    
+
     /**Simulate a double click of the element.*/
     dblclick(): this;
     /**Add a `dblclick` event listener*/
@@ -623,7 +693,7 @@ class BetterHTMLElement {
             return this.on({dblclick: fn}, options)
         }
     }
-    
+
     /**Simulate a mouseenter event to the element.*/
     mouseenter(): this;
     /**Add a `mouseenter` event listener*/
@@ -631,7 +701,7 @@ class BetterHTMLElement {
     mouseenter(fn?, options?) {
         // mouseover: also child elements
         // mouseenter: only bound element
-        
+
         if (fn === undefined) {
             const mouseenter = new MouseEvent('mouseenter', {
                 'view': window,
@@ -644,14 +714,14 @@ class BetterHTMLElement {
             return this.on({mouseenter: fn}, options)
         }
     }
-    
-    
+
+
     /**Add a `keydown` event listener*/
     keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this {
         return this.on({keydown: fn}, options)
     }
-    
-    
+
+
     /**Add a `mouseout` event listener*/
     mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this {
         //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
@@ -660,23 +730,23 @@ class BetterHTMLElement {
         // (even if the pointer is still within the element).
         return this.on({mouseout: fn}, options)
     }
-    
-    
+
+
     /**Add a `mouseover` event listener*/
     mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this {
         // mouseover: also child elements
         // mouseenter: only bound element
         return this.on({mouseover: fn}, options)
     }
-    
-    
+
+
     /** Remove the event listener of `event`, if exists.*/
     off(event: TEvent): this {
         // TODO: Should remove listener from this._listeners?
         this.e.removeEventListener(event, this._listeners[event]);
         return this;
     }
-    
+
     /** Remove all event listeners in `_listeners`*/
     allOff(): this {
         for (let event in this._listeners) {
@@ -684,100 +754,179 @@ class BetterHTMLElement {
         }
         return this;
     }
-    
-    // ***  Attributes
-    
+
+    // *** Attributes
+
     /** For each `[attr, val]` pair, apply `setAttribute`*/
-    attr(attrValPairs: TMap<string>): this
+    attr(attrValPairs: TMap<string | boolean>): this
     /** apply `getAttribute`*/
     attr(attributeName: string): string
     attr(attrValPairs) {
         if (typeof attrValPairs === 'string') {
             return this.e.getAttribute(attrValPairs);
         } else {
-            for (let [attr, val] of enumerate(attrValPairs))
+            for (let [attr, val] of enumerate(attrValPairs)) {
                 this.e.setAttribute(attr, val);
+            }
             return this;
         }
     }
-    
+
     /** `removeAttribute` */
     removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this {
         let _removeAttribute;
-        if (this._isSvg)
+        if (this._isSvg) {
             _removeAttribute = (qualifiedName) => this.e.removeAttributeNS(SVG_NS_URI, qualifiedName);
-        else
+        } else {
             _removeAttribute = (qualifiedName) => this.e.removeAttribute(qualifiedName);
-        
+        }
+
         _removeAttribute(qualifiedName);
-        for (let qn of qualifiedNames)
+        for (let qn of qualifiedNames) {
             _removeAttribute(qn);
+        }
         return this;
     }
-    
+
     /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/
     data(key: string, parse: boolean = true): string | TMap<string> {
         // TODO: jquery doesn't affect data-* attrs in DOM. https://api.jquery.com/data/
         const data = this.e.getAttribute(`data-${key}`);
-        if (parse === true)
+        if (parse === true) {
             return JSON.parse(data);
-        else
+        } else {
             return data
+        }
     }
-    
-    
+
+
 }
 
 class Div extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLDivElement;
     readonly e: HTMLDivElement;
-    
-    /**Create a Div element. Optionally set its id, text or cls.*/
-    constructor({id, text, cls}: SubElemConstructor = {}) {
-        super({tag: 'div', text, cls});
-        if (id !== undefined)
+
+    /**Create a new Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+    constructor({id, text, cls, htmlElement}: SubElemConstructor<HTMLDivElement> = {}) {
+        if (htmlElement !== undefined) {
+            super({text, cls, htmlElement});
+        } else {
+            super({create: 'div', text, cls});
+        }
+        if (id !== undefined) {
             this.id(id);
+        }
     }
 }
+
+
+class Button extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLButtonElement;
+    readonly e: HTMLButtonElement;
+
+    /**Create a new Button element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+    constructor({id, text, cls, htmlElement}: SubElemConstructor<HTMLButtonElement> = {}) {
+        if (htmlElement !== undefined) {
+            super({text, cls, htmlElement});
+        } else {
+            super({create: 'button', text, cls});
+        }
+        if (id !== undefined) {
+            this.id(id);
+        }
+    }
+}
+
 
 class Paragraph extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLParagraphElement;
     readonly e: HTMLParagraphElement;
-    
-    /**Create a Paragraph element. Optionally set its id, text or cls.*/
-    constructor({id, text, cls}: SubElemConstructor = {}) {
-        super({tag: 'p', text, cls});
-        if (id !== undefined)
+
+    /**Create a new Paragraph element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+    constructor({id, text, cls, htmlElement}: SubElemConstructor<HTMLParagraphElement> = {}) {
+        if (htmlElement !== undefined) {
+            super({text, cls, htmlElement});
+        } else {
+            super({create: 'p', text, cls});
+        }
+        if (id !== undefined) {
             this.id(id);
+        }
+    }
+}
+
+class Input extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLInputElement;
+    readonly e: HTMLInputElement;
+
+    /**Create a new Input element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+    constructor({id, cls, type, htmlElement}: InputConstructor = {}) {
+        if (htmlElement !== undefined) {
+            super({cls, htmlElement});
+        } else {
+            super({create: 'input', cls});
+        }
+        if (id !== undefined) {
+            this.id(id);
+        }
+        if (type !== undefined) {
+            this._htmlElement.type = type;
+        }
+    }
+
+    check(): this {
+        return this.attr({checked: true})
+    }
+
+    uncheck(): this {
+        return this.removeAttr('checked')
+    }
+
+    checked(): boolean {
+        const rv = this.e.checked;
+        console.log('this.e.checked: ', rv);
+        return rv
     }
 }
 
 class Span extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLSpanElement;
     readonly e: HTMLSpanElement;
-    
-    /**Create a Span element. Optionally set its id, text or cls.*/
-    constructor({id, text, cls}: SubElemConstructor = {}) {
-        super({tag: 'span', text, cls});
-        if (id !== undefined)
+
+    /**Create a new Span element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+    constructor({id, text, cls, htmlElement}: SubElemConstructor<HTMLSpanElement> = {}) {
+        if (htmlElement !== undefined) {
+            super({text, cls, htmlElement});
+        } else {
+            super({create: 'span', text, cls});
+        }
+        if (id !== undefined) {
             this.id(id);
-        
+        }
+
     }
 }
 
 class Img extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLImageElement;
-    
-    /**Create an Img element. Optionally set its id, src or cls.*/
-    constructor({id, src, cls}: ImgConstructor) {
-        super({tag: 'img', cls});
-        if (id !== undefined)
+    readonly e: HTMLImageElement;
+
+    /**Create a new Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
+    constructor({id, src, cls, htmlElement}: ImgConstructor) {
+        if (htmlElement !== undefined) {
+            super({cls, htmlElement});
+        } else {
+            super({create: 'img', cls});
+        }
+        if (id !== undefined) {
             this.id(id);
-        if (src !== undefined)
+        }
+        if (src !== undefined) {
             this._htmlElement.src = src;
-        
+        }
+
     }
-    
+
     src(src: string): this;
     src(): string;
     src(src?) {
@@ -788,55 +937,64 @@ class Img extends BetterHTMLElement {
             return this;
         }
     }
-    
-    readonly e: HTMLImageElement;
+
+
 }
 
 class Anchor extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLAnchorElement;
     readonly e: HTMLAnchorElement;
-    
-    /**Create an Anchor element. Optionally set its id, text, href or cls.*/
-    constructor({id, text, cls, href}: AnchorConstructor = {}) {
-        super({tag: 'a', text, cls});
-        if (id !== undefined)
+
+    /**Create a new Input element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
+    constructor({id, text, cls, href, htmlElement}: AnchorConstructor = {}) {
+        if (htmlElement !== undefined) {
+            super({text, cls, htmlElement});
+        } else {
+            super({create: 'a', text, cls});
+        }
+        if (id !== undefined) {
             this.id(id);
-        if (href !== undefined)
+        }
+        if (href !== undefined) {
             this.href(href)
-        
+        }
+
     }
-    
+
     href(): string
     href(val: string): this
     href(val?) {
-        if (val === undefined)
+        if (val === undefined) {
             return this.attr('href');
-        else
+        } else {
             return this.attr({href: val})
+        }
     }
-    
+
     target(): string
     target(val: string): this
     target(val?) {
-        if (val === undefined)
+        if (val === undefined) {
             return this.attr('target');
-        else
+        } else {
             return this.attr({target: val})
+        }
     }
 }
 
 
-customElements.define('better-html-element', BetterHTMLElement);
+/*customElements.define('better-html-element', BetterHTMLElement);
 customElements.define('better-div', Div, {extends: 'div'});
+customElements.define('better-input', Input, {extends: 'input'});
 customElements.define('better-p', Paragraph, {extends: 'p'});
 customElements.define('better-span', Span, {extends: 'span'});
 customElements.define('better-img', Img, {extends: 'img'});
-customElements.define('better-a', Anchor, {extends: 'a'});
+customElements.define('better-a', Anchor, {extends: 'a'});*/
 
 // customElements.define('better-svg', Svg, {extends: 'svg'});
 
-/**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
-function elem({tag, text, cls}: { tag: QuerySelector, text?: string, cls?: string }): BetterHTMLElement;
+/**Create an element of `create`. Optionally, set its `text` and / or `cls`*/
+function elem({create, text, cls}: { create: QuerySelector, text?: string, cls?: string }): BetterHTMLElement;
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
 function elem({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: ChildrenObj }): BetterHTMLElement;
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
@@ -847,29 +1005,61 @@ function elem(elemOptions): BetterHTMLElement {
     return new BetterHTMLElement(elemOptions);
 }
 
-/**Create an Span element. Optionally set its id, text or cls.*/
-function span({id, text, cls}: SubElemConstructor = {}): Span {
-    return new Span({id, text, cls});
+/**Create an Span element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+function span({id, text, cls, htmlElement}: SubElemConstructor<HTMLSpanElement> = {}): Span {
+    return new Span({id, text, cls, htmlElement});
 }
 
-/**Create an Div element. Optionally set its id, text or cls.*/
-function div({id, text, cls}: SubElemConstructor = {}): Div {
-    return new Div({id, text, cls});
+/**Create a Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+function div({id, text, cls, htmlElement}: SubElemConstructor<HTMLDivElement> = {}): Div {
+    return new Div({id, text, cls, htmlElement});
 }
 
-/**Create an Img element. Optionally set its id, src or cls.*/
-function img({id, src, cls}: ImgConstructor = {}): Img {
-    return new Img({id, src, cls});
-}
-
-/**Create a Paragraph element. Optionally set its id, text or cls.*/
-function paragraph({id, text, cls}: SubElemConstructor = {}): Paragraph {
-    return new Paragraph({id, text, cls});
-}
-
-/**Create an Anchor element. Optionally set its id, text, href or cls.*/
-function anchor({id, text, cls, href}: AnchorConstructor = {}): Anchor {
-    return new Anchor({id, text, cls, href});
+/**Create a Button element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+function button({id, text, cls, htmlElement}: SubElemConstructor<HTMLButtonElement> = {}): Button {
+    return new Button({id, text, cls, htmlElement});
 }
 
 
+/**Create an Input element, or wrap an existing one by passing htmlElement. Optionally set its id, cls or type.*/
+function input({id, cls, type, htmlElement}: InputConstructor = {}): Input {
+    return new Input({id, cls, type, htmlElement});
+}
+
+/**Create an Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
+function img({id, src, cls, htmlElement}: ImgConstructor = {}): Img {
+    return new Img({id, src, cls, htmlElement});
+}
+
+
+/**Create a Paragraph element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+function paragraph({id, text, cls, htmlElement}: SubElemConstructor<HTMLParagraphElement> = {}): Paragraph {
+    return new Paragraph({id, text, cls, htmlElement});
+}
+
+/**Create a new Anchor element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
+function anchor({id, text, cls, href, htmlElement}: AnchorConstructor = {}): Anchor {
+    return new Anchor({id, text, cls, href, htmlElement});
+}
+
+
+function bheFactory(create: string, htmlElement) {
+    switch (create) {
+        case 'div':
+            return div({htmlElement});
+        case 'anchor':
+            return anchor({htmlElement});
+        case 'paragraph':
+            return paragraph({htmlElement});
+        case 'img':
+            return img({htmlElement});
+        case 'input':
+            return input({htmlElement});
+        case 'button':
+            return button({htmlElement});
+        case 'span':
+            return span({htmlElement});
+        default:
+            return elem({htmlElement});
+    }
+}

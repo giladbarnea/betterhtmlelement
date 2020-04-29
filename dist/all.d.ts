@@ -1,6 +1,5 @@
-declare class BadArgumentsAmountError extends Error {
-    constructor(expectedArgsNum: number, passedArgs: object, details?: string);
-    constructor(expectedArgsNum: [number, number], passedArgs: object, details?: string);
+declare class MutuallyExclusiveArgs extends Error {
+    constructor(passedArgs: object, details?: string);
     static getArgNamesValues(argsWithValues: object): string;
     static getArgsWithValues(passedArgs: object): object;
 }
@@ -10,8 +9,8 @@ declare class BetterHTMLElement {
     private readonly _isSvg;
     private readonly _listeners;
     private _cachedChildren;
-    constructor({ tag, text, cls }: {
-        tag: QuerySelector;
+    constructor({ create, text, cls }: {
+        create: QuerySelector;
         text?: string;
         cls?: string;
     });
@@ -33,6 +32,7 @@ declare class BetterHTMLElement {
         cls?: string;
         children?: ChildrenObj;
     });
+    private static _buildHtmlElement;
     get e(): HTMLElement;
     wrapSomethingElse(newHtmlElement: BetterHTMLElement): this;
     wrapSomethingElse(newHtmlElement: Node): this;
@@ -100,7 +100,7 @@ declare class BetterHTMLElement {
     mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
     off(event: TEvent): this;
     allOff(): this;
-    attr(attrValPairs: TMap<string>): this;
+    attr(attrValPairs: TMap<string | boolean>): this;
     attr(attributeName: string): string;
     removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this;
     data(key: string, parse?: boolean): string | TMap<string>;
@@ -108,36 +108,49 @@ declare class BetterHTMLElement {
 declare class Div extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLDivElement;
     readonly e: HTMLDivElement;
-    constructor({ id, text, cls }?: SubElemConstructor);
+    constructor({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLDivElement>);
+}
+declare class Button extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLButtonElement;
+    readonly e: HTMLButtonElement;
+    constructor({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLButtonElement>);
 }
 declare class Paragraph extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLParagraphElement;
     readonly e: HTMLParagraphElement;
-    constructor({ id, text, cls }?: SubElemConstructor);
+    constructor({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLParagraphElement>);
+}
+declare class Input extends BetterHTMLElement {
+    protected readonly _htmlElement: HTMLInputElement;
+    readonly e: HTMLInputElement;
+    constructor({ id, cls, type, htmlElement }?: InputConstructor);
+    check(): this;
+    uncheck(): this;
+    checked(): boolean;
 }
 declare class Span extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLSpanElement;
     readonly e: HTMLSpanElement;
-    constructor({ id, text, cls }?: SubElemConstructor);
+    constructor({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLSpanElement>);
 }
 declare class Img extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLImageElement;
-    constructor({ id, src, cls }: ImgConstructor);
+    readonly e: HTMLImageElement;
+    constructor({ id, src, cls, htmlElement }: ImgConstructor);
     src(src: string): this;
     src(): string;
-    readonly e: HTMLImageElement;
 }
 declare class Anchor extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLAnchorElement;
     readonly e: HTMLAnchorElement;
-    constructor({ id, text, cls, href }?: AnchorConstructor);
+    constructor({ id, text, cls, href, htmlElement }?: AnchorConstructor);
     href(): string;
     href(val: string): this;
     target(): string;
     target(val: string): this;
 }
-declare function elem({ tag, text, cls }: {
-    tag: QuerySelector;
+declare function elem({ create, text, cls }: {
+    create: QuerySelector;
     text?: string;
     cls?: string;
 }): BetterHTMLElement;
@@ -159,11 +172,14 @@ declare function elem({ htmlElement, text, cls, children }: {
     cls?: string;
     children?: ChildrenObj;
 }): BetterHTMLElement;
-declare function span({ id, text, cls }?: SubElemConstructor): Span;
-declare function div({ id, text, cls }?: SubElemConstructor): Div;
-declare function img({ id, src, cls }?: ImgConstructor): Img;
-declare function paragraph({ id, text, cls }?: SubElemConstructor): Paragraph;
-declare function anchor({ id, text, cls, href }?: AnchorConstructor): Anchor;
+declare function span({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLSpanElement>): Span;
+declare function div({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLDivElement>): Div;
+declare function button({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLButtonElement>): Button;
+declare function input({ id, cls, type, htmlElement }?: InputConstructor): Input;
+declare function img({ id, src, cls, htmlElement }?: ImgConstructor): Img;
+declare function paragraph({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLParagraphElement>): Paragraph;
+declare function anchor({ id, text, cls, href, htmlElement }?: AnchorConstructor): Anchor;
+declare function bheFactory(create: string, htmlElement: any): BetterHTMLElement;
 declare function enumerate<T>(obj: T): Enumerated<T>;
 declare function wait(ms: number): Promise<any>;
 declare function isArray<T>(obj: any): obj is Array<T>;
@@ -228,21 +244,22 @@ interface AnimateOptions {
     playState?: AnimationPlayState;
     timingFunction?: AnimationTimingFunction;
 }
-interface BaseElemConstructor {
+interface BaseElemConstructor<T> {
     id?: string;
     cls?: string;
+    htmlElement?: T;
 }
-interface SubElemConstructor extends BaseElemConstructor {
+interface SubElemConstructor<T> extends BaseElemConstructor<T> {
     text?: string;
 }
-interface ImgConstructor extends BaseElemConstructor {
+interface ImgConstructor extends BaseElemConstructor<HTMLImageElement> {
     src?: string;
 }
-interface AnchorConstructor extends SubElemConstructor {
-    href?: string;
+interface InputConstructor extends BaseElemConstructor<HTMLInputElement> {
+    type?: string;
 }
-interface SvgConstructor extends BaseElemConstructor {
-    htmlElement?: SVGElement;
+interface AnchorConstructor extends SubElemConstructor<HTMLAnchorElement> {
+    href?: string;
 }
 interface TMap<T> {
     [s: string]: T;

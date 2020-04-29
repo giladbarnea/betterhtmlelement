@@ -1,15 +1,8 @@
-class BadArgumentsAmountError extends Error {
-    constructor(expectedArgsNum, passedArgs, details) {
-        const requiresExactNumOfArgs = !Array.isArray(expectedArgsNum);
-        const argsWithValues = BadArgumentsAmountError.getArgsWithValues(passedArgs);
-        const argNamesValues = BadArgumentsAmountError.getArgNamesValues(argsWithValues);
-        let message;
-        if (requiresExactNumOfArgs) {
-            message = `Didn't receive exactly ${expectedArgsNum} arg. `;
-        }
-        else {
-            message = `Didn't receive between ${expectedArgsNum[0]} to ${expectedArgsNum[1]} args. `;
-        }
+class MutuallyExclusiveArgs extends Error {
+    constructor(passedArgs, details) {
+        const argsWithValues = MutuallyExclusiveArgs.getArgsWithValues(passedArgs);
+        const argNamesValues = MutuallyExclusiveArgs.getArgNamesValues(argsWithValues);
+        let message = `Didn't receive exactly one arg.`;
         message += `Instead, out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
         super(message);
     }
@@ -21,8 +14,9 @@ class BadArgumentsAmountError extends Error {
     static getArgsWithValues(passedArgs) {
         const argsWithValues = {};
         for (let [argname, argval] of Object.entries(passedArgs)) {
-            if (argval !== undefined)
+            if (argval !== undefined) {
                 argsWithValues[argname] = argval;
+            }
         }
         return argsWithValues;
     }
@@ -33,49 +27,58 @@ class BetterHTMLElement {
         this._isSvg = false;
         this._listeners = {};
         this._cachedChildren = {};
-        const { tag, id, htmlElement, text, query, children, cls } = elemOptions;
-        if ([tag, id, htmlElement, query].filter(x => x !== undefined).length > 1) {
-            throw new BadArgumentsAmountError(1, {
-                tag,
+        const { create, id, htmlElement, text, query, children, cls } = elemOptions;
+        if ([create, id, htmlElement, query].filter(x => x !== undefined).length > 1) {
+            throw new MutuallyExclusiveArgs({
+                create,
                 id,
                 htmlElement,
                 query
             });
         }
-        if (tag !== undefined && children !== undefined)
-            throw new BadArgumentsAmountError(1, {
-                tag,
+        if (create !== undefined && children !== undefined) {
+            throw new MutuallyExclusiveArgs({
+                create,
                 children
-            }, '"children" and "tag" options are mutually exclusive, because tag implies creating a new element and children implies getting an existing one.');
-        if (tag !== undefined) {
-            if (['svg', 'path'].includes(tag.toLowerCase())) {
+            }, '"children" and "create" options are mutually exclusive, because create implies creating a new element and children implies getting an existing one.');
+        }
+        this._htmlElement = BetterHTMLElement._buildHtmlElement(create, id, query, htmlElement);
+        if (text !== undefined) {
+            this.text(text);
+        }
+        if (cls !== undefined) {
+            this.class(cls);
+        }
+        if (children !== undefined) {
+            this.cacheChildren(children);
+        }
+    }
+    static _buildHtmlElement(create, id, query, htmlElement) {
+        if (create !== undefined) {
+            if (['svg', 'path'].includes(create.toLowerCase())) {
+                throw new Error("Not impl");
                 this._isSvg = true;
-                this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
+                this._htmlElement = document.createElementNS(SVG_NS_URI, create);
             }
             else {
-                this._htmlElement = document.createElement(tag);
+                return document.createElement(create);
             }
         }
-        else if (id !== undefined)
-            this._htmlElement = document.getElementById(id);
-        else if (query !== undefined)
-            this._htmlElement = document.querySelector(query);
-        else if (htmlElement !== undefined)
-            this._htmlElement = htmlElement;
-        else {
-            throw new BadArgumentsAmountError(1, {
-                tag,
-                id,
-                htmlElement,
-                query
-            });
+        if (id !== undefined) {
+            return document.getElementById(id);
         }
-        if (text !== undefined)
-            this.text(text);
-        if (cls !== undefined)
-            this.class(cls);
-        if (children !== undefined)
-            this.cacheChildren(children);
+        if (query !== undefined) {
+            return document.querySelector(query);
+        }
+        if (htmlElement !== undefined) {
+            return htmlElement;
+        }
+        throw new MutuallyExclusiveArgs({
+            create,
+            id,
+            htmlElement,
+            query
+        });
     }
     get e() {
         return this._htmlElement;
@@ -139,15 +142,17 @@ class BetterHTMLElement {
             return this.e.style[css];
         }
         else {
-            for (let [styleAttr, styleVal] of enumerate(css))
+            for (let [styleAttr, styleVal] of enumerate(css)) {
                 this.e.style[styleAttr] = styleVal;
+            }
             return this;
         }
     }
     uncss(...removeProps) {
         let css = {};
-        for (let prop of removeProps)
+        for (let prop of removeProps) {
             css[prop] = '';
+        }
         return this.css(css);
     }
     class(cls) {
@@ -169,20 +174,23 @@ class BetterHTMLElement {
     }
     addClass(cls, ...clses) {
         this.e.classList.add(cls);
-        for (let c of clses)
+        for (let c of clses) {
             this.e.classList.add(c);
+        }
         return this;
     }
     removeClass(cls, ...clses) {
         if (isFunction(cls)) {
             this.e.classList.remove(this.class(cls));
-            for (let c of clses)
+            for (let c of clses) {
                 this.e.classList.remove(this.class(c));
+            }
         }
         else {
             this.e.classList.remove(cls);
-            for (let c of clses)
+            for (let c of clses) {
                 this.e.classList.remove(c);
+            }
         }
         return this;
     }
@@ -196,10 +204,12 @@ class BetterHTMLElement {
         return this;
     }
     toggleClass(cls, force) {
-        if (isFunction(cls))
+        if (isFunction(cls)) {
             this.e.classList.toggle(this.class(cls), force);
-        else
+        }
+        else {
             this.e.classList.toggle(cls, force);
+        }
         return this;
     }
     hasClass(cls) {
@@ -212,54 +222,72 @@ class BetterHTMLElement {
     }
     after(...nodes) {
         for (let node of nodes) {
-            if (node instanceof BetterHTMLElement)
+            if (node instanceof BetterHTMLElement) {
                 this.e.after(node.e);
-            else
+            }
+            else {
                 this.e.after(node);
+            }
         }
         return this;
     }
     insertAfter(node) {
-        if (node instanceof BetterHTMLElement)
+        if (node instanceof BetterHTMLElement) {
             node.e.after(this.e);
-        else
+        }
+        else {
             node.after(this.e);
+        }
         return this;
     }
     append(...nodes) {
         for (let node of nodes) {
-            if (node instanceof BetterHTMLElement)
+            if (node instanceof BetterHTMLElement) {
                 this.e.append(node.e);
-            else if (node instanceof Node)
-                this.e.append(node);
-            else if (Array.isArray(node))
-                this.cacheAppend([node]);
-            else
-                this.cacheAppend(node);
+            }
+            else {
+                if (node instanceof Node) {
+                    this.e.append(node);
+                }
+                else {
+                    if (Array.isArray(node)) {
+                        this.cacheAppend([node]);
+                    }
+                    else {
+                        this.cacheAppend(node);
+                    }
+                }
+            }
         }
         return this;
     }
     appendTo(node) {
-        if (node instanceof BetterHTMLElement)
+        if (node instanceof BetterHTMLElement) {
             node.e.append(this.e);
-        else
+        }
+        else {
             node.append(this.e);
+        }
         return this;
     }
     before(...nodes) {
         for (let node of nodes) {
-            if (node instanceof BetterHTMLElement)
+            if (node instanceof BetterHTMLElement) {
                 this.e.before(node.e);
-            else
+            }
+            else {
                 this.e.before(node);
+            }
         }
         return this;
     }
     insertBefore(node) {
-        if (node instanceof BetterHTMLElement)
+        if (node instanceof BetterHTMLElement) {
             node.e.before(this.e);
-        else
+        }
+        else {
             node.before(this.e);
+        }
         return this;
     }
     replaceChild(newChild, oldChild) {
@@ -276,17 +304,22 @@ class BetterHTMLElement {
             this._cache(_key, _child);
         };
         if (Array.isArray(keyChildPairs)) {
-            for (let [key, child] of keyChildPairs)
+            for (let [key, child] of keyChildPairs) {
                 _cacheAppend(key, child);
+            }
         }
         else {
-            for (let [key, child] of enumerate(keyChildPairs))
+            for (let [key, child] of enumerate(keyChildPairs)) {
                 _cacheAppend(key, child);
+            }
         }
         return this;
     }
     child(selector) {
-        return new BetterHTMLElement({ htmlElement: this.e.querySelector(selector) });
+        const htmlElement = this.e.querySelector(selector);
+        const tag = htmlElement.tagName.toLowerCase();
+        const bhe = bheFactory(tag, htmlElement);
+        return bhe;
     }
     children(selector) {
         let childrenVanilla;
@@ -336,8 +369,9 @@ class BetterHTMLElement {
         return this;
     }
     empty() {
-        while (this.e.firstChild)
+        while (this.e.firstChild) {
             this.e.removeChild(this.e.firstChild);
+        }
         return this;
     }
     remove() {
@@ -358,8 +392,9 @@ class BetterHTMLElement {
         this.e.addEventListener('touchstart', function _f(ev) {
             ev.preventDefault();
             fn(ev);
-            if (options && options.once)
+            if (options && options.once) {
                 this.removeEventListener('touchstart', _f);
+            }
         }, options);
         return this;
     }
@@ -374,8 +409,9 @@ class BetterHTMLElement {
         const _f = function _f(ev) {
             ev.preventDefault();
             fn(ev);
-            if (options && options.once)
+            if (options && options.once) {
                 this.removeEventListener(action, _f);
+            }
         };
         this.e.addEventListener(action, _f, options);
         this._listeners.pointerdown = _f;
@@ -466,58 +502,129 @@ class BetterHTMLElement {
             return this.e.getAttribute(attrValPairs);
         }
         else {
-            for (let [attr, val] of enumerate(attrValPairs))
+            for (let [attr, val] of enumerate(attrValPairs)) {
                 this.e.setAttribute(attr, val);
+            }
             return this;
         }
     }
     removeAttr(qualifiedName, ...qualifiedNames) {
         let _removeAttribute;
-        if (this._isSvg)
+        if (this._isSvg) {
             _removeAttribute = (qualifiedName) => this.e.removeAttributeNS(SVG_NS_URI, qualifiedName);
-        else
+        }
+        else {
             _removeAttribute = (qualifiedName) => this.e.removeAttribute(qualifiedName);
+        }
         _removeAttribute(qualifiedName);
-        for (let qn of qualifiedNames)
+        for (let qn of qualifiedNames) {
             _removeAttribute(qn);
+        }
         return this;
     }
     data(key, parse = true) {
         const data = this.e.getAttribute(`data-${key}`);
-        if (parse === true)
+        if (parse === true) {
             return JSON.parse(data);
-        else
+        }
+        else {
             return data;
+        }
     }
 }
 class Div extends BetterHTMLElement {
-    constructor({ id, text, cls } = {}) {
-        super({ tag: 'div', text, cls });
-        if (id !== undefined)
+    constructor({ id, text, cls, htmlElement } = {}) {
+        if (htmlElement !== undefined) {
+            super({ text, cls, htmlElement });
+        }
+        else {
+            super({ create: 'div', text, cls });
+        }
+        if (id !== undefined) {
             this.id(id);
+        }
+    }
+}
+class Button extends BetterHTMLElement {
+    constructor({ id, text, cls, htmlElement } = {}) {
+        if (htmlElement !== undefined) {
+            super({ text, cls, htmlElement });
+        }
+        else {
+            super({ create: 'button', text, cls });
+        }
+        if (id !== undefined) {
+            this.id(id);
+        }
     }
 }
 class Paragraph extends BetterHTMLElement {
-    constructor({ id, text, cls } = {}) {
-        super({ tag: 'p', text, cls });
-        if (id !== undefined)
+    constructor({ id, text, cls, htmlElement } = {}) {
+        if (htmlElement !== undefined) {
+            super({ text, cls, htmlElement });
+        }
+        else {
+            super({ create: 'p', text, cls });
+        }
+        if (id !== undefined) {
             this.id(id);
+        }
+    }
+}
+class Input extends BetterHTMLElement {
+    constructor({ id, cls, type, htmlElement } = {}) {
+        if (htmlElement !== undefined) {
+            super({ cls, htmlElement });
+        }
+        else {
+            super({ create: 'input', cls });
+        }
+        if (id !== undefined) {
+            this.id(id);
+        }
+        if (type !== undefined) {
+            this._htmlElement.type = type;
+        }
+    }
+    check() {
+        return this.attr({ checked: true });
+    }
+    uncheck() {
+        return this.removeAttr('checked');
+    }
+    checked() {
+        const rv = this.e.checked;
+        console.log('this.e.checked: ', rv);
+        return rv;
     }
 }
 class Span extends BetterHTMLElement {
-    constructor({ id, text, cls } = {}) {
-        super({ tag: 'span', text, cls });
-        if (id !== undefined)
+    constructor({ id, text, cls, htmlElement } = {}) {
+        if (htmlElement !== undefined) {
+            super({ text, cls, htmlElement });
+        }
+        else {
+            super({ create: 'span', text, cls });
+        }
+        if (id !== undefined) {
             this.id(id);
+        }
     }
 }
 class Img extends BetterHTMLElement {
-    constructor({ id, src, cls }) {
-        super({ tag: 'img', cls });
-        if (id !== undefined)
+    constructor({ id, src, cls, htmlElement }) {
+        if (htmlElement !== undefined) {
+            super({ cls, htmlElement });
+        }
+        else {
+            super({ create: 'img', cls });
+        }
+        if (id !== undefined) {
             this.id(id);
-        if (src !== undefined)
+        }
+        if (src !== undefined) {
             this._htmlElement.src = src;
+        }
     }
     src(src) {
         if (src === undefined) {
@@ -530,49 +637,80 @@ class Img extends BetterHTMLElement {
     }
 }
 class Anchor extends BetterHTMLElement {
-    constructor({ id, text, cls, href } = {}) {
-        super({ tag: 'a', text, cls });
-        if (id !== undefined)
+    constructor({ id, text, cls, href, htmlElement } = {}) {
+        if (htmlElement !== undefined) {
+            super({ text, cls, htmlElement });
+        }
+        else {
+            super({ create: 'a', text, cls });
+        }
+        if (id !== undefined) {
             this.id(id);
-        if (href !== undefined)
+        }
+        if (href !== undefined) {
             this.href(href);
+        }
     }
     href(val) {
-        if (val === undefined)
+        if (val === undefined) {
             return this.attr('href');
-        else
+        }
+        else {
             return this.attr({ href: val });
+        }
     }
     target(val) {
-        if (val === undefined)
+        if (val === undefined) {
             return this.attr('target');
-        else
+        }
+        else {
             return this.attr({ target: val });
+        }
     }
 }
-customElements.define('better-html-element', BetterHTMLElement);
-customElements.define('better-div', Div, { extends: 'div' });
-customElements.define('better-p', Paragraph, { extends: 'p' });
-customElements.define('better-span', Span, { extends: 'span' });
-customElements.define('better-img', Img, { extends: 'img' });
-customElements.define('better-a', Anchor, { extends: 'a' });
 function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
-function span({ id, text, cls } = {}) {
-    return new Span({ id, text, cls });
+function span({ id, text, cls, htmlElement } = {}) {
+    return new Span({ id, text, cls, htmlElement });
 }
-function div({ id, text, cls } = {}) {
-    return new Div({ id, text, cls });
+function div({ id, text, cls, htmlElement } = {}) {
+    return new Div({ id, text, cls, htmlElement });
 }
-function img({ id, src, cls } = {}) {
-    return new Img({ id, src, cls });
+function button({ id, text, cls, htmlElement } = {}) {
+    return new Button({ id, text, cls, htmlElement });
 }
-function paragraph({ id, text, cls } = {}) {
-    return new Paragraph({ id, text, cls });
+function input({ id, cls, type, htmlElement } = {}) {
+    return new Input({ id, cls, type, htmlElement });
 }
-function anchor({ id, text, cls, href } = {}) {
-    return new Anchor({ id, text, cls, href });
+function img({ id, src, cls, htmlElement } = {}) {
+    return new Img({ id, src, cls, htmlElement });
+}
+function paragraph({ id, text, cls, htmlElement } = {}) {
+    return new Paragraph({ id, text, cls, htmlElement });
+}
+function anchor({ id, text, cls, href, htmlElement } = {}) {
+    return new Anchor({ id, text, cls, href, htmlElement });
+}
+function bheFactory(create, htmlElement) {
+    switch (create) {
+        case 'div':
+            return div({ htmlElement });
+        case 'anchor':
+            return anchor({ htmlElement });
+        case 'paragraph':
+            return paragraph({ htmlElement });
+        case 'img':
+            return img({ htmlElement });
+        case 'input':
+            return input({ htmlElement });
+        case 'button':
+            return button({ htmlElement });
+        case 'span':
+            return span({ htmlElement });
+        default:
+            return elem({ htmlElement });
+    }
 }
 function enumerate(obj) {
     let typeofObj = typeof obj;
