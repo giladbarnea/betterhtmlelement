@@ -71,7 +71,7 @@ function noValue(obj): boolean {
     } else {
         throw new TypeError(`expected array or obj, got: ${typeof obj}`)
     }
-    return array.filter(x => Boolean(x)).length > 0
+    return array.filter(x => Boolean(x)).length === 0
 }
 
 function isArray<T>(obj): obj is Array<T> {
