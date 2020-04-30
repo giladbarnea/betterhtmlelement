@@ -195,6 +195,9 @@ declare function anchor({ id, text, cls, href, htmlElement }?: AnchorConstructor
 declare function wrapHtmlElement<K extends HTMLTag | string>(opts: {
     query: K;
 }): K extends HTMLTag ? HTMLElementTagNameMap[K] : any;
+declare function wrapHtmlElement<K extends HTMLTag, T = HTMLElementTagNameMap[K]>(opts: {
+    htmlElement: T;
+}): T;
 declare function newHtmlElement(tag: any): any;
 declare function bheFactory(create: string, htmlElement: any): any;
 declare function enumerate<T>(obj: T): Enumerated<T>;

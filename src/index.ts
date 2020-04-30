@@ -1091,7 +1091,11 @@ function wrapHtmlElement<K extends HTMLTag | string>(
         }*/
     opts: { query: K }
     // query: QuerySelector<K>
-): K extends HTMLTag ? HTMLElementTagNameMap[K] : any {
+): K extends HTMLTag ? HTMLElementTagNameMap[K] : any;
+function wrapHtmlElement<K extends HTMLTag, T = HTMLElementTagNameMap[K]>(
+    opts: { htmlElement: T }
+): T;
+function wrapHtmlElement(opts) {
     // const {id, query, htmlElement} = buildOptions;
     if (htmlElement !== undefined) {
         return htmlElement;
@@ -1124,7 +1128,8 @@ function newHtmlElement(tag) {
     }
 }
 
-wrapHtmlElement({query: "a"});
+// wrapHtmlElement({query: "a"});
+wrapHtmlElement({htmlElement: document.createElement("div")});
 
 // wrapHtmlElement("div");
 
