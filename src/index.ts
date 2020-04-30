@@ -78,38 +78,6 @@ class BetterHTMLElement {
 
     }
 
-    /**All options get an existing HTMLElement, besides `create` (tag), which creates one.*/
-    static buildHtmlElement<K extends HTMLTag>(buildOptions: { create?: K, id?: string, query?: QuerySelector, htmlElement?: HTMLElementTagNameMap[K] }): HTMLElementTagNameMap[K] {
-        const {create, id, query, htmlElement} = buildOptions;
-        // ** EXISTING by id, query or htmlElement
-        if (htmlElement !== undefined) {
-            return htmlElement;
-        }
-        if (id !== undefined) {
-            // @ts-ignore
-            return document.getElementById(id);
-        }
-        if (query !== undefined) {
-            return document.querySelector(query);
-        }
-        // ** NEW by tag
-        if (create !== undefined) {
-            if (['svg', 'path'].includes(create.toLowerCase())) {
-                throw new Error("Not impl");
-                // this._isSvg = true;
-                // this._htmlElement = document.createElementNS(SVG_NS_URI, create);
-            } else {
-                return document.createElement(create);
-            }
-        }
-
-        throw new NotEnoughArgs(1, {
-            create,
-            id,
-            htmlElement,
-            query
-        })
-    }
 
     /**Return the wrapped HTMLElement*/
     get e() {
@@ -418,13 +386,10 @@ class BetterHTMLElement {
     }
 
     /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child<K extends HTMLTag>(selector: K): BetterHTMLElement;
-    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child(selector: string): BetterHTMLElement;
-    child(selector) {
+    child<K extends HTMLTag | string>(selector: K): TagBHEMap<K> {
         const htmlElement = this.e.querySelector(selector);
-        const tag = htmlElement.tagName.toLowerCase();
-        const bhe = bheFactory(tag, htmlElement);
+        const tag = htmlElement.tagName.toLowerCase() as HTMLTag;
+        const bhe = wrapWithBHE(tag, htmlElement) as TagBHEMap<K>;
         return bhe;
         // BetterHTMLElement({})
         // return new BetterHTMLElement({htmlElement: htmlElement});
@@ -1059,11 +1024,13 @@ function createInput({id, cls, type}: InputConstructor = {}): Input {
 }
 
 /**Wrap an existing Input element. Optionally set its id, cls or type.*/
-function getInput({id, query, htmlElement}: GetInputConstructor): Input {
-    const inputElement = BetterHTMLElement.buildHtmlElement({id, query, htmlElement});
+function getInput(queryOrHtmlElement): Input {
+    const inputElement = getHtmlElement(queryOrHtmlElement);
     return new Input({htmlElement: inputElement});
 }
 
+// getInput("a");
+// getInput(document.createElement("div"));
 
 /**Create an Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
 function img({id, src, cls, htmlElement}: ImgConstructor = {}): Img {
@@ -1081,70 +1048,48 @@ function anchor({id, text, cls, href, htmlElement}: AnchorConstructor = {}): Anc
     return new Anchor({id, text, cls, href, htmlElement});
 }
 
-// ** EXISTING by id, query or htmlElement
-function wrapHtmlElement<K extends HTMLTag | string>(
-    /*buildOptions:
-        {
-            // id?: string,
-            query: QuerySelector<K>,
-            // htmlElement?: HTMLElementTagNameMap[K]
-        }*/
-    opts: { query: K }
-    // query: QuerySelector<K>
-): HTMLElementType<K>;
-function wrapHtmlElement<K extends HTMLTag, T = HTMLElementTagNameMap[K]>(
-    opts: { htmlElement: T }
-): T;
-function wrapHtmlElement(opts) {
-    // const {id, query, htmlElement} = buildOptions;
-    if (htmlElement !== undefined) {
-        return htmlElement;
+// ** get EXISTING vanilla HTMLElement: by id, query or htmlElement
+function getHtmlElement<K extends (HTMLTag | string)>(query: K): HTMLElementType<K>;
+function getHtmlElement<T extends HTMLElement>(htmlElement: T): T;
+function getHtmlElement(queryOrHtmlElement) {
+    if (queryOrHtmlElement instanceof HTMLElement) {
+        return queryOrHtmlElement;
     }
-    if (id !== undefined) {
-        const e = document.getElementById(id);
-    }
-    if (query !== undefined) {
-        return document.querySelector(query);
-    }
-
-
-    throw new NotEnoughArgs(1, {
-        id,
-        htmlElement,
-        query
-    })
+    return document.querySelector(queryOrHtmlElement);
 }
 
-// ** NEW by tag
-function newHtmlElement(tag) {
-    if (tag !== undefined) {
-        if (['svg', 'path'].includes(tag.toLowerCase())) {
-            throw new Error("Not impl");
-            // this._isSvg = true;
-            // this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
-        } else {
-            return document.createElement(tag);
-        }
+// ** create NEW vanilla HTMLElement: by tag
+function newHtmlElement<K extends HTMLTag>(tag: K) {
+    if (tag === undefined) {
+        throw new NotEnoughArgs(1, {tag})
+    }
+    if (['svg', 'path'].includes(tag.toLowerCase())) {
+        throw new Error("Not impl");
+        // this._isSvg = true;
+        // this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
+    } else {
+        return document.createElement(tag);
     }
 }
 
-wrapHtmlElement({query: "a"});
-// wrapHtmlElement({htmlElement: document.createElement("div")});
+// getHtmlElement("diva");
+// getHtmlElement(document.createElement("div"));
+// getHtmlElement(5);
+// getHtmlElement("div");
+// newHtmlElement("div");
 
-// wrapHtmlElement("div");
-
-function bheFactory(create: string, htmlElement) {
-    switch (create) {
+function wrapWithBHE<K extends HTMLTag>(tag: K, htmlElement): TagBHEMap<K> {
+    switch (tag) {
         case 'div':
             return div({htmlElement});
-        case 'anchor':
+        case 'a':
             return anchor({htmlElement});
-        case 'paragraph':
+        case 'p':
             return paragraph({htmlElement});
         case 'img':
             return img({htmlElement});
         case 'input':
-            return input({htmlElement});
+            return new Input({htmlElement});
         case 'button':
             return button({htmlElement});
         case 'span':

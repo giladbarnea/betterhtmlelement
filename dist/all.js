@@ -62,32 +62,6 @@ class BetterHTMLElement {
             this.cacheChildren(children);
         }
     }
-    static buildHtmlElement(buildOptions) {
-        const { create, id, query, htmlElement } = buildOptions;
-        if (htmlElement !== undefined) {
-            return htmlElement;
-        }
-        if (id !== undefined) {
-            return document.getElementById(id);
-        }
-        if (query !== undefined) {
-            return document.querySelector(query);
-        }
-        if (create !== undefined) {
-            if (['svg', 'path'].includes(create.toLowerCase())) {
-                throw new Error("Not impl");
-            }
-            else {
-                return document.createElement(create);
-            }
-        }
-        throw new NotEnoughArgs(1, {
-            create,
-            id,
-            htmlElement,
-            query
-        });
-    }
     get e() {
         return this._htmlElement;
     }
@@ -326,7 +300,7 @@ class BetterHTMLElement {
     child(selector) {
         const htmlElement = this.e.querySelector(selector);
         const tag = htmlElement.tagName.toLowerCase();
-        const bhe = bheFactory(tag, htmlElement);
+        const bhe = wrapWithBHE(tag, htmlElement);
         return bhe;
     }
     children(selector) {
@@ -710,8 +684,8 @@ function button({ id, text, cls, htmlElement } = {}) {
 function createInput({ id, cls, type } = {}) {
     return new Input({ id, cls, type });
 }
-function getInput({ id, query, htmlElement }) {
-    const inputElement = BetterHTMLElement.buildHtmlElement({ id, query, htmlElement });
+function getInput(queryOrHtmlElement) {
+    const inputElement = getHtmlElement(queryOrHtmlElement);
     return new Input({ htmlElement: inputElement });
 }
 function img({ id, src, cls, htmlElement } = {}) {
@@ -723,45 +697,35 @@ function paragraph({ id, text, cls, htmlElement } = {}) {
 function anchor({ id, text, cls, href, htmlElement } = {}) {
     return new Anchor({ id, text, cls, href, htmlElement });
 }
-function wrapHtmlElement(opts) {
-    if (htmlElement !== undefined) {
-        return htmlElement;
+function getHtmlElement(queryOrHtmlElement) {
+    if (queryOrHtmlElement instanceof HTMLElement) {
+        return queryOrHtmlElement;
     }
-    if (id !== undefined) {
-        const e = document.getElementById(id);
-    }
-    if (query !== undefined) {
-        return document.querySelector(query);
-    }
-    throw new NotEnoughArgs(1, {
-        id,
-        htmlElement,
-        query
-    });
+    return document.querySelector(queryOrHtmlElement);
 }
 function newHtmlElement(tag) {
-    if (tag !== undefined) {
-        if (['svg', 'path'].includes(tag.toLowerCase())) {
-            throw new Error("Not impl");
-        }
-        else {
-            return document.createElement(tag);
-        }
+    if (tag === undefined) {
+        throw new NotEnoughArgs(1, { tag });
+    }
+    if (['svg', 'path'].includes(tag.toLowerCase())) {
+        throw new Error("Not impl");
+    }
+    else {
+        return document.createElement(tag);
     }
 }
-wrapHtmlElement({ query: "a" });
-function bheFactory(create, htmlElement) {
-    switch (create) {
+function wrapWithBHE(tag, htmlElement) {
+    switch (tag) {
         case 'div':
             return div({ htmlElement });
-        case 'anchor':
+        case 'a':
             return anchor({ htmlElement });
-        case 'paragraph':
+        case 'p':
             return paragraph({ htmlElement });
         case 'img':
             return img({ htmlElement });
         case 'input':
-            return input({ htmlElement });
+            return new Input({ htmlElement });
         case 'button':
             return button({ htmlElement });
         case 'span':
@@ -825,11 +789,7 @@ function shallowProperty(key) {
 function getLength(collection) {
     return shallowProperty('length')(collection);
 }
-function foo(tag) {
-    return document.createElement(tag);
-}
-function bar(query) {
-    return document.querySelector(query);
-}
-bar("a");
+const foo = (tag) => document.createElement(tag);
+const baz = (query) => document.querySelector(query);
+const bar = (query) => document.querySelector(query);
 //# sourceMappingURL=all.js.map

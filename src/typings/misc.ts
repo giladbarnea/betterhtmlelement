@@ -23,11 +23,17 @@ type TEventFunctionMap<K extends TEvent> = {
  * foo("a") → HTMLAnchorElement
  * foo("BAD") // error
  */
-type HTMLTag = keyof HTMLElementTagNameMap;
-
-type HTMLElementType<K> = K extends HTMLTag ? HTMLElementTagNameMap[K] : any;
+type HTMLTag = Exclude<keyof HTMLElementTagNameMap, "object">;
 /**
- * "a", "div", "gilad"
+ * "a", "div", "gilad". HTMLElementType "returns" an HTMLElement, QuerySelector "returns" a HTMLTag.
+ * @example
+ * const baz = <K extends HTMLTag | string>(query: K) => document.querySelector(query);
+ * baz("div") → HTMLDivElement
+ * baz("diva") → HTMLSelectElement | HTMLLegendElement | ...
+ */
+type HTMLElementType<K = HTMLTag> = K extends HTMLTag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[HTMLTag];
+/**
+ * "a", "div", "gilad". HTMLElementType "returns" an HTMLElement, QuerySelector "returns" a HTMLTag.
  * @example
  * const bar = <K extends HTMLTag | string>(query: QuerySelector<K>) => document.querySelector(query);
  * bar("a") → HTMLAnchorElement
@@ -35,15 +41,21 @@ type HTMLElementType<K> = K extends HTMLTag ? HTMLElementTagNameMap[K] : any;
  */
 type QuerySelector<K = HTMLTag> = K extends HTMLTag ? K : string;
 
-function foo<K extends HTMLTag>(tag: K) {
-    return document.createElement(tag);
-}
+const foo = <K extends HTMLTag>(tag: K) => document.createElement(tag);
 
-function bar<K extends HTMLTag | string>(query: QuerySelector<K>): K extends HTMLTag ? HTMLElementTagNameMap[K] : any {
-    return document.querySelector(query);
-}
+const baz = <K extends HTMLTag | string>(query: K) => document.querySelector(query);
 
-bar("a");
+const bar = <K extends HTMLTag | string>(query: QuerySelector<K>) => document.querySelector(query);
+
+type TagBHEMap<K extends HTMLTag> = K extends "div" ? Div :
+    K extends "a" ? Anchor :
+        K extends "p" ? Paragraph :
+            K extends "img" ? Img :
+                K extends "input" ? Input :
+                    K extends "button" ? Button :
+                        K extends "span" ? Span : BetterHTMLElement
+
+// type ChildrenObj = TMap<HTMLElementType> | TRecMap<HTMLElementType>
 type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
 type Enumerated<T> =
     T extends (infer U)[] ? [number, U][]
