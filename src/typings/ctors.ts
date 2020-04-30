@@ -10,8 +10,8 @@ interface ByIdBHEConstructor {
     children?: ChildrenObj
 }
 
-interface QueryBHEConstructor {
-    query?: QuerySelector,
+interface QueryBHEConstructor<T extends HTMLElement> {
+    query?: QuerySelector<HTMLElement2Tag<T>>,
     children?: ChildrenObj
 }
 
@@ -23,7 +23,7 @@ interface ByHtmlElementBHEConstructor<T extends HTMLElement> {
 interface BHEConstructor<T extends HTMLElement>
     extends NewBHEConstructor<T>,
         ByIdBHEConstructor,
-        QueryBHEConstructor,
+        QueryBHEConstructor<T>,
         ByHtmlElementBHEConstructor<T> {
 }
 

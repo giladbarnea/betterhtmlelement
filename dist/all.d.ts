@@ -14,7 +14,7 @@ declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     private _cachedChildren;
     constructor({ tag, cls, setid }: NewBHEConstructor<T>);
     constructor({ byid, children }: ByIdBHEConstructor);
-    constructor({ query, children }: QueryBHEConstructor);
+    constructor({ query, children }: QueryBHEConstructor<T>);
     constructor({ htmlElement, children }: ByHtmlElementBHEConstructor<T>);
     get e(): T;
     wrapSomethingElse(newHtmlElement: BetterHTMLElement): this;
@@ -101,8 +101,12 @@ declare class Input extends BetterHTMLElement<HTMLInputElement> {
     constructor({ setid, cls, type, placeholder, byid, query, htmlElement, children }: InputConstructor);
     check(): this;
     uncheck(): this;
-    toggle(on: boolean): this;
+    toggleChecked(on: boolean): this;
     get checked(): boolean;
+    disable(): this;
+    enable(): this;
+    toggleEnabled(on: boolean): this;
+    get disabled(): boolean;
     value(val: string): this;
     value(): string;
     placeholder(val: string): this;
@@ -211,15 +215,15 @@ interface ByIdBHEConstructor {
     byid?: string;
     children?: ChildrenObj;
 }
-interface QueryBHEConstructor {
-    query?: QuerySelector;
+interface QueryBHEConstructor<T extends HTMLElement> {
+    query?: QuerySelector<HTMLElement2Tag<T>>;
     children?: ChildrenObj;
 }
 interface ByHtmlElementBHEConstructor<T extends HTMLElement> {
     htmlElement?: T;
     children?: ChildrenObj;
 }
-interface BHEConstructor<T extends HTMLElement> extends NewBHEConstructor<T>, ByIdBHEConstructor, QueryBHEConstructor, ByHtmlElementBHEConstructor<T> {
+interface BHEConstructor<T extends HTMLElement> extends NewBHEConstructor<T>, ByIdBHEConstructor, QueryBHEConstructor<T>, ByHtmlElementBHEConstructor<T> {
 }
 interface DivConstructor extends SubElemConstructor<HTMLDivElement> {
     htmlElement?: HTMLDivElement;
@@ -260,7 +264,7 @@ declare const a: A<"a">;
 declare function c(d: HTMLAnchorElement): void;
 declare type HTMLTag = Exclude<keyof HTMLElementTagNameMap, "object">;
 declare type HTMLElementType<K extends HTMLTag = HTMLTag> = K extends HTMLTag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[keyof HTMLElementTagNameMap];
-declare type QuerySelector<K extends HTMLTag | string> = K extends HTMLTag ? K : string;
+declare type QuerySelector<K extends HTMLTag | string = HTMLTag | string> = K extends HTMLTag ? K : string;
 declare const foo: <K extends "track" | "progress" | "a" | "abbr" | "address" | "applet" | "area" | "article" | "aside" | "audio" | "b" | "base" | "basefont" | "bdi" | "bdo" | "blockquote" | "body" | "br" | "button" | "canvas" | "caption" | "cite" | "code" | "col" | "colgroup" | "data" | "datalist" | "dd" | "del" | "details" | "dfn" | "dialog" | "dir" | "div" | "dl" | "dt" | "em" | "embed" | "fieldset" | "figcaption" | "figure" | "font" | "footer" | "form" | "frame" | "frameset" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "head" | "header" | "hgroup" | "hr" | "html" | "i" | "iframe" | "img" | "input" | "ins" | "kbd" | "label" | "legend" | "li" | "link" | "main" | "map" | "mark" | "marquee" | "menu" | "meta" | "meter" | "nav" | "noscript" | "ol" | "optgroup" | "option" | "output" | "p" | "param" | "picture" | "pre" | "q" | "rp" | "rt" | "ruby" | "s" | "samp" | "script" | "section" | "select" | "slot" | "small" | "source" | "span" | "strong" | "style" | "sub" | "summary" | "sup" | "table" | "tbody" | "td" | "template" | "textarea" | "tfoot" | "th" | "thead" | "time" | "title" | "tr" | "u" | "ul" | "var" | "video" | "wbr">(tag: K) => HTMLElementTagNameMap[K];
 declare const baz: <K extends string>(query: K) => Element;
 declare const bar: <K extends string>(query: QuerySelector<K>) => Element;

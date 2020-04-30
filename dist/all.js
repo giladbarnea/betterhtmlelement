@@ -626,7 +626,6 @@ class Paragraph extends BetterHTMLElement {
 }
 class Input extends BetterHTMLElement {
     constructor({ setid, cls, type, placeholder, byid, query, htmlElement, children }) {
-        console.log(`Input() arguments[0]: `, arguments[0]);
         if (noValue(arguments[0])) {
             throw new NotEnoughArgs([1], arguments[0]);
         }
@@ -667,7 +666,7 @@ class Input extends BetterHTMLElement {
         this.e.checked = false;
         return this;
     }
-    toggle(on) {
+    toggleChecked(on) {
         if (on) {
             return this.check();
         }
@@ -676,9 +675,26 @@ class Input extends BetterHTMLElement {
         }
     }
     get checked() {
-        const rv = this.e.checked;
-        console.log('this.e.checked: ', rv);
-        return rv;
+        return this.e.checked;
+    }
+    disable() {
+        this.e.disabled = true;
+        return this;
+    }
+    enable() {
+        this.e.disabled = false;
+        return this;
+    }
+    toggleEnabled(on) {
+        if (on) {
+            return this.enable();
+        }
+        else {
+            return this.disable();
+        }
+    }
+    get disabled() {
+        return this.e.disabled;
     }
     value(val) {
         if (val === undefined) {
