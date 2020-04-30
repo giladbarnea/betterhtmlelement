@@ -851,6 +851,7 @@ class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
 
 class Input extends BetterHTMLElement<HTMLInputElement> {
     constructor({setid, cls, type, placeholder, byid, query, htmlElement, children}: InputConstructor) {
+        console.log(`Input() arguments[0]: `, arguments[0]);
         if (noValue(arguments[0])) {
             throw new NotEnoughArgs([1], arguments[0])
         }
@@ -1053,7 +1054,7 @@ function elem({byid, children}: ByIdBHEConstructor);
 function elem({query, children}: QueryBHEConstructor);
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
 function elem({htmlElement, children}: ByHtmlElementBHEConstructor<HTMLElement>);
-function elem(elemOptions): BetterHTMLElement {
+function elem(elemOptions: BHEConstructor<HTMLElement>): BetterHTMLElement {
     return new BetterHTMLElement(elemOptions);
 }
 

@@ -50,12 +50,28 @@ function wait(ms: number): Promise<any> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function anyValue(array): boolean {
+function anyValue(obj): boolean {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj)
+    } else if (isArray(obj)) {
+        array = obj;
+    } else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`)
+    }
     return array.filter(x => Boolean(x)).length > 0
 }
 
-function noValue(array): boolean {
-    return array.filter(x => Boolean(x)).length === 0
+function noValue(obj): boolean {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj)
+    } else if (isArray(obj)) {
+        array = obj;
+    } else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`)
+    }
+    return array.filter(x => Boolean(x)).length > 0
 }
 
 function isArray<T>(obj): obj is Array<T> {

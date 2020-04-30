@@ -626,6 +626,7 @@ class Paragraph extends BetterHTMLElement {
 }
 class Input extends BetterHTMLElement {
     constructor({ setid, cls, type, placeholder, byid, query, htmlElement, children }) {
+        console.log(`Input() arguments[0]: `, arguments[0]);
         if (noValue(arguments[0])) {
             throw new NotEnoughArgs([1], arguments[0]);
         }
@@ -863,11 +864,31 @@ function enumerate(obj) {
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-function anyValue(array) {
+function anyValue(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    }
+    else if (isArray(obj)) {
+        array = obj;
+    }
+    else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
     return array.filter(x => Boolean(x)).length > 0;
 }
-function noValue(array) {
-    return array.filter(x => Boolean(x)).length === 0;
+function noValue(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    }
+    else if (isArray(obj)) {
+        array = obj;
+    }
+    else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => Boolean(x)).length > 0;
 }
 function isArray(obj) {
     return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');

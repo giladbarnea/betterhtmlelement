@@ -60,7 +60,7 @@ type HTMLElementType<K extends HTMLTag = HTMLTag> = K extends HTMLTag ? HTMLElem
  * bar("a") → HTMLAnchorElement
  * bar("gilad") → HTMLSelectElement | HTMLLegendElement | ...
  */
-type QuerySelector<K extends HTMLTag = HTMLTag> = K extends HTMLTag ? K : string;
+type QuerySelector<K extends HTMLTag | string> = K extends HTMLTag ? K : string;
 
 const foo = <K extends HTMLTag>(tag: K) => document.createElement(tag);
 
@@ -102,7 +102,7 @@ type HTMLElement2Tag<T extends HTMLElement> =
                             : never;
 
 // type ChildrenObj = TMap<HTMLElementType> | TRecMap<HTMLElementType>
-type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
+type ChildrenObj = TMap<QuerySelector<HTMLTag | string>> | TRecMap<QuerySelector<HTMLTag | string>>
 type Enumerated<T> =
     T extends (infer U)[] ? [number, U][]
         : T extends TMap<(infer U)> ? [keyof T, U][]
