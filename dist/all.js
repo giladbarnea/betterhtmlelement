@@ -1,24 +1,33 @@
+function getArgNamesValues(argsWithValues) {
+    return Object.entries(argsWithValues)
+        .flatMap(([argname, argval]) => `${argname}: ${argval}`)
+        .join('", "');
+}
+function getArgsWithValues(passedArgs) {
+    const argsWithValues = {};
+    for (let [argname, argval] of Object.entries(passedArgs)) {
+        if (argval !== undefined) {
+            argsWithValues[argname] = argval;
+        }
+    }
+    return argsWithValues;
+}
 class MutuallyExclusiveArgs extends Error {
     constructor(passedArgs, details) {
-        const argsWithValues = MutuallyExclusiveArgs.getArgsWithValues(passedArgs);
-        const argNamesValues = MutuallyExclusiveArgs.getArgNamesValues(argsWithValues);
-        let message = `Didn't receive exactly one arg.`;
+        const argsWithValues = getArgsWithValues(passedArgs);
+        const argNamesValues = getArgNamesValues(argsWithValues);
+        let message = `Didn't receive exactly one arg. `;
         message += `Instead, out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
         super(message);
     }
-    static getArgNamesValues(argsWithValues) {
-        return Object.entries(argsWithValues)
-            .flatMap(([argname, argval]) => `${argname}: ${argval}`)
-            .join('", "');
-    }
-    static getArgsWithValues(passedArgs) {
-        const argsWithValues = {};
-        for (let [argname, argval] of Object.entries(passedArgs)) {
-            if (argval !== undefined) {
-                argsWithValues[argname] = argval;
-            }
-        }
-        return argsWithValues;
+}
+class NotEnoughArgs extends Error {
+    constructor(expected, passedArgs, details) {
+        const argsWithValues = getArgsWithValues(passedArgs);
+        const argNamesValues = getArgNamesValues(argsWithValues);
+        let message = `Didn't receive enough args: expected ${expected}. `;
+        message += `Out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
+        super(message);
     }
 }
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
@@ -42,7 +51,7 @@ class BetterHTMLElement {
                 children
             }, '"children" and "create" options are mutually exclusive, because create implies creating a new element and children implies getting an existing one.');
         }
-        this._htmlElement = BetterHTMLElement._buildHtmlElement(create, id, query, htmlElement);
+        this._htmlElement = BetterHTMLElement.buildHtmlElement({ create, id, query, htmlElement });
         if (text !== undefined) {
             this.text(text);
         }
@@ -53,16 +62,10 @@ class BetterHTMLElement {
             this.cacheChildren(children);
         }
     }
-    static _buildHtmlElement(create, id, query, htmlElement) {
-        if (create !== undefined) {
-            if (['svg', 'path'].includes(create.toLowerCase())) {
-                throw new Error("Not impl");
-                this._isSvg = true;
-                this._htmlElement = document.createElementNS(SVG_NS_URI, create);
-            }
-            else {
-                return document.createElement(create);
-            }
+    static buildHtmlElement(buildOptions) {
+        const { create, id, query, htmlElement } = buildOptions;
+        if (htmlElement !== undefined) {
+            return htmlElement;
         }
         if (id !== undefined) {
             return document.getElementById(id);
@@ -70,10 +73,15 @@ class BetterHTMLElement {
         if (query !== undefined) {
             return document.querySelector(query);
         }
-        if (htmlElement !== undefined) {
-            return htmlElement;
+        if (create !== undefined) {
+            if (['svg', 'path'].includes(create.toLowerCase())) {
+                throw new Error("Not impl");
+            }
+            else {
+                return document.createElement(create);
+            }
         }
-        throw new MutuallyExclusiveArgs({
+        throw new NotEnoughArgs(1, {
             create,
             id,
             htmlElement,
@@ -572,7 +580,7 @@ class Paragraph extends BetterHTMLElement {
     }
 }
 class Input extends BetterHTMLElement {
-    constructor({ id, cls, type, htmlElement } = {}) {
+    constructor({ id, cls, type, query, htmlElement } = {}) {
         if (htmlElement !== undefined) {
             super({ cls, htmlElement });
         }
@@ -590,12 +598,31 @@ class Input extends BetterHTMLElement {
         return this.attr({ checked: true });
     }
     uncheck() {
-        return this.removeAttr('checked');
+        this.e.checked = false;
+        return this;
     }
-    checked() {
+    get checked() {
         const rv = this.e.checked;
         console.log('this.e.checked: ', rv);
         return rv;
+    }
+    value(val) {
+        if (val === undefined) {
+            return this.e.value;
+        }
+        else {
+            this.e.value = val;
+            return this;
+        }
+    }
+    placeholder(val) {
+        if (val === undefined) {
+            return this.e.placeholder;
+        }
+        else {
+            this.e.placeholder = val;
+            return this;
+        }
     }
 }
 class Span extends BetterHTMLElement {
@@ -680,8 +707,12 @@ function div({ id, text, cls, htmlElement } = {}) {
 function button({ id, text, cls, htmlElement } = {}) {
     return new Button({ id, text, cls, htmlElement });
 }
-function input({ id, cls, type, htmlElement } = {}) {
-    return new Input({ id, cls, type, htmlElement });
+function createInput({ id, cls, type } = {}) {
+    return new Input({ id, cls, type });
+}
+function getInput({ id, query, htmlElement }) {
+    const inputElement = BetterHTMLElement.buildHtmlElement({ id, query, htmlElement });
+    return new Input({ htmlElement: inputElement });
 }
 function img({ id, src, cls, htmlElement } = {}) {
     return new Img({ id, src, cls, htmlElement });
@@ -692,6 +723,33 @@ function paragraph({ id, text, cls, htmlElement } = {}) {
 function anchor({ id, text, cls, href, htmlElement } = {}) {
     return new Anchor({ id, text, cls, href, htmlElement });
 }
+function wrapHtmlElement(opts) {
+    if (htmlElement !== undefined) {
+        return htmlElement;
+    }
+    if (id !== undefined) {
+        const e = document.getElementById(id);
+    }
+    if (query !== undefined) {
+        return document.querySelector(query);
+    }
+    throw new NotEnoughArgs(1, {
+        id,
+        htmlElement,
+        query
+    });
+}
+function newHtmlElement(tag) {
+    if (tag !== undefined) {
+        if (['svg', 'path'].includes(tag.toLowerCase())) {
+            throw new Error("Not impl");
+        }
+        else {
+            return document.createElement(tag);
+        }
+    }
+}
+wrapHtmlElement({ query: "a" });
 function bheFactory(create, htmlElement) {
     switch (create) {
         case 'div':
@@ -767,4 +825,11 @@ function shallowProperty(key) {
 function getLength(collection) {
     return shallowProperty('length')(collection);
 }
+function foo(tag) {
+    return document.createElement(tag);
+}
+function bar(query) {
+    return document.querySelector(query);
+}
+bar("a");
 //# sourceMappingURL=all.js.map

@@ -1,7 +1,10 @@
+declare function getArgNamesValues(argsWithValues: object): string;
+declare function getArgsWithValues(passedArgs: object): object;
 declare class MutuallyExclusiveArgs extends Error {
     constructor(passedArgs: object, details?: string);
-    static getArgNamesValues(argsWithValues: object): string;
-    static getArgsWithValues(passedArgs: object): object;
+}
+declare class NotEnoughArgs extends Error {
+    constructor(expected: number, passedArgs: object, details?: string);
 }
 declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
 declare class BetterHTMLElement {
@@ -32,7 +35,12 @@ declare class BetterHTMLElement {
         cls?: string;
         children?: ChildrenObj;
     });
-    private static _buildHtmlElement;
+    static buildHtmlElement<K extends HTMLTag>(buildOptions: {
+        create?: K;
+        id?: string;
+        query?: QuerySelector;
+        htmlElement?: HTMLElementTagNameMap[K];
+    }): HTMLElementTagNameMap[K];
     get e(): HTMLElement;
     wrapSomethingElse(newHtmlElement: BetterHTMLElement): this;
     wrapSomethingElse(newHtmlElement: Node): this;
@@ -123,10 +131,14 @@ declare class Paragraph extends BetterHTMLElement {
 declare class Input extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLInputElement;
     readonly e: HTMLInputElement;
-    constructor({ id, cls, type, htmlElement }?: InputConstructor);
+    constructor({ id, cls, type, query, htmlElement }?: InputConstructor & GetInputConstructor);
     check(): this;
     uncheck(): this;
-    checked(): boolean;
+    get checked(): boolean;
+    value(val: string): this;
+    value(): string;
+    placeholder(val: string): this;
+    placeholder(): string;
 }
 declare class Span extends BetterHTMLElement {
     protected readonly _htmlElement: HTMLSpanElement;
@@ -175,11 +187,16 @@ declare function elem({ htmlElement, text, cls, children }: {
 declare function span({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLSpanElement>): Span;
 declare function div({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLDivElement>): Div;
 declare function button({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLButtonElement>): Button;
-declare function input({ id, cls, type, htmlElement }?: InputConstructor): Input;
+declare function createInput({ id, cls, type }?: InputConstructor): Input;
+declare function getInput({ id, query, htmlElement }: GetInputConstructor): Input;
 declare function img({ id, src, cls, htmlElement }?: ImgConstructor): Img;
 declare function paragraph({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLParagraphElement>): Paragraph;
 declare function anchor({ id, text, cls, href, htmlElement }?: AnchorConstructor): Anchor;
-declare function bheFactory(create: string, htmlElement: any): BetterHTMLElement;
+declare function wrapHtmlElement<K extends HTMLTag | string>(opts: {
+    query: K;
+}): K extends HTMLTag ? HTMLElementTagNameMap[K] : any;
+declare function newHtmlElement(tag: any): any;
+declare function bheFactory(create: string, htmlElement: any): any;
 declare function enumerate<T>(obj: T): Enumerated<T>;
 declare function wait(ms: number): Promise<any>;
 declare function isArray<T>(obj: any): obj is Array<T>;
@@ -247,7 +264,11 @@ interface AnimateOptions {
 interface BaseElemConstructor<T> {
     id?: string;
     cls?: string;
+}
+interface BaseGetElemConstructor<T> {
+    id?: string;
     htmlElement?: T;
+    query?: QuerySelector;
 }
 interface SubElemConstructor<T> extends BaseElemConstructor<T> {
     text?: string;
@@ -257,6 +278,9 @@ interface ImgConstructor extends BaseElemConstructor<HTMLImageElement> {
 }
 interface InputConstructor extends BaseElemConstructor<HTMLInputElement> {
     type?: string;
+}
+interface GetInputConstructor extends BaseGetElemConstructor<HTMLInputElement> {
+    query?: QuerySelector;
 }
 interface AnchorConstructor extends SubElemConstructor<HTMLAnchorElement> {
     href?: string;
@@ -274,7 +298,9 @@ declare type TEventFunctionMap<K extends TEvent> = {
     [P in K]?: (event: HTMLElementEventMap[P]) => void;
 };
 declare type HTMLTag = keyof HTMLElementTagNameMap;
-declare type QuerySelector = HTMLTag | string;
+declare type QuerySelector<K = HTMLTag> = K extends HTMLTag ? K : string;
+declare function foo<K extends HTMLTag>(tag: K): HTMLElementTagNameMap[K];
+declare function bar<K extends HTMLTag | string>(query: QuerySelector<K>): K extends HTMLTag ? HTMLElementTagNameMap[K] : any;
 declare type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
 declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
 declare type TReturnBoolean = (s: string) => boolean;

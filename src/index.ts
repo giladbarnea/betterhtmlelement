@@ -63,7 +63,7 @@ class BetterHTMLElement {
                 }
             }
         }*/
-        this._htmlElement = BetterHTMLElement._buildHtmlElement(create, id, query, htmlElement);
+        this._htmlElement = BetterHTMLElement.buildHtmlElement({create, id, query, htmlElement});
         if (text !== undefined) {
             this.text(text);
         }
@@ -78,34 +78,37 @@ class BetterHTMLElement {
 
     }
 
-    private static _buildHtmlElement(create, id, query, htmlElement) {
-        // ** create (CREATE element)
-        if (create !== undefined) {
-            if (['svg', 'path'].includes(create.toLowerCase())) {
-                throw new Error("Not impl");
-                this._isSvg = true;
-                this._htmlElement = document.createElementNS(SVG_NS_URI, create);
-            } else {
-                return document.createElement(create);
-            }
+    /**All options get an existing HTMLElement, besides `create` (tag), which creates one.*/
+    static buildHtmlElement<K extends HTMLTag>(buildOptions: { create?: K, id?: string, query?: QuerySelector, htmlElement?: HTMLElementTagNameMap[K] }): HTMLElementTagNameMap[K] {
+        const {create, id, query, htmlElement} = buildOptions;
+        // ** EXISTING by id, query or htmlElement
+        if (htmlElement !== undefined) {
+            return htmlElement;
         }
         if (id !== undefined) {
+            // @ts-ignore
             return document.getElementById(id);
         }
         if (query !== undefined) {
             return document.querySelector(query);
         }
-        if (htmlElement !== undefined) {
-            return htmlElement;
+        // ** NEW by tag
+        if (create !== undefined) {
+            if (['svg', 'path'].includes(create.toLowerCase())) {
+                throw new Error("Not impl");
+                // this._isSvg = true;
+                // this._htmlElement = document.createElementNS(SVG_NS_URI, create);
+            } else {
+                return document.createElement(create);
+            }
         }
-        throw new MutuallyExclusiveArgs({
+
+        throw new NotEnoughArgs(1, {
             create,
             id,
             htmlElement,
             query
         })
-
-
     }
 
     /**Return the wrapped HTMLElement*/
@@ -564,7 +567,7 @@ class BetterHTMLElement {
     }
 
 
-    // ***  Events
+    // *** Events
 
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this {
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
@@ -860,7 +863,7 @@ class Input extends BetterHTMLElement {
     readonly e: HTMLInputElement;
 
     /**Create a new Input element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({id, cls, type, htmlElement}: InputConstructor = {}) {
+    constructor({id, cls, type, query, htmlElement}: InputConstructor & GetInputConstructor = {}) {
         if (htmlElement !== undefined) {
             super({cls, htmlElement});
         } else {
@@ -879,14 +882,43 @@ class Input extends BetterHTMLElement {
     }
 
     uncheck(): this {
-        return this.removeAttr('checked')
+        // return this.removeAttr('checked')
+        // return this.attr({'checked': false})
+        this.e.checked = false;
+        return this
     }
 
-    checked(): boolean {
+    get checked(): boolean {
         const rv = this.e.checked;
         console.log('this.e.checked: ', rv);
         return rv
     }
+
+    value(val: string): this;
+    value(): string;
+    value(val?) {
+        if (val === undefined) {
+            return this.e.value;
+        } else {
+            this.e.value = val;
+            return this;
+        }
+
+    }
+
+    placeholder(val: string): this;
+    placeholder(): string;
+    placeholder(val?) {
+        if (val === undefined) {
+            return this.e.placeholder;
+        } else {
+            this.e.placeholder = val;
+            return this;
+        }
+
+    }
+
+
 }
 
 class Span extends BetterHTMLElement {
@@ -1021,10 +1053,17 @@ function button({id, text, cls, htmlElement}: SubElemConstructor<HTMLButtonEleme
 }
 
 
-/**Create an Input element, or wrap an existing one by passing htmlElement. Optionally set its id, cls or type.*/
-function input({id, cls, type, htmlElement}: InputConstructor = {}): Input {
-    return new Input({id, cls, type, htmlElement});
+/**Create an Input element. Optionally set its id, cls or type.*/
+function createInput({id, cls, type}: InputConstructor = {}): Input {
+    return new Input({id, cls, type});
 }
+
+/**Wrap an existing Input element. Optionally set its id, cls or type.*/
+function getInput({id, query, htmlElement}: GetInputConstructor): Input {
+    const inputElement = BetterHTMLElement.buildHtmlElement({id, query, htmlElement});
+    return new Input({htmlElement: inputElement});
+}
+
 
 /**Create an Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
 function img({id, src, cls, htmlElement}: ImgConstructor = {}): Img {
@@ -1042,6 +1081,52 @@ function anchor({id, text, cls, href, htmlElement}: AnchorConstructor = {}): Anc
     return new Anchor({id, text, cls, href, htmlElement});
 }
 
+// ** EXISTING by id, query or htmlElement
+function wrapHtmlElement<K extends HTMLTag | string>(
+    /*buildOptions:
+        {
+            // id?: string,
+            query: QuerySelector<K>,
+            // htmlElement?: HTMLElementTagNameMap[K]
+        }*/
+    opts: { query: K }
+    // query: QuerySelector<K>
+): K extends HTMLTag ? HTMLElementTagNameMap[K] : any {
+    // const {id, query, htmlElement} = buildOptions;
+    if (htmlElement !== undefined) {
+        return htmlElement;
+    }
+    if (id !== undefined) {
+        const e = document.getElementById(id);
+    }
+    if (query !== undefined) {
+        return document.querySelector(query);
+    }
+
+
+    throw new NotEnoughArgs(1, {
+        id,
+        htmlElement,
+        query
+    })
+}
+
+// ** NEW by tag
+function newHtmlElement(tag) {
+    if (tag !== undefined) {
+        if (['svg', 'path'].includes(tag.toLowerCase())) {
+            throw new Error("Not impl");
+            // this._isSvg = true;
+            // this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
+        } else {
+            return document.createElement(tag);
+        }
+    }
+}
+
+wrapHtmlElement({query: "a"});
+
+// wrapHtmlElement("div");
 
 function bheFactory(create: string, htmlElement) {
     switch (create) {

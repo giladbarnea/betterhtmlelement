@@ -1,7 +1,14 @@
 interface BaseElemConstructor<T> {
+    // id is SET after element creation
     id?: string;
     cls?: string;
+}
+
+interface BaseGetElemConstructor<T> {
+    // id is used to get element
+    id?: string;
     htmlElement?: T;
+    query?: QuerySelector;
 }
 
 interface SubElemConstructor<T> extends BaseElemConstructor<T> {
@@ -21,6 +28,10 @@ interface ImgConstructor extends BaseElemConstructor<HTMLImageElement> {
 
 interface InputConstructor extends BaseElemConstructor<HTMLInputElement> {
     type?: string;
+}
+
+interface GetInputConstructor extends BaseGetElemConstructor<HTMLInputElement> {
+    query?: QuerySelector;
 }
 
 interface AnchorConstructor extends SubElemConstructor<HTMLAnchorElement> {
