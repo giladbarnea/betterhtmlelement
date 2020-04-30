@@ -15,7 +15,7 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     constructor({query, children}: QueryBHEConstructor);
     /**Wrap an existing HTMLElement. Optionally cache existing `children`*/
     constructor({htmlElement, children}: ByHtmlElementBHEConstructor<T>);
-    constructor(elemOptions) {
+    constructor(elemOptions: BHEConstructor<T>) {
         const {
             tag, cls, setid, // create
             htmlElement, byid, query, children // wrap existing
@@ -57,7 +57,7 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
                 this._isSvg = true;
                 this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
             } else {
-                this._htmlElement = document.createElement(tag);
+                this._htmlElement = document.createElement(tag) as T;
             }
             // ** wrap EXISTING element
             // * byid
@@ -66,7 +66,7 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
         } else {
             // * query
             if (query !== undefined) {
-                this._htmlElement = document.querySelector(query);
+                this._htmlElement = document.querySelector(query) as T;
             } else {
                 // * htmlElement
                 if (htmlElement !== undefined) {
@@ -396,14 +396,13 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     }
 
     /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    // child<K extends HTMLTag>(selector: K): BetterHTMLElement<HTMLElementType<K>> {
-    child<K extends HTMLTag>(selector: K): BetterHTMLElement<HTMLElementTagNameMap[K]> {
+    child<K extends HTMLTag, T extends HTMLElementTagNameMap[K]>(selector: K): BetterHTMLElement<T>;
+    child(selector: string): BetterHTMLElement
+    child(selector) {
         const htmlElement = this.e.querySelector(selector);
         const tag = htmlElement.tagName.toLowerCase() as HTMLTag;
         const bhe = wrapWithBHE(tag, htmlElement);
         return bhe;
-        // BetterHTMLElement({})
-        // return new BetterHTMLElement({htmlElement: htmlElement});
     }
 
 
@@ -781,63 +780,79 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
 
 }
 
-class Div extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLDivElement;
-    readonly e: HTMLDivElement;
+class Div extends BetterHTMLElement<HTMLDivElement> {
 
     /**Create a new Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({id, text, cls, htmlElement}: SubElemConstructor<HTMLDivElement> = {}) {
-        if (htmlElement !== undefined) {
-            super({text, cls, htmlElement});
-        } else {
-            super({tag: 'div', text, cls});
+    constructor({setid, cls, byid, text, query, htmlElement, children}: DivConstructor) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0])
         }
-        if (id !== undefined) {
-            this.id(id);
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "div", cls, setid})
+        }
+        if (text !== undefined) {
+            this.text(text);
         }
     }
 }
 
 
-class Button extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLButtonElement;
-    readonly e: HTMLButtonElement;
+class Button extends BetterHTMLElement<HTMLButtonElement> {
+
 
     /**Create a new Button element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({id, text, cls, htmlElement}: SubElemConstructor<HTMLButtonElement> = {}) {
-        if (htmlElement !== undefined) {
-            super({text, cls, htmlElement});
-        } else {
-            super({tag: 'button', text, cls});
+    constructor({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLButtonElement>) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0])
         }
-        if (id !== undefined) {
-            this.id(id);
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "button", setid, cls})
+        }
+        if (text !== undefined) {
+            this.text(text);
         }
     }
 }
 
 
-class Paragraph extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLParagraphElement;
-    readonly e: HTMLParagraphElement;
+class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
 
     /**Create a new Paragraph element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({id, text, cls, htmlElement}: SubElemConstructor<HTMLParagraphElement> = {}) {
-        if (htmlElement !== undefined) {
-            super({text, cls, htmlElement});
-        } else {
-            super({tag: 'p', text, cls});
+    constructor({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLParagraphElement>) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0])
         }
-        if (id !== undefined) {
-            this.id(id);
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "p", setid, cls})
+        }
+        if (text !== undefined) {
+            this.text(text);
         }
     }
 }
 
 class Input extends BetterHTMLElement<HTMLInputElement> {
     constructor({setid, cls, type, placeholder, byid, query, htmlElement, children}: InputConstructor) {
-        if (noValue([setid, cls, type, placeholder, byid, query, htmlElement, children])) {
-            throw new NotEnoughArgs([1], {setid, cls, type, placeholder, byid, query, htmlElement, children})
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0])
         }
 
         if (htmlElement !== undefined) {
@@ -847,7 +862,7 @@ class Input extends BetterHTMLElement<HTMLInputElement> {
         } else if (query !== undefined) {
             super({query, children});
         } else {
-            super({tag: "input"})
+            super({tag: "input", cls, setid})
         }
 
         if (type !== undefined) {
@@ -910,40 +925,47 @@ class Input extends BetterHTMLElement<HTMLInputElement> {
 
 }
 
-class Span extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLSpanElement;
-    readonly e: HTMLSpanElement;
+class Span extends BetterHTMLElement<HTMLSpanElement> {
 
     /**Create a new Span element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({id, text, cls, htmlElement}: SubElemConstructor<HTMLSpanElement> = {}) {
-        if (htmlElement !== undefined) {
-            super({text, cls, htmlElement});
-        } else {
-            super({tag: 'span', text, cls});
+    constructor({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLSpanElement>) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0])
         }
-        if (id !== undefined) {
-            this.id(id);
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "span", setid, cls})
+        }
+        if (text !== undefined) {
+            this.text(text);
         }
 
     }
 }
 
-class Img extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLImageElement;
-    readonly e: HTMLImageElement;
+class Img extends BetterHTMLElement<HTMLImageElement> {
 
     /**Create a new Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
-    constructor({id, src, cls, htmlElement}: ImgConstructor) {
-        if (htmlElement !== undefined) {
-            super({cls, htmlElement});
-        } else {
-            super({tag: 'img', cls});
+    constructor({setid, cls, src, byid, query, htmlElement, children}: ImgConstructor) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0])
         }
-        if (id !== undefined) {
-            this.id(id);
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "img", setid, cls})
         }
         if (src !== undefined) {
-            this._htmlElement.src = src;
+            this.src(src);
         }
 
     }
@@ -962,22 +984,31 @@ class Img extends BetterHTMLElement {
 
 }
 
-class Anchor extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLAnchorElement;
-    readonly e: HTMLAnchorElement;
+class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
+
 
     /**Create a new Input element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
-    constructor({id, text, cls, href, htmlElement}: AnchorConstructor = {}) {
-        if (htmlElement !== undefined) {
-            super({text, cls, htmlElement});
-        } else {
-            super({tag: 'a', text, cls});
+    constructor({setid, cls, text, href, target, byid, query, htmlElement, children}: AnchorConstructor) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0])
         }
-        if (id !== undefined) {
-            this.id(id);
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "a", setid, cls})
+        }
+        if (text !== undefined) {
+            this.text(text);
         }
         if (href !== undefined) {
-            this.href(href)
+            this.href(href);
+        }
+        if (target !== undefined) {
+            this.target(target);
         }
 
     }
@@ -1027,22 +1058,22 @@ function elem(elemOptions): BetterHTMLElement {
 }
 
 /**Create an Span element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function span({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLSpanElement>): Span {
+function span({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLSpanElement> = {}): Span {
     return new Span({setid, cls, text, byid, query, htmlElement, children});
 }
 
 /**Create a Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function div({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLDivElement>): Div {
+function div({setid, cls, text, byid, query, htmlElement, children}: DivConstructor = {}): Div {
     return new Div({setid, cls, text, byid, query, htmlElement, children});
 }
 
 /**Create a Button element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function button({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLButtonElement>): Button {
+function button({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLButtonElement> = {}): Button {
     return new Button({setid, cls, text, byid, query, htmlElement, children});
 }
 
 
-function input({setid, cls, type, placeholder, byid, query, htmlElement, children}: InputConstructor): Input {
+function input({setid, cls, type, placeholder, byid, query, htmlElement, children}: InputConstructor = {}): Input {
     return new Input({setid, cls, type, placeholder, byid, query, htmlElement, children})
 }
 
@@ -1050,22 +1081,22 @@ function input({setid, cls, type, placeholder, byid, query, htmlElement, childre
 // getInput(document.createElement("div"));
 
 /**Create an Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
-function img({setid, cls, src, byid, query, htmlElement, children}: ImgConstructor): Img {
+function img({setid, cls, src, byid, query, htmlElement, children}: ImgConstructor = {}): Img {
     return new Img({setid, cls, src, byid, query, htmlElement, children});
 }
 
 
 /**Create a Paragraph element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function paragraph({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLParagraphElement>): Paragraph {
+function paragraph({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLParagraphElement> = {}): Paragraph {
     return new Paragraph({setid, cls, text, byid, query, htmlElement, children});
 }
 
 /**Create a new Anchor element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
-function anchor({setid, cls, text, href, byid, query, htmlElement, children}: AnchorConstructor): Anchor {
-    return new Anchor({setid, cls, text, href, byid, query, htmlElement, children});
+function anchor({setid, cls, text, href, target, byid, query, htmlElement, children}: AnchorConstructor = {}): Anchor {
+    return new Anchor({setid, cls, text, href, target, byid, query, htmlElement, children});
 }
 
-// ** get EXISTING vanilla HTMLElement: by id, query or htmlElement
+/*// ** get EXISTING vanilla HTMLElement: by id, query or htmlElement
 function getHtmlElement<K extends (HTMLTag | string)>(query: K): HTMLElementType<K>;
 function getHtmlElement<T extends HTMLElement>(htmlElement: T): T;
 function getHtmlElement(idOrQueryOrHtmlElement) {
@@ -1094,14 +1125,15 @@ function newHtmlElement<K extends HTMLTag>(tag: K) {
 // getHtmlElement(5);
 // getHtmlElement("div");
 // newHtmlElement("div");
-
-// function wrapWithBHE<K extends HTMLTag, T extends HTMLElementType<K>>(tag: K, htmlElement: T)
-function wrapWithBHE<K extends HTMLTag, T extends HTMLElement>
-(tag: K, htmlElement: T): BetterHTMLElement<T> {
+*/
+function wrapWithBHE<K extends HTMLTag, T extends HTMLElementType<K>>(tag: K, htmlElement: T): BetterHTMLElement<T> {
+// function wrapWithBHE<K extends BHETag>(tag: K, htmlElement: BHETag2HTMLElement<K>): Tag2BHE<K> {
+// function wrapWithBHE<K extends BHETag, T extends HTMLElementType<K>>(tag: K, htmlElement: T): BetterHTMLElement<T> {
 
     switch (tag) {
         case 'div':
-            return div({htmlElement});
+            let e = div({htmlElement: htmlElement});
+            return e;
         case 'a':
             return anchor({htmlElement});
         case 'p':

@@ -1,35 +1,40 @@
 interface NewBHEConstructor<T extends HTMLElement> {
-    tag: HTMLElement2Tag<T>,
+    tag?: HTMLElement2Tag<T>,
     cls?: string,
     setid?: string
 }
 
 
 interface ByIdBHEConstructor {
-    byid: string,
+    byid?: string,
     children?: ChildrenObj
 }
 
 interface QueryBHEConstructor {
-    query: QuerySelector,
+    query?: QuerySelector,
     children?: ChildrenObj
 }
 
 interface ByHtmlElementBHEConstructor<T extends HTMLElement> {
-    htmlElement: T,
+    htmlElement?: T;
     children?: ChildrenObj
 }
 
 interface BHEConstructor<T extends HTMLElement>
-    extends Partial<NewBHEConstructor<T>>,
-        Partial<ByIdBHEConstructor>,
-        Partial<QueryBHEConstructor>,
-        Partial<ByHtmlElementBHEConstructor<T>> {
+    extends NewBHEConstructor<T>,
+        ByIdBHEConstructor,
+        QueryBHEConstructor,
+        ByHtmlElementBHEConstructor<T> {
 }
 
-interface SubElemConstructor<T extends HTMLElement> extends BHEConstructor<T> {
+interface DivConstructor extends SubElemConstructor<HTMLDivElement> {
+    htmlElement?: HTMLDivElement;
+}
+
+interface SubElemConstructor<K extends HTMLElement> extends BHEConstructor<K> {
     text?: string;
 }
+
 
 interface ImgConstructor extends BHEConstructor<HTMLImageElement> {
     src?: string;
@@ -43,5 +48,6 @@ interface InputConstructor extends BHEConstructor<HTMLInputElement> {
 
 interface AnchorConstructor extends SubElemConstructor<HTMLAnchorElement> {
     href?: string;
+    target?: string;
 }
 

@@ -25,7 +25,19 @@ class NotEnoughArgs extends Error {
     constructor(expected, passedArgs, details) {
         const argsWithValues = getArgsWithValues(passedArgs);
         const argNamesValues = getArgNamesValues(argsWithValues);
-        let message = `Didn't receive enough args: expected ${expected}. `;
+        let message;
+        if (isArray(expected)) {
+            let [min, max] = expected;
+            if (max === undefined) {
+                message = `Didn't receive enough args: expected at least ${min}. `;
+            }
+            else {
+                message = `Didn't receive enough args: expected between ${min} and ${max}. `;
+            }
+        }
+        else {
+            message = `Didn't receive enough args: expected exactly ${expected}. `;
+        }
         message += `Out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
         super(message);
     }
@@ -36,30 +48,62 @@ class BetterHTMLElement {
         this._isSvg = false;
         this._listeners = {};
         this._cachedChildren = {};
-        const { tag, id, htmlElement, text, query, children, cls } = elemOptions;
-        if ([tag, id, htmlElement, query].filter(x => x !== undefined).length > 1) {
+        const { tag, cls, setid, htmlElement, byid, query, children } = elemOptions;
+        if ([byid, htmlElement, query].filter(x => Boolean(x)).length > 1) {
+            throw new MutuallyExclusiveArgs({
+                byid, query, htmlElement
+            }, `Choose only one way to get an existing element; by its id, query, or actual element`);
+        }
+        if (tag !== undefined && anyValue([children, byid, htmlElement, query])) {
             throw new MutuallyExclusiveArgs({
                 tag,
-                id,
+                byid,
                 htmlElement,
                 query
-            });
+            }, `Either create a new elem via "tag", or get an existing one via either "byid", "htmlElement", or "query" (and maybe cache its "children")`);
         }
-        if (tag !== undefined && children !== undefined) {
+        if (anyValue([tag, cls, setid]) && anyValue([children, byid, htmlElement, query])) {
             throw new MutuallyExclusiveArgs({
-                tag,
-                children
-            }, '"children" and "tag" options are mutually exclusive, because tag implies creating a new element and children implies getting an existing one.');
+                group1: { cls, setid },
+                group2: { children, byid, htmlElement, query }
+            }, `Can't have args from both groups`);
         }
-        this._htmlElement = BetterHTMLElement.buildHtmlElement({ tag, id, query, htmlElement });
-        if (text !== undefined) {
-            this.text(text);
+        if (noValue([tag, cls, setid]) && noValue([children, byid, htmlElement, query])) {
+            throw new NotEnoughArgs([1], {
+                group1: { cls, setid },
+                group2: { children, byid, htmlElement, query }
+            }, `Expecting at least one arg from a given group`);
+        }
+        if (tag !== undefined) {
+            if (['svg', 'path'].includes(tag.toLowerCase())) {
+                this._isSvg = true;
+                this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
+            }
+            else {
+                this._htmlElement = document.createElement(tag);
+            }
+        }
+        else if (byid !== undefined) {
+            this._htmlElement = document.getElementById(byid);
+        }
+        else {
+            if (query !== undefined) {
+                this._htmlElement = document.querySelector(query);
+            }
+            else {
+                if (htmlElement !== undefined) {
+                    this._htmlElement = htmlElement;
+                }
+            }
         }
         if (cls !== undefined) {
             this.class(cls);
         }
         if (children !== undefined) {
             this.cacheChildren(children);
+        }
+        if (setid !== undefined) {
+            this.id(setid);
         }
     }
     get e() {
@@ -515,57 +559,103 @@ class BetterHTMLElement {
     }
 }
 class Div extends BetterHTMLElement {
-    constructor({ id, text, cls, htmlElement } = {}) {
+    constructor({ setid, cls, byid, text, query, htmlElement, children }) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0]);
+        }
         if (htmlElement !== undefined) {
-            super({ text, cls, htmlElement });
+            super({ htmlElement, children });
+        }
+        else if (byid !== undefined) {
+            super({ byid, children });
+        }
+        else if (query !== undefined) {
+            super({ query, children });
         }
         else {
-            super({ tag: 'div', text, cls });
+            super({ tag: "div", cls, setid });
         }
-        if (id !== undefined) {
-            this.id(id);
+        if (text !== undefined) {
+            this.text(text);
         }
     }
 }
 class Button extends BetterHTMLElement {
-    constructor({ id, text, cls, htmlElement } = {}) {
+    constructor({ setid, cls, text, byid, query, htmlElement, children }) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0]);
+        }
         if (htmlElement !== undefined) {
-            super({ text, cls, htmlElement });
+            super({ htmlElement, children });
+        }
+        else if (byid !== undefined) {
+            super({ byid, children });
+        }
+        else if (query !== undefined) {
+            super({ query, children });
         }
         else {
-            super({ tag: 'button', text, cls });
+            super({ tag: "button", setid, cls });
         }
-        if (id !== undefined) {
-            this.id(id);
+        if (text !== undefined) {
+            this.text(text);
         }
     }
 }
 class Paragraph extends BetterHTMLElement {
-    constructor({ id, text, cls, htmlElement } = {}) {
+    constructor({ setid, cls, text, byid, query, htmlElement, children }) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0]);
+        }
         if (htmlElement !== undefined) {
-            super({ text, cls, htmlElement });
+            super({ htmlElement, children });
+        }
+        else if (byid !== undefined) {
+            super({ byid, children });
+        }
+        else if (query !== undefined) {
+            super({ query, children });
         }
         else {
-            super({ tag: 'p', text, cls });
+            super({ tag: "p", setid, cls });
         }
-        if (id !== undefined) {
-            this.id(id);
+        if (text !== undefined) {
+            this.text(text);
         }
     }
 }
 class Input extends BetterHTMLElement {
-    constructor({ id, cls, type, query, htmlElement } = {}) {
+    constructor({ setid, cls, type, placeholder, byid, query, htmlElement, children }) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0]);
+        }
         if (htmlElement !== undefined) {
-            super({ cls, htmlElement });
+            super({ htmlElement, children });
+        }
+        else if (byid !== undefined) {
+            super({ byid, children });
+        }
+        else if (query !== undefined) {
+            super({ query, children });
         }
         else {
-            super({ tag: 'input', cls });
-        }
-        if (id !== undefined) {
-            this.id(id);
+            super({ tag: "input", cls, setid });
         }
         if (type !== undefined) {
             this._htmlElement.type = type;
+        }
+        if (placeholder !== undefined) {
+            if (type) {
+                if (type === "number" && typeof placeholder !== "number") {
+                    console.warn(`placeholder type is ${typeof placeholder} but input type is number. ignoring`);
+                }
+                else if (type !== "text") {
+                    console.warn(`placeholder type is ${typeof placeholder} but input type not number nor text. ignoring`);
+                }
+                else {
+                    this.placeholder(placeholder);
+                }
+            }
         }
     }
     check() {
@@ -600,31 +690,46 @@ class Input extends BetterHTMLElement {
     }
 }
 class Span extends BetterHTMLElement {
-    constructor({ id, text, cls, htmlElement } = {}) {
+    constructor({ setid, cls, text, byid, query, htmlElement, children }) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0]);
+        }
         if (htmlElement !== undefined) {
-            super({ text, cls, htmlElement });
+            super({ htmlElement, children });
+        }
+        else if (byid !== undefined) {
+            super({ byid, children });
+        }
+        else if (query !== undefined) {
+            super({ query, children });
         }
         else {
-            super({ tag: 'span', text, cls });
+            super({ tag: "span", setid, cls });
         }
-        if (id !== undefined) {
-            this.id(id);
+        if (text !== undefined) {
+            this.text(text);
         }
     }
 }
 class Img extends BetterHTMLElement {
-    constructor({ id, src, cls, htmlElement }) {
+    constructor({ setid, cls, src, byid, query, htmlElement, children }) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0]);
+        }
         if (htmlElement !== undefined) {
-            super({ cls, htmlElement });
+            super({ htmlElement, children });
+        }
+        else if (byid !== undefined) {
+            super({ byid, children });
+        }
+        else if (query !== undefined) {
+            super({ query, children });
         }
         else {
-            super({ tag: 'img', cls });
-        }
-        if (id !== undefined) {
-            this.id(id);
+            super({ tag: "img", setid, cls });
         }
         if (src !== undefined) {
-            this._htmlElement.src = src;
+            this.src(src);
         }
     }
     src(src) {
@@ -638,18 +743,30 @@ class Img extends BetterHTMLElement {
     }
 }
 class Anchor extends BetterHTMLElement {
-    constructor({ id, text, cls, href, htmlElement } = {}) {
+    constructor({ setid, cls, text, href, target, byid, query, htmlElement, children }) {
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0]);
+        }
         if (htmlElement !== undefined) {
-            super({ text, cls, htmlElement });
+            super({ htmlElement, children });
+        }
+        else if (byid !== undefined) {
+            super({ byid, children });
+        }
+        else if (query !== undefined) {
+            super({ query, children });
         }
         else {
-            super({ tag: 'a', text, cls });
+            super({ tag: "a", setid, cls });
         }
-        if (id !== undefined) {
-            this.id(id);
+        if (text !== undefined) {
+            this.text(text);
         }
         if (href !== undefined) {
             this.href(href);
+        }
+        if (target !== undefined) {
+            this.target(target);
         }
     }
     href(val) {
@@ -672,52 +789,32 @@ class Anchor extends BetterHTMLElement {
 function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
-function span({ id, text, cls, htmlElement } = {}) {
-    return new Span({ id, text, cls, htmlElement });
+function span({ setid, cls, text, byid, query, htmlElement, children } = {}) {
+    return new Span({ setid, cls, text, byid, query, htmlElement, children });
 }
-function div({ id, text, cls, htmlElement } = {}) {
-    return new Div({ id, text, cls, htmlElement });
+function div({ setid, cls, text, byid, query, htmlElement, children } = {}) {
+    return new Div({ setid, cls, text, byid, query, htmlElement, children });
 }
-function button({ id, text, cls, htmlElement } = {}) {
-    return new Button({ id, text, cls, htmlElement });
+function button({ setid, cls, text, byid, query, htmlElement, children } = {}) {
+    return new Button({ setid, cls, text, byid, query, htmlElement, children });
 }
-function createInput({ id, cls, type } = {}) {
-    return new Input({ id, cls, type });
+function input({ setid, cls, type, placeholder, byid, query, htmlElement, children } = {}) {
+    return new Input({ setid, cls, type, placeholder, byid, query, htmlElement, children });
 }
-function getInput(idOrQueryOrHtmlElement) {
-    const inputElement = getHtmlElement(idOrQueryOrHtmlElement);
-    return new Input({ htmlElement: inputElement });
+function img({ setid, cls, src, byid, query, htmlElement, children } = {}) {
+    return new Img({ setid, cls, src, byid, query, htmlElement, children });
 }
-function img({ id, src, cls, htmlElement } = {}) {
-    return new Img({ id, src, cls, htmlElement });
+function paragraph({ setid, cls, text, byid, query, htmlElement, children } = {}) {
+    return new Paragraph({ setid, cls, text, byid, query, htmlElement, children });
 }
-function paragraph({ id, text, cls, htmlElement } = {}) {
-    return new Paragraph({ id, text, cls, htmlElement });
-}
-function anchor({ id, text, cls, href, htmlElement } = {}) {
-    return new Anchor({ id, text, cls, href, htmlElement });
-}
-function getHtmlElement(idOrQueryOrHtmlElement) {
-    if (idOrQueryOrHtmlElement instanceof HTMLElement) {
-        return idOrQueryOrHtmlElement;
-    }
-    return document.querySelector(idOrQueryOrHtmlElement);
-}
-function newHtmlElement(tag) {
-    if (tag === undefined) {
-        throw new NotEnoughArgs(1, { tag });
-    }
-    if (['svg', 'path'].includes(tag.toLowerCase())) {
-        throw new Error("Not impl");
-    }
-    else {
-        return document.createElement(tag);
-    }
+function anchor({ setid, cls, text, href, target, byid, query, htmlElement, children } = {}) {
+    return new Anchor({ setid, cls, text, href, target, byid, query, htmlElement, children });
 }
 function wrapWithBHE(tag, htmlElement) {
     switch (tag) {
         case 'div':
-            return div({ htmlElement });
+            let e = div({ htmlElement: htmlElement });
+            return e;
         case 'a':
             return anchor({ htmlElement });
         case 'p':
@@ -725,7 +822,7 @@ function wrapWithBHE(tag, htmlElement) {
         case 'img':
             return img({ htmlElement });
         case 'input':
-            return new Input({ htmlElement });
+            return input({ htmlElement });
         case 'button':
             return button({ htmlElement });
         case 'span':
@@ -766,6 +863,12 @@ function enumerate(obj) {
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+function anyValue(array) {
+    return array.filter(x => Boolean(x)).length > 0;
+}
+function noValue(array) {
+    return array.filter(x => Boolean(x)).length === 0;
+}
 function isArray(obj) {
     return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
@@ -774,6 +877,26 @@ function isEmptyArr(collection) {
 }
 function isEmptyObj(obj) {
     return isObject(obj) && Object.keys(obj).length === 0;
+}
+function isHTMLElement(tag, element) {
+    switch (tag) {
+        case 'div':
+            return element instanceof HTMLDivElement;
+        case 'a':
+            return element instanceof HTMLAnchorElement;
+        case 'p':
+            return element instanceof HTMLParagraphElement;
+        case 'img':
+            return element instanceof HTMLImageElement;
+        case 'input':
+            return element instanceof HTMLInputElement;
+        case 'button':
+            return element instanceof HTMLButtonElement;
+        case 'span':
+            return element instanceof HTMLSpanElement;
+        default:
+            return element instanceof HTMLElement;
+    }
 }
 function isFunction(fn) {
     return fn && {}.toString.call(fn) === '[object Function]';
@@ -789,6 +912,10 @@ function shallowProperty(key) {
 function getLength(collection) {
     return shallowProperty('length')(collection);
 }
+const a = undefined;
+function c(d) {
+}
+c(a);
 const foo = (tag) => document.createElement(tag);
 const baz = (query) => document.querySelector(query);
 const bar = (query) => document.querySelector(query);

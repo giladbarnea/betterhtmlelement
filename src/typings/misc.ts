@@ -16,6 +16,23 @@ type TEvent = keyof HTMLElementEventMap;
 type TEventFunctionMap<K extends TEvent> = {
     [P in K]?: (event: HTMLElementEventMap[P]) => void;
 };
+
+type A<K extends keyof HTMLElementTagNameMap> = {
+    [P in K]: HTMLElementTagNameMap[P]
+}[K]
+
+type B = {
+    [P in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[P]
+}
+
+const a: A<"a"> = undefined;
+
+function c(d: HTMLAnchorElement) {
+
+}
+
+c(a);
+
 /**
  * "a", "div"
  * @example
@@ -33,7 +50,7 @@ type HTMLTag = Exclude<keyof HTMLElementTagNameMap, "object">;
  * baz("div") → HTMLDivElement
  * baz("diva") → HTMLSelectElement | HTMLLegendElement | ...
  */
-type HTMLElementType<K = HTMLTag> = K extends HTMLTag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[HTMLTag];
+type HTMLElementType<K extends HTMLTag = HTMLTag> = K extends HTMLTag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[keyof HTMLElementTagNameMap];
 /**
  * "a", "div", "gilad".
  * HTMLElementType "expects" a tag and "returns" an HTMLElement;
@@ -43,15 +60,29 @@ type HTMLElementType<K = HTMLTag> = K extends HTMLTag ? HTMLElementTagNameMap[K]
  * bar("a") → HTMLAnchorElement
  * bar("gilad") → HTMLSelectElement | HTMLLegendElement | ...
  */
-type QuerySelector<K = HTMLTag> = K extends HTMLTag ? K : string;
+type QuerySelector<K extends HTMLTag = HTMLTag> = K extends HTMLTag ? K : string;
 
 const foo = <K extends HTMLTag>(tag: K) => document.createElement(tag);
 
 const baz = <K extends HTMLTag | string>(query: K) => document.querySelector(query);
 
 const bar = <K extends HTMLTag | string>(query: QuerySelector<K>) => document.querySelector(query);
-
-type Tag2BHE<K extends HTMLTag> =
+type BHETag =
+    "div" |
+    "a" |
+    "p" |
+    "img" |
+    "input" |
+    "button" |
+    "span"
+type BHETag2HTMLElement<K extends BHETag> = K extends "div" ? Div :
+    K extends "a" ? HTMLAnchorElement :
+        K extends "p" ? HTMLParagraphElement :
+            K extends "img" ? HTMLImageElement :
+                K extends "input" ? HTMLInputElement :
+                    K extends "button" ? HTMLButtonElement :
+                        K extends "span" ? HTMLSpanElement : never
+type Tag2BHE<K extends BHETag> =
     K extends "div" ? Div :
         K extends "a" ? Anchor :
             K extends "p" ? Paragraph :
@@ -64,14 +95,14 @@ type HTMLElement2Tag<T extends HTMLElement> =
     T extends HTMLInputElement ? "input"
         : T extends HTMLAnchorElement ? "a"
         : T extends HTMLDivElement ? "div"
-            : T extends HTMLParagraphElement ? "p"
-                : T extends HTMLSpanElement ? "span"
+            : T extends HTMLImageElement ? "img"
+                : T extends HTMLParagraphElement ? "p"
                     : T extends HTMLButtonElement ? "button"
-                        : T extends HTMLImageElement ? "img"
+                        : T extends HTMLSpanElement ? "span"
                             : never;
 
-type ChildrenObj = TMap<HTMLElementType> | TRecMap<HTMLElementType>
-// type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
+// type ChildrenObj = TMap<HTMLElementType> | TRecMap<HTMLElementType>
+type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
 type Enumerated<T> =
     T extends (infer U)[] ? [number, U][]
         : T extends TMap<(infer U)> ? [keyof T, U][]
