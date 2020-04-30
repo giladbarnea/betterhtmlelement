@@ -101,6 +101,7 @@ declare class Input extends BetterHTMLElement<HTMLInputElement> {
     constructor({ setid, cls, type, placeholder, byid, query, htmlElement, children }: InputConstructor);
     check(): this;
     uncheck(): this;
+    toggle(on: boolean): this;
     get checked(): boolean;
     value(val: string): this;
     value(): string;

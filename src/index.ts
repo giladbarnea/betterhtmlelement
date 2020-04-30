@@ -883,14 +883,21 @@ class Input extends BetterHTMLElement<HTMLInputElement> {
     }
 
     check(): this {
-        return this.attr({checked: true})
+        this.e.checked = true;
+        return this;
     }
 
     uncheck(): this {
-        // return this.removeAttr('checked')
-        // return this.attr({'checked': false})
         this.e.checked = false;
-        return this
+        return this;
+    }
+
+    toggle(on: boolean): this {
+        if (on) {
+            return this.check()
+        } else {
+            return this.uncheck()
+        }
     }
 
     get checked(): boolean {

@@ -660,11 +660,20 @@ class Input extends BetterHTMLElement {
         }
     }
     check() {
-        return this.attr({ checked: true });
+        this.e.checked = true;
+        return this;
     }
     uncheck() {
         this.e.checked = false;
         return this;
+    }
+    toggle(on) {
+        if (on) {
+            return this.check();
+        }
+        else {
+            return this.uncheck();
+        }
     }
     get checked() {
         const rv = this.e.checked;
@@ -888,7 +897,7 @@ function noValue(obj) {
     else {
         throw new TypeError(`expected array or obj, got: ${typeof obj}`);
     }
-    return array.filter(x => Boolean(x)).length > 0;
+    return array.filter(x => Boolean(x)).length === 0;
 }
 function isArray(obj) {
     return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
