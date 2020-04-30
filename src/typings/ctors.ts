@@ -1,38 +1,45 @@
-interface BaseElemConstructor<T> {
-    // id is SET after element creation
-    id?: string;
-    cls?: string;
+interface NewBHEConstructor<T extends HTMLElement> {
+    tag: HTMLElement2Tag<T>,
+    cls?: string,
+    setid?: string
 }
 
-interface BaseGetElemConstructor<T> {
-    // id is used to get element
-    id?: string;
-    htmlElement?: T;
-    query?: QuerySelector;
+
+interface ByIdBHEConstructor {
+    byid: string,
+    children?: ChildrenObj
 }
 
-interface SubElemConstructor<T> extends BaseElemConstructor<T> {
+interface QueryBHEConstructor {
+    query: QuerySelector,
+    children?: ChildrenObj
+}
+
+interface ByHtmlElementBHEConstructor<T extends HTMLElement> {
+    htmlElement: T,
+    children?: ChildrenObj
+}
+
+interface BHEConstructor<T extends HTMLElement>
+    extends Partial<NewBHEConstructor<T>>,
+        Partial<ByIdBHEConstructor>,
+        Partial<QueryBHEConstructor>,
+        Partial<ByHtmlElementBHEConstructor<T>> {
+}
+
+interface SubElemConstructor<T extends HTMLElement> extends BHEConstructor<T> {
     text?: string;
-    /*htmlElement?: T extends HTMLDivElement ? HTMLDivElement :
-        T extends HTMLInputElement ? HTMLInputElement :
-            T extends HTMLSpanElement ? HTMLSpanElement :
-                T extends HTMLButtonElement ? HTMLButtonElement :
-                    T extends HTMLParagraphElement ? HTMLParagraphElement :
-                        T extends HTMLImageElement ? HTMLImageElement :
-                            T extends HTMLSpanElement ? HTMLSpanElement : HTMLElement;*/
 }
 
-interface ImgConstructor extends BaseElemConstructor<HTMLImageElement> {
+interface ImgConstructor extends BHEConstructor<HTMLImageElement> {
     src?: string;
 }
 
-interface InputConstructor extends BaseElemConstructor<HTMLInputElement> {
-    type?: string;
+interface InputConstructor extends BHEConstructor<HTMLInputElement> {
+    type?: "checkbox" | "number" | "radio" | "text";
+    placeholder?: string;
 }
 
-interface GetInputConstructor extends BaseGetElemConstructor<HTMLInputElement> {
-    query?: QuerySelector;
-}
 
 interface AnchorConstructor extends SubElemConstructor<HTMLAnchorElement> {
     href?: string;

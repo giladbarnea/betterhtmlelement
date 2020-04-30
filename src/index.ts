@@ -1,43 +1,57 @@
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
 
-class BetterHTMLElement {
-    protected _htmlElement: HTMLElement;
+class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
+    protected _htmlElement: T;
     private readonly _isSvg: boolean = false;
     private readonly _listeners: TEventFunctionMap<TEvent> = {};
     private _cachedChildren: TMap<BetterHTMLElement> = {};
 
-    /**Create an element of `create`. Optionally, set its `text` and / or `cls`*/
-    constructor({create, text, cls}: { create: QuerySelector, text?: string, cls?: string });
-    /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: ChildrenObj });
-    /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: ChildrenObj });
-    /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: ChildrenObj });
+    /**Create an element of `tag`. Optionally, set its `text`, `cls` or `id`. */
+    constructor({tag, cls, setid}: NewBHEConstructor<T>);
+    /**Wrap an existing element by `byid`. Optionally cache existing `children`*/
+    constructor({byid, children}: ByIdBHEConstructor);
+    /**Wrap an existing element by `query`. Optionally cache existing `children`*/
+    constructor({query, children}: QueryBHEConstructor);
+    /**Wrap an existing HTMLElement. Optionally cache existing `children`*/
+    constructor({htmlElement, children}: ByHtmlElementBHEConstructor<T>);
     constructor(elemOptions) {
-        const {create, id, htmlElement, text, query, children, cls} = elemOptions;
+        const {
+            tag, cls, setid, // create
+            htmlElement, byid, query, children // wrap existing
+        } = elemOptions;
 
-        // ** Argument Errors
-        // * choose one: create, id, htmlElement, query
-        if ([create, id, htmlElement, query].filter(x => x !== undefined).length > 1) {
+        // *** Argument Errors
+        // ** wrapping args: only one
+        if ([byid, htmlElement, query].filter(x => Boolean(x)).length > 1) {
             throw new MutuallyExclusiveArgs({
-                create,
-                id,
+                byid, query, htmlElement
+            }, `Choose only one way to get an existing element; by its id, query, or actual element`)
+        }
+        // ** creating new elem args: both creators and wrappers
+        // * if creating new with `tag`, no meaning to either children, byid, htmlElement, or query
+        if (tag !== undefined && anyValue([children, byid, htmlElement, query])) {
+            throw new MutuallyExclusiveArgs({
+                tag,
+                byid,
                 htmlElement,
                 query
-            })
-
+            }, `Either create a new elem via "tag", or get an existing one via either "byid", "htmlElement", or "query" (and maybe cache its "children")`)
         }
-        // * choose one: create, children
-        if (create !== undefined && children !== undefined) {
+        if (anyValue([tag, cls, setid]) && anyValue([children, byid, htmlElement, query])) {
             throw new MutuallyExclusiveArgs({
-                create,
-                children
-            }, '"children" and "create" options are mutually exclusive, because create implies creating a new element and children implies getting an existing one.');
+                group1: {cls, setid},
+                group2: {children, byid, htmlElement, query}
+            }, `Can't have args from both groups`)
+        }
+        if (noValue([tag, cls, setid]) && noValue([children, byid, htmlElement, query])) {
+            throw new NotEnoughArgs([1], {
+                group1: {cls, setid},
+                group2: {children, byid, htmlElement, query}
+            }, `Expecting at least one arg from a given group`)
         }
 
-        /*// ** tag (CREATE element)
+        // ** tag (CREATE element)
         if (tag !== undefined) {
             if (['svg', 'path'].includes(tag.toLowerCase())) {
                 this._isSvg = true;
@@ -45,34 +59,30 @@ class BetterHTMLElement {
             } else {
                 this._htmlElement = document.createElement(tag);
             }
-        } else if (id !== undefined) {
-            this._htmlElement = document.getElementById(id);
+            // ** wrap EXISTING element
+            // * byid
+        } else if (byid !== undefined) {
+            this._htmlElement = document.getElementById(byid) as T;
         } else {
+            // * query
             if (query !== undefined) {
                 this._htmlElement = document.querySelector(query);
             } else {
+                // * htmlElement
                 if (htmlElement !== undefined) {
                     this._htmlElement = htmlElement;
-                } else {
-                    throw new MutuallyExclusiveArgs(1, {
-                        tag,
-                        id,
-                        htmlElement,
-                        query
-                    })
                 }
             }
-        }*/
-        this._htmlElement = BetterHTMLElement.buildHtmlElement({create, id, query, htmlElement});
-        if (text !== undefined) {
-            this.text(text);
         }
+
         if (cls !== undefined) {
             this.class(cls);
         }
-
         if (children !== undefined) {
             this.cacheChildren(children);
+        }
+        if (setid !== undefined) {
+            this.id(setid);
         }
 
 
@@ -386,10 +396,11 @@ class BetterHTMLElement {
     }
 
     /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child<K extends HTMLTag | string>(selector: K): TagBHEMap<K> {
+    // child<K extends HTMLTag>(selector: K): BetterHTMLElement<HTMLElementType<K>> {
+    child<K extends HTMLTag>(selector: K): BetterHTMLElement<HTMLElementTagNameMap[K]> {
         const htmlElement = this.e.querySelector(selector);
         const tag = htmlElement.tagName.toLowerCase() as HTMLTag;
-        const bhe = wrapWithBHE(tag, htmlElement) as TagBHEMap<K>;
+        const bhe = wrapWithBHE(tag, htmlElement);
         return bhe;
         // BetterHTMLElement({})
         // return new BetterHTMLElement({htmlElement: htmlElement});
@@ -779,7 +790,7 @@ class Div extends BetterHTMLElement {
         if (htmlElement !== undefined) {
             super({text, cls, htmlElement});
         } else {
-            super({create: 'div', text, cls});
+            super({tag: 'div', text, cls});
         }
         if (id !== undefined) {
             this.id(id);
@@ -797,7 +808,7 @@ class Button extends BetterHTMLElement {
         if (htmlElement !== undefined) {
             super({text, cls, htmlElement});
         } else {
-            super({create: 'button', text, cls});
+            super({tag: 'button', text, cls});
         }
         if (id !== undefined) {
             this.id(id);
@@ -815,7 +826,7 @@ class Paragraph extends BetterHTMLElement {
         if (htmlElement !== undefined) {
             super({text, cls, htmlElement});
         } else {
-            super({create: 'p', text, cls});
+            super({tag: 'p', text, cls});
         }
         if (id !== undefined) {
             this.id(id);
@@ -823,22 +834,35 @@ class Paragraph extends BetterHTMLElement {
     }
 }
 
-class Input extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLInputElement;
-    readonly e: HTMLInputElement;
+class Input extends BetterHTMLElement<HTMLInputElement> {
+    constructor({setid, cls, type, placeholder, byid, query, htmlElement, children}: InputConstructor) {
+        if (noValue([setid, cls, type, placeholder, byid, query, htmlElement, children])) {
+            throw new NotEnoughArgs([1], {setid, cls, type, placeholder, byid, query, htmlElement, children})
+        }
 
-    /**Create a new Input element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({id, cls, type, query, htmlElement}: InputConstructor & GetInputConstructor = {}) {
         if (htmlElement !== undefined) {
-            super({cls, htmlElement});
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
         } else {
-            super({create: 'input', cls});
+            super({tag: "input"})
         }
-        if (id !== undefined) {
-            this.id(id);
-        }
+
         if (type !== undefined) {
             this._htmlElement.type = type;
+        }
+        if (placeholder !== undefined) {
+            if (type) {
+                if (type === "number" && typeof placeholder !== "number") {
+                    console.warn(`placeholder type is ${typeof placeholder} but input type is number. ignoring`)
+                } else if (type !== "text") {
+                    console.warn(`placeholder type is ${typeof placeholder} but input type not number nor text. ignoring`)
+                } else {
+                    this.placeholder(placeholder);
+                }
+            }
         }
     }
 
@@ -895,7 +919,7 @@ class Span extends BetterHTMLElement {
         if (htmlElement !== undefined) {
             super({text, cls, htmlElement});
         } else {
-            super({create: 'span', text, cls});
+            super({tag: 'span', text, cls});
         }
         if (id !== undefined) {
             this.id(id);
@@ -913,7 +937,7 @@ class Img extends BetterHTMLElement {
         if (htmlElement !== undefined) {
             super({cls, htmlElement});
         } else {
-            super({create: 'img', cls});
+            super({tag: 'img', cls});
         }
         if (id !== undefined) {
             this.id(id);
@@ -947,7 +971,7 @@ class Anchor extends BetterHTMLElement {
         if (htmlElement !== undefined) {
             super({text, cls, htmlElement});
         } else {
-            super({create: 'a', text, cls});
+            super({tag: 'a', text, cls});
         }
         if (id !== undefined) {
             this.id(id);
@@ -991,71 +1015,64 @@ customElements.define('better-a', Anchor, {extends: 'a'});*/
 // customElements.define('better-svg', Svg, {extends: 'svg'});
 
 /**Create an element of `create`. Optionally, set its `text` and / or `cls`*/
-function elem({create, text, cls}: { create: QuerySelector, text?: string, cls?: string }): BetterHTMLElement;
+function elem({tag, cls, setid}: NewBHEConstructor<HTMLElement>);
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({id, text, cls, children}: { id: string, text?: string, cls?: string, children?: ChildrenObj }): BetterHTMLElement;
+function elem({byid, children}: ByIdBHEConstructor);
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({query, text, cls, children}: { query: QuerySelector, text?: string, cls?: string, children?: ChildrenObj }): BetterHTMLElement;
+function elem({query, children}: QueryBHEConstructor);
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({htmlElement, text, cls, children}: { htmlElement: HTMLElement, text?: string, cls?: string, children?: ChildrenObj }): BetterHTMLElement;
+function elem({htmlElement, children}: ByHtmlElementBHEConstructor<HTMLElement>);
 function elem(elemOptions): BetterHTMLElement {
     return new BetterHTMLElement(elemOptions);
 }
 
 /**Create an Span element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function span({id, text, cls, htmlElement}: SubElemConstructor<HTMLSpanElement> = {}): Span {
-    return new Span({id, text, cls, htmlElement});
+function span({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLSpanElement>): Span {
+    return new Span({setid, cls, text, byid, query, htmlElement, children});
 }
 
 /**Create a Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function div({id, text, cls, htmlElement}: SubElemConstructor<HTMLDivElement> = {}): Div {
-    return new Div({id, text, cls, htmlElement});
+function div({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLDivElement>): Div {
+    return new Div({setid, cls, text, byid, query, htmlElement, children});
 }
 
 /**Create a Button element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function button({id, text, cls, htmlElement}: SubElemConstructor<HTMLButtonElement> = {}): Button {
-    return new Button({id, text, cls, htmlElement});
+function button({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLButtonElement>): Button {
+    return new Button({setid, cls, text, byid, query, htmlElement, children});
 }
 
 
-/**Create an Input element. Optionally set its id, cls or type.*/
-function createInput({id, cls, type}: InputConstructor = {}): Input {
-    return new Input({id, cls, type});
-}
-
-/**Wrap an existing Input element. Optionally set its id, cls or type.*/
-function getInput(queryOrHtmlElement): Input {
-    const inputElement = getHtmlElement(queryOrHtmlElement);
-    return new Input({htmlElement: inputElement});
+function input({setid, cls, type, placeholder, byid, query, htmlElement, children}: InputConstructor): Input {
+    return new Input({setid, cls, type, placeholder, byid, query, htmlElement, children})
 }
 
 // getInput("a");
 // getInput(document.createElement("div"));
 
 /**Create an Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
-function img({id, src, cls, htmlElement}: ImgConstructor = {}): Img {
-    return new Img({id, src, cls, htmlElement});
+function img({setid, cls, src, byid, query, htmlElement, children}: ImgConstructor): Img {
+    return new Img({setid, cls, src, byid, query, htmlElement, children});
 }
 
 
 /**Create a Paragraph element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function paragraph({id, text, cls, htmlElement}: SubElemConstructor<HTMLParagraphElement> = {}): Paragraph {
-    return new Paragraph({id, text, cls, htmlElement});
+function paragraph({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLParagraphElement>): Paragraph {
+    return new Paragraph({setid, cls, text, byid, query, htmlElement, children});
 }
 
 /**Create a new Anchor element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
-function anchor({id, text, cls, href, htmlElement}: AnchorConstructor = {}): Anchor {
-    return new Anchor({id, text, cls, href, htmlElement});
+function anchor({setid, cls, text, href, byid, query, htmlElement, children}: AnchorConstructor): Anchor {
+    return new Anchor({setid, cls, text, href, byid, query, htmlElement, children});
 }
 
 // ** get EXISTING vanilla HTMLElement: by id, query or htmlElement
 function getHtmlElement<K extends (HTMLTag | string)>(query: K): HTMLElementType<K>;
 function getHtmlElement<T extends HTMLElement>(htmlElement: T): T;
-function getHtmlElement(queryOrHtmlElement) {
-    if (queryOrHtmlElement instanceof HTMLElement) {
-        return queryOrHtmlElement;
+function getHtmlElement(idOrQueryOrHtmlElement) {
+    if (idOrQueryOrHtmlElement instanceof HTMLElement) {
+        return idOrQueryOrHtmlElement;
     }
-    return document.querySelector(queryOrHtmlElement);
+    return document.querySelector(idOrQueryOrHtmlElement);
 }
 
 // ** create NEW vanilla HTMLElement: by tag
@@ -1078,7 +1095,10 @@ function newHtmlElement<K extends HTMLTag>(tag: K) {
 // getHtmlElement("div");
 // newHtmlElement("div");
 
-function wrapWithBHE<K extends HTMLTag>(tag: K, htmlElement): TagBHEMap<K> {
+// function wrapWithBHE<K extends HTMLTag, T extends HTMLElementType<K>>(tag: K, htmlElement: T)
+function wrapWithBHE<K extends HTMLTag, T extends HTMLElement>
+(tag: K, htmlElement: T): BetterHTMLElement<T> {
+
     switch (tag) {
         case 'div':
             return div({htmlElement});
@@ -1089,7 +1109,7 @@ function wrapWithBHE<K extends HTMLTag>(tag: K, htmlElement): TagBHEMap<K> {
         case 'img':
             return img({htmlElement});
         case 'input':
-            return new Input({htmlElement});
+            return input({htmlElement});
         case 'button':
             return button({htmlElement});
         case 'span':

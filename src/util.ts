@@ -21,7 +21,7 @@ function enumerate<T>(obj: T): Enumerated<T> {
     ) {
         return [] as Enumerated<T>;
     }
-    
+
     if (
         obj === null
         || typeofObj === "boolean"
@@ -50,6 +50,13 @@ function wait(ms: number): Promise<any> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function anyValue(array): boolean {
+    return array.filter(x => Boolean(x)).length > 0
+}
+
+function noValue(array): boolean {
+    return array.filter(x => Boolean(x)).length === 0
+}
 
 function isArray<T>(obj): obj is Array<T> {
     return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');

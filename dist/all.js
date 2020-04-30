@@ -36,22 +36,22 @@ class BetterHTMLElement {
         this._isSvg = false;
         this._listeners = {};
         this._cachedChildren = {};
-        const { create, id, htmlElement, text, query, children, cls } = elemOptions;
-        if ([create, id, htmlElement, query].filter(x => x !== undefined).length > 1) {
+        const { tag, id, htmlElement, text, query, children, cls } = elemOptions;
+        if ([tag, id, htmlElement, query].filter(x => x !== undefined).length > 1) {
             throw new MutuallyExclusiveArgs({
-                create,
+                tag,
                 id,
                 htmlElement,
                 query
             });
         }
-        if (create !== undefined && children !== undefined) {
+        if (tag !== undefined && children !== undefined) {
             throw new MutuallyExclusiveArgs({
-                create,
+                tag,
                 children
-            }, '"children" and "create" options are mutually exclusive, because create implies creating a new element and children implies getting an existing one.');
+            }, '"children" and "tag" options are mutually exclusive, because tag implies creating a new element and children implies getting an existing one.');
         }
-        this._htmlElement = BetterHTMLElement.buildHtmlElement({ create, id, query, htmlElement });
+        this._htmlElement = BetterHTMLElement.buildHtmlElement({ tag, id, query, htmlElement });
         if (text !== undefined) {
             this.text(text);
         }
@@ -520,7 +520,7 @@ class Div extends BetterHTMLElement {
             super({ text, cls, htmlElement });
         }
         else {
-            super({ create: 'div', text, cls });
+            super({ tag: 'div', text, cls });
         }
         if (id !== undefined) {
             this.id(id);
@@ -533,7 +533,7 @@ class Button extends BetterHTMLElement {
             super({ text, cls, htmlElement });
         }
         else {
-            super({ create: 'button', text, cls });
+            super({ tag: 'button', text, cls });
         }
         if (id !== undefined) {
             this.id(id);
@@ -546,7 +546,7 @@ class Paragraph extends BetterHTMLElement {
             super({ text, cls, htmlElement });
         }
         else {
-            super({ create: 'p', text, cls });
+            super({ tag: 'p', text, cls });
         }
         if (id !== undefined) {
             this.id(id);
@@ -559,7 +559,7 @@ class Input extends BetterHTMLElement {
             super({ cls, htmlElement });
         }
         else {
-            super({ create: 'input', cls });
+            super({ tag: 'input', cls });
         }
         if (id !== undefined) {
             this.id(id);
@@ -605,7 +605,7 @@ class Span extends BetterHTMLElement {
             super({ text, cls, htmlElement });
         }
         else {
-            super({ create: 'span', text, cls });
+            super({ tag: 'span', text, cls });
         }
         if (id !== undefined) {
             this.id(id);
@@ -618,7 +618,7 @@ class Img extends BetterHTMLElement {
             super({ cls, htmlElement });
         }
         else {
-            super({ create: 'img', cls });
+            super({ tag: 'img', cls });
         }
         if (id !== undefined) {
             this.id(id);
@@ -643,7 +643,7 @@ class Anchor extends BetterHTMLElement {
             super({ text, cls, htmlElement });
         }
         else {
-            super({ create: 'a', text, cls });
+            super({ tag: 'a', text, cls });
         }
         if (id !== undefined) {
             this.id(id);
@@ -684,8 +684,8 @@ function button({ id, text, cls, htmlElement } = {}) {
 function createInput({ id, cls, type } = {}) {
     return new Input({ id, cls, type });
 }
-function getInput(queryOrHtmlElement) {
-    const inputElement = getHtmlElement(queryOrHtmlElement);
+function getInput(idOrQueryOrHtmlElement) {
+    const inputElement = getHtmlElement(idOrQueryOrHtmlElement);
     return new Input({ htmlElement: inputElement });
 }
 function img({ id, src, cls, htmlElement } = {}) {
@@ -697,11 +697,11 @@ function paragraph({ id, text, cls, htmlElement } = {}) {
 function anchor({ id, text, cls, href, htmlElement } = {}) {
     return new Anchor({ id, text, cls, href, htmlElement });
 }
-function getHtmlElement(queryOrHtmlElement) {
-    if (queryOrHtmlElement instanceof HTMLElement) {
-        return queryOrHtmlElement;
+function getHtmlElement(idOrQueryOrHtmlElement) {
+    if (idOrQueryOrHtmlElement instanceof HTMLElement) {
+        return idOrQueryOrHtmlElement;
     }
-    return document.querySelector(queryOrHtmlElement);
+    return document.querySelector(idOrQueryOrHtmlElement);
 }
 function newHtmlElement(tag) {
     if (tag === undefined) {

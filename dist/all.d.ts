@@ -12,8 +12,8 @@ declare class BetterHTMLElement {
     private readonly _isSvg;
     private readonly _listeners;
     private _cachedChildren;
-    constructor({ create, text, cls }: {
-        create: QuerySelector;
+    constructor({ tag, text, cls }: {
+        tag: QuerySelector;
         text?: string;
         cls?: string;
     });
@@ -154,8 +154,8 @@ declare class Anchor extends BetterHTMLElement {
     target(): string;
     target(val: string): this;
 }
-declare function elem({ create, text, cls }: {
-    create: QuerySelector;
+declare function elem({ tag, text, cls }: {
+    tag: QuerySelector;
     text?: string;
     cls?: string;
 }): BetterHTMLElement;
@@ -181,7 +181,7 @@ declare function span({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLSp
 declare function div({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLDivElement>): Div;
 declare function button({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLButtonElement>): Button;
 declare function createInput({ id, cls, type }?: InputConstructor): Input;
-declare function getInput(queryOrHtmlElement: any): Input;
+declare function getInput(idOrQueryOrHtmlElement: any): Input;
 declare function img({ id, src, cls, htmlElement }?: ImgConstructor): Img;
 declare function paragraph({ id, text, cls, htmlElement }?: SubElemConstructor<HTMLParagraphElement>): Paragraph;
 declare function anchor({ id, text, cls, href, htmlElement }?: AnchorConstructor): Anchor;
