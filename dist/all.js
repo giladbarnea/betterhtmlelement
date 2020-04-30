@@ -749,7 +749,7 @@ function newHtmlElement(tag) {
         }
     }
 }
-wrapHtmlElement({ htmlElement: document.createElement("div") });
+wrapHtmlElement({ query: "a" });
 function bheFactory(create, htmlElement) {
     switch (create) {
         case 'div':

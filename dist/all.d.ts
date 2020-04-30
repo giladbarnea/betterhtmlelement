@@ -194,7 +194,7 @@ declare function paragraph({ id, text, cls, htmlElement }?: SubElemConstructor<H
 declare function anchor({ id, text, cls, href, htmlElement }?: AnchorConstructor): Anchor;
 declare function wrapHtmlElement<K extends HTMLTag | string>(opts: {
     query: K;
-}): K extends HTMLTag ? HTMLElementTagNameMap[K] : any;
+}): HTMLElementType<K>;
 declare function wrapHtmlElement<K extends HTMLTag, T = HTMLElementTagNameMap[K]>(opts: {
     htmlElement: T;
 }): T;
@@ -301,6 +301,7 @@ declare type TEventFunctionMap<K extends TEvent> = {
     [P in K]?: (event: HTMLElementEventMap[P]) => void;
 };
 declare type HTMLTag = keyof HTMLElementTagNameMap;
+declare type HTMLElementType<K> = K extends HTMLTag ? HTMLElementTagNameMap[K] : any;
 declare type QuerySelector<K = HTMLTag> = K extends HTMLTag ? K : string;
 declare function foo<K extends HTMLTag>(tag: K): HTMLElementTagNameMap[K];
 declare function bar<K extends HTMLTag | string>(query: QuerySelector<K>): K extends HTMLTag ? HTMLElementTagNameMap[K] : any;

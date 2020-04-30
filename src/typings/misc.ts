@@ -25,7 +25,7 @@ type TEventFunctionMap<K extends TEvent> = {
  */
 type HTMLTag = keyof HTMLElementTagNameMap;
 
-
+type HTMLElementType<K> = K extends HTMLTag ? HTMLElementTagNameMap[K] : any;
 /**
  * "a", "div", "gilad"
  * @example
