@@ -86,7 +86,7 @@ function isEmptyObj(obj): boolean {
     return isObject(obj) && Object.keys(obj).length === 0
 }
 
-function isHTMLElement<K extends BHETag>(tag: K, element: BHETag2HTMLElement<K>): element is BHETag2HTMLElement<K> {
+/*function isHTMLElement<K extends BHETag>(tag: K, element: BHETag2HTMLElement<K>): element is BHETag2HTMLElement<K> {
     switch (tag) {
         case 'div':
             return element instanceof HTMLDivElement;
@@ -106,7 +106,7 @@ function isHTMLElement<K extends BHETag>(tag: K, element: BHETag2HTMLElement<K>)
             return element instanceof HTMLElement;
     }
 
-}
+}*/
 
 function isFunction(fn: AnyFunction): fn is AnyFunction {
     return fn && {}.toString.call(fn) === '[object Function]'

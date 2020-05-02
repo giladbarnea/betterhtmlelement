@@ -18,25 +18,18 @@ type TEventFunctionMap<K extends TEvent> = {
     [P in K]?: (event: HTMLElementEventMap[P]) => void;
 };
 
-type A<K extends keyof HTMLElementTagNameMap> = {
+// HTMLTag2HTMLElement<"a"> → HTMLAnchorElement
+type HTMLTag2HTMLElement<K extends keyof HTMLElementTagNameMap> = {
     [P in K]: HTMLElementTagNameMap[P]
 }[K]
 
-type B = {
+// HTMLTag2HTMLElement2["a"] → HTMLAnchorElement
+type HTMLTag2HTMLElement2 = {
     [P in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[P]
 }
 
-const a: A<"a"> = undefined;
-
-function c(d: HTMLAnchorElement) {
-
-}
-
-function b<K extends TEvent>(d: TEventFunctionMap<K>) {
-
-}
-
-c(a);
+const a: HTMLTag2HTMLElement<"a"> = undefined;
+const b: HTMLTag2HTMLElement2["a"] = undefined;
 
 
 /**
@@ -84,17 +77,41 @@ interface BHETag2BHEMap {
     "span": Span,
 }
 
-type BHETag = keyof BHETag2BHEMap;
-type BHE = { [K in keyof BHETag2BHEMap]: BHETag2BHEMap[K] }
+interface IHTMLElement2Tag {
+    HTMLDivElement: "div",
+    HTMLAnchorElement: "a",
+    HTMLParagraphElement: "p",
+    HTMLImageElement: "img",
+    HTMLInputElement: "input",
+    HTMLButtonElement: "button",
+    HTMLSpanElement: "span"
+}
 
-type Tag2BHE<K extends BHETag> =
-    K extends "div" ? Div :
-        K extends "a" ? Anchor :
-            K extends "p" ? Paragraph :
-                K extends "img" ? Img :
-                    K extends "input" ? Input :
-                        K extends "button" ? Button :
-                            K extends "span" ? Span : BetterHTMLElement
+
+type HTMLElement2Tag<T> =
+    T extends HTMLInputElement ? "input"
+        : T extends HTMLDivElement ? "div"
+        : T extends HTMLAnchorElement ? "a"
+            : T extends HTMLParagraphElement ? "p"
+                : T extends HTMLImageElement ? "img"
+                    : T extends HTMLButtonElement ? "button"
+                        : T extends HTMLSpanElement ? "span"
+                            : never
+
+type MapValues<T> = { [K in keyof T]: T[K] }[keyof T];
+
+type HTMLElements = MapValues<HTMLElementTagNameMap>;
+type Filter<T> = T extends HTMLElements ? T : never;
+
+type GenericFilter<T, U> = T extends U ? T : never;
+// const what: HTMLElement2Tag<HTMLDivElement> = undefined;
+// const what: Filter<HTMLInputElement, HTMLElements> = undefined;
+// const what: Filter<HTMLInputElement> = undefined;
+// const what: HTMLElement2Tag<HTMLAnchorElement> = undefined;
+type BHETag = keyof BHETag2BHEMap;
+
+// BHE["a"] → Anchor
+type BHE = { [K in keyof BHETag2BHEMap]: BHETag2BHEMap[K] }
 
 
 // type ChildrenObj = TMap<HTMLElementType> | TRecMap<HTMLElementType>

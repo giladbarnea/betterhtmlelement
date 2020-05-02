@@ -146,7 +146,6 @@ declare function noValue(obj: any): boolean;
 declare function isArray<T>(obj: any): obj is Array<T>;
 declare function isEmptyArr(collection: any): boolean;
 declare function isEmptyObj(obj: any): boolean;
-declare function isHTMLElement<K extends BHETag>(tag: K, element: BHETag2HTMLElement<K>): element is BHETag2HTMLElement<K>;
 declare function isFunction(fn: AnyFunction): fn is AnyFunction;
 declare function isObject(obj: any): boolean;
 declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
@@ -235,7 +234,7 @@ interface ImgConstructor extends BHEConstructor<HTMLImageElement> {
     src?: string;
 }
 interface InputConstructor extends BHEConstructor<HTMLInputElement> {
-    type?: "checkbox" | "number" | "radio" | "text";
+    type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local";
     placeholder?: string;
 }
 interface AnchorConstructor extends SubElemConstructor<HTMLAnchorElement> {
@@ -254,25 +253,50 @@ declare type TEvent = keyof HTMLElementEventMap;
 declare type TEventFunctionMap<K extends TEvent> = {
     [P in K]?: (event: HTMLElementEventMap[P]) => void;
 };
-declare type A<K extends keyof HTMLElementTagNameMap> = {
+declare type HTMLTag2HTMLElement<K extends keyof HTMLElementTagNameMap> = {
     [P in K]: HTMLElementTagNameMap[P];
 }[K];
-declare type B = {
+declare type HTMLTag2HTMLElement2 = {
     [P in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[P];
 };
-declare const a: A<"a">;
-declare function c(d: HTMLAnchorElement): void;
+declare const a: HTMLTag2HTMLElement<"a">;
+declare const b: HTMLTag2HTMLElement2["a"];
 declare type HTMLTag = Exclude<keyof HTMLElementTagNameMap, "object">;
 declare type HTMLElementType<K extends HTMLTag = HTMLTag> = K extends HTMLTag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[keyof HTMLElementTagNameMap];
 declare type QuerySelector<K extends HTMLTag | string = HTMLTag | string> = K extends HTMLTag ? K : string;
 declare const foo: <K extends "track" | "progress" | "a" | "abbr" | "address" | "applet" | "area" | "article" | "aside" | "audio" | "b" | "base" | "basefont" | "bdi" | "bdo" | "blockquote" | "body" | "br" | "button" | "canvas" | "caption" | "cite" | "code" | "col" | "colgroup" | "data" | "datalist" | "dd" | "del" | "details" | "dfn" | "dialog" | "dir" | "div" | "dl" | "dt" | "em" | "embed" | "fieldset" | "figcaption" | "figure" | "font" | "footer" | "form" | "frame" | "frameset" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "head" | "header" | "hgroup" | "hr" | "html" | "i" | "iframe" | "img" | "input" | "ins" | "kbd" | "label" | "legend" | "li" | "link" | "main" | "map" | "mark" | "marquee" | "menu" | "meta" | "meter" | "nav" | "noscript" | "ol" | "optgroup" | "option" | "output" | "p" | "param" | "picture" | "pre" | "q" | "rp" | "rt" | "ruby" | "s" | "samp" | "script" | "section" | "select" | "slot" | "small" | "source" | "span" | "strong" | "style" | "sub" | "summary" | "sup" | "table" | "tbody" | "td" | "template" | "textarea" | "tfoot" | "th" | "thead" | "time" | "title" | "tr" | "u" | "ul" | "var" | "video" | "wbr">(tag: K) => HTMLElementTagNameMap[K];
 declare const baz: <K extends string>(query: K) => Element;
 declare const bar: <K extends string>(query: QuerySelector<K>) => Element;
-declare type BHETag = "div" | "a" | "p" | "img" | "input" | "button" | "span";
-declare type BHETag2HTMLElement<K extends BHETag> = K extends "div" ? Div : K extends "a" ? HTMLAnchorElement : K extends "p" ? HTMLParagraphElement : K extends "img" ? HTMLImageElement : K extends "input" ? HTMLInputElement : K extends "button" ? HTMLButtonElement : K extends "span" ? HTMLSpanElement : never;
-declare type Tag2BHE<K extends BHETag> = K extends "div" ? Div : K extends "a" ? Anchor : K extends "p" ? Paragraph : K extends "img" ? Img : K extends "input" ? Input : K extends "button" ? Button : K extends "span" ? Span : BetterHTMLElement;
-declare type HTMLElement2Tag<T extends HTMLElement> = T extends HTMLInputElement ? "input" : T extends HTMLAnchorElement ? "a" : T extends HTMLDivElement ? "div" : T extends HTMLImageElement ? "img" : T extends HTMLParagraphElement ? "p" : T extends HTMLButtonElement ? "button" : T extends HTMLSpanElement ? "span" : never;
-declare type ChildrenObj = TMap<QuerySelector<HTMLTag | string>> | TRecMap<QuerySelector<HTMLTag | string>>;
+interface BHETag2BHEMap {
+    "div": Div;
+    "a": Anchor;
+    "p": Paragraph;
+    "img": Img;
+    "input": Input;
+    "button": Button;
+    "span": Span;
+}
+interface IHTMLElement2Tag {
+    HTMLDivElement: "div";
+    HTMLAnchorElement: "a";
+    HTMLParagraphElement: "p";
+    HTMLImageElement: "img";
+    HTMLInputElement: "input";
+    HTMLButtonElement: "button";
+    HTMLSpanElement: "span";
+}
+declare type HTMLElement2Tag<T> = T extends HTMLInputElement ? "input" : T extends HTMLDivElement ? "div" : T extends HTMLAnchorElement ? "a" : T extends HTMLParagraphElement ? "p" : T extends HTMLImageElement ? "img" : T extends HTMLButtonElement ? "button" : T extends HTMLSpanElement ? "span" : never;
+declare type MapValues<T> = {
+    [K in keyof T]: T[K];
+}[keyof T];
+declare type HTMLElements = MapValues<HTMLElementTagNameMap>;
+declare type Filter<T> = T extends HTMLElements ? T : never;
+declare type GenericFilter<T, U> = T extends U ? T : never;
+declare type BHETag = keyof BHETag2BHEMap;
+declare type BHE = {
+    [K in keyof BHETag2BHEMap]: BHETag2BHEMap[K];
+};
+declare type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
 declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
 declare type TReturnBoolean = (s: string) => boolean;
 declare type AnyFunction = (...args: any[]) => any;

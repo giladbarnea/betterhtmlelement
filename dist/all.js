@@ -924,26 +924,6 @@ function isEmptyArr(collection) {
 function isEmptyObj(obj) {
     return isObject(obj) && Object.keys(obj).length === 0;
 }
-function isHTMLElement(tag, element) {
-    switch (tag) {
-        case 'div':
-            return element instanceof HTMLDivElement;
-        case 'a':
-            return element instanceof HTMLAnchorElement;
-        case 'p':
-            return element instanceof HTMLParagraphElement;
-        case 'img':
-            return element instanceof HTMLImageElement;
-        case 'input':
-            return element instanceof HTMLInputElement;
-        case 'button':
-            return element instanceof HTMLButtonElement;
-        case 'span':
-            return element instanceof HTMLSpanElement;
-        default:
-            return element instanceof HTMLElement;
-    }
-}
 function isFunction(fn) {
     return fn && {}.toString.call(fn) === '[object Function]';
 }
@@ -959,9 +939,7 @@ function getLength(collection) {
     return shallowProperty('length')(collection);
 }
 const a = undefined;
-function c(d) {
-}
-c(a);
+const b = undefined;
 const foo = (tag) => document.createElement(tag);
 const baz = (query) => document.querySelector(query);
 const bar = (query) => document.querySelector(query);

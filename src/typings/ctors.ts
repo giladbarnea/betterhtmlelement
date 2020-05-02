@@ -41,7 +41,7 @@ interface ImgConstructor extends BHEConstructor<HTMLImageElement> {
 }
 
 interface InputConstructor extends BHEConstructor<HTMLInputElement> {
-    type?: "checkbox" | "number" | "radio" | "text";
+    type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local";
     placeholder?: string;
 }
 
