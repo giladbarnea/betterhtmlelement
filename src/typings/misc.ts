@@ -13,6 +13,7 @@ interface TRecMap<T> {
 
 
 type TEvent = keyof HTMLElementEventMap;
+// for each event ("click"), create a `(event: MouseEvent) => void` function.
 type TEventFunctionMap<K extends TEvent> = {
     [P in K]?: (event: HTMLElementEventMap[P]) => void;
 };
@@ -31,7 +32,12 @@ function c(d: HTMLAnchorElement) {
 
 }
 
+function b<K extends TEvent>(d: TEventFunctionMap<K>) {
+
+}
+
 c(a);
+
 
 /**
  * "a", "div"
@@ -67,21 +73,20 @@ const foo = <K extends HTMLTag>(tag: K) => document.createElement(tag);
 const baz = <K extends HTMLTag | string>(query: K) => document.querySelector(query);
 
 const bar = <K extends HTMLTag | string>(query: QuerySelector<K>) => document.querySelector(query);
-type BHETag =
-    "div" |
-    "a" |
-    "p" |
-    "img" |
-    "input" |
-    "button" |
-    "span"
-type BHETag2HTMLElement<K extends BHETag> = K extends "div" ? Div :
-    K extends "a" ? HTMLAnchorElement :
-        K extends "p" ? HTMLParagraphElement :
-            K extends "img" ? HTMLImageElement :
-                K extends "input" ? HTMLInputElement :
-                    K extends "button" ? HTMLButtonElement :
-                        K extends "span" ? HTMLSpanElement : never
+
+interface BHETag2BHEMap {
+    "div": Div,
+    "a": Anchor,
+    "p": Paragraph,
+    "img": Img,
+    "input": Input,
+    "button": Button,
+    "span": Span,
+}
+
+type BHETag = keyof BHETag2BHEMap;
+type BHE = { [K in keyof BHETag2BHEMap]: BHETag2BHEMap[K] }
+
 type Tag2BHE<K extends BHETag> =
     K extends "div" ? Div :
         K extends "a" ? Anchor :
@@ -91,15 +96,6 @@ type Tag2BHE<K extends BHETag> =
                         K extends "button" ? Button :
                             K extends "span" ? Span : BetterHTMLElement
 
-type HTMLElement2Tag<T extends HTMLElement> =
-    T extends HTMLInputElement ? "input"
-        : T extends HTMLAnchorElement ? "a"
-        : T extends HTMLDivElement ? "div"
-            : T extends HTMLImageElement ? "img"
-                : T extends HTMLParagraphElement ? "p"
-                    : T extends HTMLButtonElement ? "button"
-                        : T extends HTMLSpanElement ? "span"
-                            : never;
 
 // type ChildrenObj = TMap<HTMLElementType> | TRecMap<HTMLElementType>
 type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
