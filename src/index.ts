@@ -1157,15 +1157,13 @@ function newHtmlElement<K extends Tag>(tag: K) {
 
 const query_input = elem({query: 'input'});
 const tag_input = elem({tag: 'input'});
+const aa: Tag2Element<'input'> = undefined;
 
+const bb: BetterHTMLElement<Tag2Element<"input">> = undefined;
 
-const askjhf: Tag2Element<'input'> = undefined;
+const cc: BetterHTMLElement<HTMLInputElement> = undefined;
 
-const shdjgjkhdskj: BetterHTMLElement<Tag2Element<"input">> = undefined;
-
-const ashdjgjkhdskj: BetterHTMLElement<HTMLInputElement> = undefined;
-
-const ashdjgjkhdsskj: Input = undefined;
+const dd: Input = undefined;
 
 
 function wrapWithBHE<K extends Tag, T extends Tag2Element<K>>(tag: K, htmlElement: T): BetterHTMLElement<T> {
