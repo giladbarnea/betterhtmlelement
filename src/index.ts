@@ -1,4 +1,4 @@
-import {anyValue, enumerate, isBHE, isFunction, isHTMLElement, isHTMLInputElement, isObject, noValue} from "./util";
+import {anyValue, enumerate, isBHE, isFunction, isHTMLElement, isHTMLInputElement, isObject, isType, noValue} from "./util";
 import {BHEHTMLElement, BHETag, ChildrenObj, Element2Tag, NotTag, QuerySelector, Tag, Tag2BHE, Tag2Element, TEvent, TEventFunctionMap, TMap, TRecMap, TReturnBoolean, TTag2BHE} from "./typings/misc";
 import {AnchorConstructor, DivConstructor, ImgConstructor, SubElemConstructor} from "./typings/ctors";
 
@@ -1231,31 +1231,33 @@ const dd: Input = undefined;
 // export function wrapWithBHE(tag: "p", htmlElement: HTMLParagraphElement): Paragraph;
 // export function wrapWithBHE(tag: "span", htmlElement: HTMLSpanElement): Span;
 // export function wrapWithBHE(tag: "a", htmlElement: HTMLAnchorElement): Anchor;
-export function wrapWithBHE<K extends string>(tag: K, element):
-    K extends "div" ? Div
-        : K extends "a" ? Anchor
-        : K extends "button" ? Button
-            : K extends "input" ? Input
-                : K extends "span" ? Span
-                    : unknown {
+export function wrapWithBHE<K extends "div">(tag: K, element):
+    Tag2BHE[K] {
 
 // function wrapWithBHE<K extends BHETag>(tag: K, htmlElement: BHETag2HTMLElement<K>): Tag2BHE<K> {
 // function wrapWithBHE<K extends BHETag, T extends Tag2Element<K>>(tag: K, htmlElement: T): BetterHTMLElement<T> {
 
-    if (tag === 'div') {
-        return div({htmlElement: element}) as Div;
-    } else if (tag === 'a') {
-        return anchor({htmlElement: element});
-    } else if (tag === 'p') {
-        return paragraph({htmlElement: element});
-    } else if (tag === 'img') {
-        return img({htmlElement: element});
-    } else if (tag === 'input') {
-        return input({htmlElement: element});
-    } else if (tag === 'button') {
-        return button({htmlElement: element});
-    } else if (tag === 'span') {
-        return span({htmlElement: element});
+    if (isType<string>(tag)) {
+        if (isType<"div">(tag)) {
+            if (tag === "div") {
+                const d = div({htmlElement: element});
+                return d as Div;
+            }
+        }
+    }
+    if (tag as "div" === 'div') {
+        // } else if (tag === 'a') {
+        //     return anchor({htmlElement: element});
+        // } else if (tag === 'p') {
+        //     return paragraph({htmlElement: element});
+        // } else if (tag === 'img') {
+        //     return img({htmlElement: element});
+        // } else if (tag === 'input') {
+        //     return input({htmlElement: element});
+        // } else if (tag === 'button') {
+        //     return button({htmlElement: element});
+        // } else if (tag === 'span') {
+        //     return span({htmlElement: element});
     } else {
         return elem({htmlElement: element});
     }

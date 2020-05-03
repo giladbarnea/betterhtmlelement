@@ -122,6 +122,10 @@ export function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType): bhe is T
     return (bhe instanceof bheSubType)
 }
 
+export function isType<T>(arg: T): arg is T {
+    return true
+}
+
 export function isFunction(fn: AnyFunction): fn is AnyFunction {
     return fn && {}.toString.call(fn) === '[object Function]'
 }
