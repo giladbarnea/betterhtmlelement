@@ -1,3 +1,5 @@
+import {anyValue, noValue, enumerate, isFunction, isObject} from "./util";
+
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
 
@@ -1074,14 +1076,14 @@ customElements.define('better-a', Anchor, {extends: 'a'});*/
 // customElements.define('better-svg', Svg, {extends: 'svg'});
 
 /**Create an element of `create`. Optionally, set its `text` and / or `cls`*/
-function elem<T extends Tag>({tag, cls, setid}: { tag: T, cls?: string, setid?: string }): BetterHTMLElement<Tag2Element<T>>;
+export function elem<T extends Tag>({tag, cls, setid}: { tag: T, cls?: string, setid?: string }): BetterHTMLElement<Tag2Element<T>>;
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({byid, children}: { byid: string, children?: ChildrenObj }): BetterHTMLElement;
+export function elem({byid, children}: { byid: string, children?: ChildrenObj }): BetterHTMLElement;
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem<Q extends QuerySelector>({query, children}: { query: Q, children?: ChildrenObj }): Q extends Tag ? BetterHTMLElement<Tag2Element<Q>> : BetterHTMLElement;
+export function elem<Q extends QuerySelector>({query, children}: { query: Q, children?: ChildrenObj }): Q extends Tag ? BetterHTMLElement<Tag2Element<Q>> : BetterHTMLElement;
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-function elem<E extends HTMLElement>({htmlElement, children}: { htmlElement: E; children?: ChildrenObj }): BetterHTMLElement<E>;
-function elem(elemOptions) {
+export function elem<E extends HTMLElement>({htmlElement, children}: { htmlElement: E; children?: ChildrenObj }): BetterHTMLElement<E>;
+export function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
 

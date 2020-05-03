@@ -1,4 +1,4 @@
-function enumerate<T>(obj: T): Enumerated<T> {
+export function enumerate<T>(obj: T): Enumerated<T> {
     // undefined    []
     // {}           []
     // []           []
@@ -50,7 +50,7 @@ function wait(ms: number): Promise<any> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function anyValue(obj): boolean {
+export function anyValue(obj): boolean {
     let array;
     if (isObject(obj)) {
         array = Object.values(obj)
@@ -62,7 +62,7 @@ function anyValue(obj): boolean {
     return array.filter(x => Boolean(x)).length > 0
 }
 
-function noValue(obj): boolean {
+export function noValue(obj): boolean {
     let array;
     if (isObject(obj)) {
         array = Object.values(obj)
@@ -108,13 +108,13 @@ function isEmptyObj(obj): boolean {
 
 }*/
 
-function isFunction(fn: AnyFunction): fn is AnyFunction {
+export function isFunction(fn: AnyFunction): fn is AnyFunction {
     return fn && {}.toString.call(fn) === '[object Function]'
 }
 
 
 // *  underscore.js
-function isObject(obj): boolean {
+export function isObject(obj): boolean {
     return typeof obj === 'object' && !!obj;
 }
 

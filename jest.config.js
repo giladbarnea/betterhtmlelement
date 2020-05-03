@@ -2,7 +2,7 @@ module.exports = {
     "//": "https://jestjs.io/docs/en/configuration",
     "verbose": true,
     "preset": "ts-jest",
-    "testEnvironment": "node",
+    "testEnvironment": "jsdom",
     "maxConcurrency": 500,
     "globals": {
         "ts-jest": {

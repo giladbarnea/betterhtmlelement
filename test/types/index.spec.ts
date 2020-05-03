@@ -1,4 +1,5 @@
-//
+import {elem} from "../../src/index";
+
 describe('wow', () => {
     test("foo", () => {
         const actual = elem({htmlElement: document.createElement("div")});
