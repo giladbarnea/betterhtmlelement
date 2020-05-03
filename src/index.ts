@@ -853,14 +853,14 @@ export class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
     }
 }
 
-export class Input extends BetterHTMLElement<HTMLInputElement> {
-    constructor({tag, cls, setid, type, placeholder}: {
-        tag: string, cls?: string, setid?: string,
+export class Input<Q extends QuerySelector = QuerySelector> extends BetterHTMLElement<HTMLInputElement> {
+    constructor({cls, setid, type, placeholder}: {
+        cls?: string, setid?: string,
         type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
         placeholder?: string
     });
     constructor({byid, children}: { byid: string, children?: ChildrenObj });
-    constructor({query, children}: { query: string, children?: ChildrenObj });
+    constructor({query, children}: { query: Q extends QuerySelector<NotInput> ? never : Q, children?: ChildrenObj });
     constructor({htmlElement, children}: { htmlElement: HTMLInputElement; children?: ChildrenObj });
     constructor(inputOpts) {
         const {setid, cls, type, placeholder, byid, query, htmlElement, children} = inputOpts;
@@ -1123,32 +1123,27 @@ type NotInput = Exclude<Tag, "input">;
 type InputTagOrString<T> = T extends NotInput ? never : T;
 
 
-export function input<T extends string>({tag, cls, setid, type, placeholder}: {
-    tag: InputTagOrString<T>, cls?: string, setid?: string,
+export function input({cls, setid, type, placeholder}: {
+    cls?: string, setid?: string,
     type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
     placeholder?: string
 }): Input;
 
 export function input({byid, children}: { byid: string, children?: ChildrenObj }): Input;
 
-export function input<Q extends QuerySelector>({query, children}: { query: Q, children?: ChildrenObj }): Input;
+export function input<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotInput> ? never : Q,
+    children?: ChildrenObj
+}): Input;
 
-export function input<E extends HTMLInputElement>({htmlElement, children}: { htmlElement: E; children?: ChildrenObj }): Input;
+export function input<E extends HTMLInputElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Input;
 export function input(inputOpts): Input {
     return new Input(inputOpts)
 }
 
-const quygjasf: NotInput = "input";
-const quygjasf0: NotInput = "shlomo";
-const quygjasf1: NotInput = "div";
-const quygjasf2: InputTagOrString = "div";
-const quygjasf3: InputTagOrString = "shlomo";
-
-input({tag: 'div'});
-input({tag: 'input'});
-input({tag: 'shlomo'});
-// getInput("a");
-// getInput(document.createElement("div"));
 
 /**Create an Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
 function img({setid, cls, src, byid, query, htmlElement, children}: ImgConstructor = {}): Img {

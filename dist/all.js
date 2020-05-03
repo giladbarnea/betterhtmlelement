@@ -944,14 +944,6 @@ define("index", ["require", "exports", "util"], function (require, exports, util
         return new Input(inputOpts);
     }
     exports.input = input;
-    const quygjasf = "input";
-    const quygjasf0 = "shlomo";
-    const quygjasf1 = "div";
-    const quygjasf2 = "div";
-    const quygjasf3 = "shlomo";
-    input({ tag: 'div' });
-    input({ tag: 'input' });
-    input({ tag: 'shlomo' });
     function img({ setid, cls, src, byid, query, htmlElement, children } = {}) {
         return new Img({ setid, cls, src, byid, query, htmlElement, children });
     }
