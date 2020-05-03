@@ -1,4 +1,5 @@
 import {AnyFunction, Enumerated} from "./typings/misc";
+import {BetterHTMLElement} from "./index";
 
 export function enumerate<T>(obj: T): Enumerated<T> {
     // undefined    []
@@ -109,6 +110,17 @@ function isEmptyObj(obj): boolean {
     }
 
 }*/
+export function isHTMLInputElement(el: HTMLInputElement): el is HTMLInputElement {
+    return (el instanceof HTMLInputElement)
+}
+
+export function isHTMLButtonElement(el: HTMLButtonElement): el is HTMLButtonElement {
+    return (el instanceof HTMLButtonElement)
+}
+
+export function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType): bhe is T {
+    return (bhe instanceof bheSubType)
+}
 
 export function isFunction(fn: AnyFunction): fn is AnyFunction {
     return fn && {}.toString.call(fn) === '[object Function]'

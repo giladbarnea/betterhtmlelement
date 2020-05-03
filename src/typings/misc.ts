@@ -80,7 +80,16 @@ export interface Tag2BHE {
     "span": Span,
 }
 
+
 export type BHETag = keyof Tag2BHE;
+export type BHEHTMLElement =
+    HTMLDivElement |
+    HTMLAnchorElement |
+    HTMLParagraphElement |
+    HTMLImageElement |
+    HTMLInputElement |
+    HTMLButtonElement |
+    HTMLSpanElement;
 
 interface IElement2Tag {
     HTMLDivElement: "div",
