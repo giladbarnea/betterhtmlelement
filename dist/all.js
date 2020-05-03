@@ -735,7 +735,8 @@ define("index", ["require", "exports", "util"], function (require, exports, util
     }
     exports.Paragraph = Paragraph;
     class Input extends BetterHTMLElement {
-        constructor({ setid, cls, type, placeholder, byid, query, htmlElement, children }) {
+        constructor(inputOpts) {
+            const { setid, cls, type, placeholder, byid, query, htmlElement, children } = inputOpts;
             if (util_1.noValue(arguments[0])) {
                 throw new NotEnoughArgs([1], arguments[0]);
             }
@@ -939,9 +940,18 @@ define("index", ["require", "exports", "util"], function (require, exports, util
     function button({ setid, cls, text, byid, query, htmlElement, children } = {}) {
         return new Button({ setid, cls, text, byid, query, htmlElement, children });
     }
-    function input({ setid, cls, type, placeholder, byid, query, htmlElement, children } = {}) {
-        return new Input({ setid, cls, type, placeholder, byid, query, htmlElement, children });
+    function input(inputOpts) {
+        return new Input(inputOpts);
     }
+    exports.input = input;
+    const quygjasf = "input";
+    const quygjasf0 = "shlomo";
+    const quygjasf1 = "div";
+    const quygjasf2 = "div";
+    const quygjasf3 = "shlomo";
+    input({ tag: 'div' });
+    input({ tag: 'input' });
+    input({ tag: 'shlomo' });
     function img({ setid, cls, src, byid, query, htmlElement, children } = {}) {
         return new Img({ setid, cls, src, byid, query, htmlElement, children });
     }

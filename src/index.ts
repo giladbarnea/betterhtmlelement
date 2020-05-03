@@ -854,7 +854,16 @@ export class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
 }
 
 export class Input extends BetterHTMLElement<HTMLInputElement> {
-    constructor({setid, cls, type, placeholder, byid, query, htmlElement, children}: InputConstructor) {
+    constructor({tag, cls, setid, type, placeholder}: {
+        tag: string, cls?: string, setid?: string,
+        type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
+        placeholder?: string
+    });
+    constructor({byid, children}: { byid: string, children?: ChildrenObj });
+    constructor({query, children}: { query: string, children?: ChildrenObj });
+    constructor({htmlElement, children}: { htmlElement: HTMLInputElement; children?: ChildrenObj });
+    constructor(inputOpts) {
+        const {setid, cls, type, placeholder, byid, query, htmlElement, children} = inputOpts;
         if (noValue(arguments[0])) {
             throw new NotEnoughArgs([1], arguments[0])
         }
@@ -1085,10 +1094,7 @@ export function elem({byid, children}: { byid: string, children?: ChildrenObj })
     BetterHTMLElement;
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
 export function elem<Q extends QuerySelector>({query, children}: { query: Q, children?: ChildrenObj }):
-// Q extends BHETag ? Tag2BHE[Q] : Q extends Tag ? BetterHTMLElement<HTMLElementTagNameMap[Q]> : BetterHTMLElement;
     Q extends Tag ? BetterHTMLElement<HTMLElementTagNameMap[Q]> : BetterHTMLElement;
-
-
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
 export function elem<E extends HTMLElement>({htmlElement, children}: { htmlElement: E; children?: ChildrenObj }):
     BetterHTMLElement<E>;
@@ -1112,11 +1118,35 @@ function button({setid, cls, text, byid, query, htmlElement, children}: SubElemC
     return new Button({setid, cls, text, byid, query, htmlElement, children});
 }
 
+type NotInput = Exclude<Tag, "input">;
 
-function input({setid, cls, type, placeholder, byid, query, htmlElement, children}: InputConstructor = {}): Input {
-    return new Input({setid, cls, type, placeholder, byid, query, htmlElement, children})
+type InputTagOrString<T> = T extends NotInput ? never : T;
+
+
+export function input<T extends string>({tag, cls, setid, type, placeholder}: {
+    tag: InputTagOrString<T>, cls?: string, setid?: string,
+    type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
+    placeholder?: string
+}): Input;
+
+export function input({byid, children}: { byid: string, children?: ChildrenObj }): Input;
+
+export function input<Q extends QuerySelector>({query, children}: { query: Q, children?: ChildrenObj }): Input;
+
+export function input<E extends HTMLInputElement>({htmlElement, children}: { htmlElement: E; children?: ChildrenObj }): Input;
+export function input(inputOpts): Input {
+    return new Input(inputOpts)
 }
 
+const quygjasf: NotInput = "input";
+const quygjasf0: NotInput = "shlomo";
+const quygjasf1: NotInput = "div";
+const quygjasf2: InputTagOrString = "div";
+const quygjasf3: InputTagOrString = "shlomo";
+
+input({tag: 'div'});
+input({tag: 'input'});
+input({tag: 'shlomo'});
 // getInput("a");
 // getInput(document.createElement("div"));
 
