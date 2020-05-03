@@ -1,4 +1,5 @@
 import {Anchor, BetterHTMLElement, Button, Div, Paragraph, wrapWithBHE} from "../../src/index";
+import {isBHE} from "./util";
 
 describe('wrapWithBHE', () => {
     test("ok scenarios", () => {
@@ -25,6 +26,3 @@ describe('wrapWithBHE', () => {
     });
 });
 
-function isBHE<T extends BetterHTMLElement>(arg: T, bheSubType): arg is T {
-    return (arg instanceof bheSubType)
-}

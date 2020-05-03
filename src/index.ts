@@ -1,5 +1,5 @@
 import {anyValue, enumerate, isFunction, isObject, noValue} from "./util";
-import {ChildrenObj, Element2Tag, NotTag, QuerySelector, Tag, Tag2BHE, Tag2Element, TEvent, TEventFunctionMap, TMap, TRecMap, TReturnBoolean} from "./typings/misc";
+import {ChildrenObj, Element2Tag, NotTag, QuerySelector, Tag, Tag2Element, TEvent, TEventFunctionMap, TMap, TRecMap, TReturnBoolean} from "./typings/misc";
 import {AnchorConstructor, DivConstructor, ImgConstructor, SubElemConstructor} from "./typings/ctors";
 
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
@@ -404,7 +404,7 @@ export class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     child(selector: string): BetterHTMLElement
     child(selector) {
         const htmlElement = this.e.querySelector(selector);
-        const tag = htmlElement.tagName.toLowerCase() as Tag;
+        const tag = htmlElement.tagName.toLowerCase();
         const bhe = wrapWithBHE(tag, htmlElement);
         return bhe;
     }
@@ -1133,7 +1133,7 @@ export function span(spanOpts): Span {
 }
 
 /**Create a Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function div({setid, cls, text, byid, query, htmlElement, children}: DivConstructor): Div {
+export function div({setid, cls, text, byid, query, htmlElement, children}: DivConstructor): Div {
     return new Div({setid, cls, text, byid, query, htmlElement, children});
 }
 

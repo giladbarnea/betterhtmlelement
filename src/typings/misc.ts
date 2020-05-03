@@ -80,6 +80,8 @@ export interface Tag2BHE {
     "span": Span,
 }
 
+export type BHETag = keyof Tag2BHE;
+
 interface IElement2Tag {
     HTMLDivElement: "div",
     HTMLAnchorElement: "a",
@@ -112,7 +114,6 @@ type GenericFilter<T, U> = T extends U ? T : never;
 // const what: Filter<HTMLInputElement, HTMLElements> = undefined;
 // const what: Filter<HTMLInputElement> = undefined;
 // const what: Element2Tag<HTMLAnchorElement> = undefined;
-export type BHETag = keyof Tag2BHE;
 
 
 // type ChildrenObj = TMap<Tag2Element> | TRecMap<Tag2Element>
