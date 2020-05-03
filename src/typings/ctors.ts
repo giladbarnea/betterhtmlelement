@@ -1,5 +1,5 @@
 interface NewBHEConstructor<T extends HTMLElement> {
-    tag?: HTMLElement2Tag<T>,
+    tag?: Element2Tag<T>,
     cls?: string,
     setid?: string
 }
@@ -11,7 +11,7 @@ interface ByIdBHEConstructor {
 }
 
 interface QueryBHEConstructor<T extends HTMLElement> {
-    query?: QuerySelector<HTMLElement2Tag<T>>,
+    query: QuerySelector<Element2Tag<T>>,
     children?: ChildrenObj
 }
 

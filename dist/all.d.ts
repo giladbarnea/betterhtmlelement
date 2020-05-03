@@ -51,11 +51,11 @@ declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     private _cache;
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this;
     cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this;
-    child<K extends HTMLTag, T extends HTMLElementTagNameMap[K]>(selector: K): BetterHTMLElement<T>;
+    child<K extends Tag, T extends HTMLElementTagNameMap[K]>(selector: K): BetterHTMLElement<T>;
     child(selector: string): BetterHTMLElement;
     children(): BetterHTMLElement[];
-    children<K extends HTMLTag>(selector: K): BetterHTMLElement[];
-    children(selector: string | HTMLTag): BetterHTMLElement[];
+    children<K extends Tag>(selector: K): BetterHTMLElement[];
+    children(selector: string | Tag): BetterHTMLElement[];
     clone(deep?: boolean): BetterHTMLElement;
     cacheChildren(queryMap: TMap<QuerySelector>): this;
     cacheChildren(recursiveQueryMap: TRecMap<QuerySelector>): this;
@@ -107,8 +107,8 @@ declare class Input extends BetterHTMLElement<HTMLInputElement> {
     enable(): this;
     toggleEnabled(on: boolean): this;
     get disabled(): boolean;
-    value(val: string): this;
     value(): string;
+    value(val: any): this;
     placeholder(val: string): this;
     placeholder(): string;
 }
@@ -127,10 +127,23 @@ declare class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
     target(): string;
     target(val: string): this;
 }
-declare function elem({ tag, cls, setid }: NewBHEConstructor<HTMLElement>): any;
-declare function elem({ byid, children }: ByIdBHEConstructor): any;
-declare function elem({ query, children }: QueryBHEConstructor): any;
-declare function elem({ htmlElement, children }: ByHtmlElementBHEConstructor<HTMLElement>): any;
+declare function elem<T extends Tag>({ tag, cls, setid }: {
+    tag: T;
+    cls?: string;
+    setid?: string;
+}): BetterHTMLElement<Tag2Element<T>>;
+declare function elem({ byid, children }: {
+    byid: string;
+    children?: ChildrenObj;
+}): BetterHTMLElement;
+declare function elem<Q extends QuerySelector>({ query, children }: {
+    query: Q;
+    children?: ChildrenObj;
+}): Q extends Tag ? BetterHTMLElement<Tag2Element<Q>> : BetterHTMLElement;
+declare function elem<E extends HTMLElement>({ htmlElement, children }: {
+    htmlElement: E;
+    children?: ChildrenObj;
+}): BetterHTMLElement<E>;
 declare function span({ setid, cls, text, byid, query, htmlElement, children }?: SubElemConstructor<HTMLSpanElement>): Span;
 declare function div({ setid, cls, text, byid, query, htmlElement, children }?: DivConstructor): Div;
 declare function button({ setid, cls, text, byid, query, htmlElement, children }?: SubElemConstructor<HTMLButtonElement>): Button;
@@ -138,7 +151,13 @@ declare function input({ setid, cls, type, placeholder, byid, query, htmlElement
 declare function img({ setid, cls, src, byid, query, htmlElement, children }?: ImgConstructor): Img;
 declare function paragraph({ setid, cls, text, byid, query, htmlElement, children }?: SubElemConstructor<HTMLParagraphElement>): Paragraph;
 declare function anchor({ setid, cls, text, href, target, byid, query, htmlElement, children }?: AnchorConstructor): Anchor;
-declare function wrapWithBHE<K extends HTMLTag, T extends HTMLElementType<K>>(tag: K, htmlElement: T): BetterHTMLElement<T>;
+declare const query_input: BetterHTMLElement<HTMLInputElement>;
+declare const tag_input: BetterHTMLElement<HTMLInputElement>;
+declare const askjhf: Tag2Element<'input'>;
+declare const shdjgjkhdskj: BetterHTMLElement<Tag2Element<"input">>;
+declare const ashdjgjkhdskj: BetterHTMLElement<HTMLInputElement>;
+declare const ashdjgjkhdsskj: Input;
+declare function wrapWithBHE<K extends Tag, T extends Tag2Element<K>>(tag: K, htmlElement: T): BetterHTMLElement<T>;
 declare function enumerate<T>(obj: T): Enumerated<T>;
 declare function wait(ms: number): Promise<any>;
 declare function anyValue(obj: any): boolean;
@@ -206,7 +225,7 @@ interface AnimateOptions {
     timingFunction?: AnimationTimingFunction;
 }
 interface NewBHEConstructor<T extends HTMLElement> {
-    tag?: HTMLElement2Tag<T>;
+    tag?: Element2Tag<T>;
     cls?: string;
     setid?: string;
 }
@@ -215,7 +234,7 @@ interface ByIdBHEConstructor {
     children?: ChildrenObj;
 }
 interface QueryBHEConstructor<T extends HTMLElement> {
-    query?: QuerySelector<HTMLElement2Tag<T>>;
+    query: QuerySelector<Element2Tag<T>>;
     children?: ChildrenObj;
 }
 interface ByHtmlElementBHEConstructor<T extends HTMLElement> {
@@ -261,13 +280,13 @@ declare type HTMLTag2HTMLElement2 = {
 };
 declare const a: HTMLTag2HTMLElement<"a">;
 declare const b: HTMLTag2HTMLElement2["a"];
-declare type HTMLTag = Exclude<keyof HTMLElementTagNameMap, "object">;
-declare type HTMLElementType<K extends HTMLTag = HTMLTag> = K extends HTMLTag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[keyof HTMLElementTagNameMap];
-declare type QuerySelector<K extends HTMLTag | string = HTMLTag | string> = K extends HTMLTag ? K : string;
+declare type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
+declare type Tag2Element<K extends Tag = Tag> = K extends Tag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[Tag];
+declare type QuerySelector<K extends Tag | string = Tag | string> = K extends Tag ? K : string;
 declare const foo: <K extends "track" | "progress" | "a" | "abbr" | "address" | "applet" | "area" | "article" | "aside" | "audio" | "b" | "base" | "basefont" | "bdi" | "bdo" | "blockquote" | "body" | "br" | "button" | "canvas" | "caption" | "cite" | "code" | "col" | "colgroup" | "data" | "datalist" | "dd" | "del" | "details" | "dfn" | "dialog" | "dir" | "div" | "dl" | "dt" | "em" | "embed" | "fieldset" | "figcaption" | "figure" | "font" | "footer" | "form" | "frame" | "frameset" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "head" | "header" | "hgroup" | "hr" | "html" | "i" | "iframe" | "img" | "input" | "ins" | "kbd" | "label" | "legend" | "li" | "link" | "main" | "map" | "mark" | "marquee" | "menu" | "meta" | "meter" | "nav" | "noscript" | "ol" | "optgroup" | "option" | "output" | "p" | "param" | "picture" | "pre" | "q" | "rp" | "rt" | "ruby" | "s" | "samp" | "script" | "section" | "select" | "slot" | "small" | "source" | "span" | "strong" | "style" | "sub" | "summary" | "sup" | "table" | "tbody" | "td" | "template" | "textarea" | "tfoot" | "th" | "thead" | "time" | "title" | "tr" | "u" | "ul" | "var" | "video" | "wbr">(tag: K) => HTMLElementTagNameMap[K];
 declare const baz: <K extends string>(query: K) => Element;
 declare const bar: <K extends string>(query: QuerySelector<K>) => Element;
-interface BHETag2BHEMap {
+interface Tag2BHE {
     "div": Div;
     "a": Anchor;
     "p": Paragraph;
@@ -276,7 +295,7 @@ interface BHETag2BHEMap {
     "button": Button;
     "span": Span;
 }
-interface IHTMLElement2Tag {
+interface IElement2Tag {
     HTMLDivElement: "div";
     HTMLAnchorElement: "a";
     HTMLParagraphElement: "p";
@@ -285,18 +304,17 @@ interface IHTMLElement2Tag {
     HTMLButtonElement: "button";
     HTMLSpanElement: "span";
 }
-declare type HTMLElement2Tag<T> = T extends HTMLInputElement ? "input" : T extends HTMLDivElement ? "div" : T extends HTMLAnchorElement ? "a" : T extends HTMLParagraphElement ? "p" : T extends HTMLImageElement ? "img" : T extends HTMLButtonElement ? "button" : T extends HTMLSpanElement ? "span" : never;
+declare type Element2Tag<T> = T extends HTMLInputElement ? "input" : T extends HTMLDivElement ? "div" : T extends HTMLAnchorElement ? "a" : T extends HTMLParagraphElement ? "p" : T extends HTMLImageElement ? "img" : T extends HTMLButtonElement ? "button" : T extends HTMLSpanElement ? "span" : never;
 declare type MapValues<T> = {
     [K in keyof T]: T[K];
 }[keyof T];
 declare type HTMLElements = MapValues<HTMLElementTagNameMap>;
 declare type Filter<T> = T extends HTMLElements ? T : never;
 declare type GenericFilter<T, U> = T extends U ? T : never;
-declare type BHETag = keyof BHETag2BHEMap;
-declare type BHE = {
-    [K in keyof BHETag2BHEMap]: BHETag2BHEMap[K];
-};
+declare type BHETag = keyof Tag2BHE;
 declare type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
 declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
 declare type TReturnBoolean = (s: string) => boolean;
 declare type AnyFunction = (...args: any[]) => any;
+interface BHE extends BetterHTMLElement {
+}

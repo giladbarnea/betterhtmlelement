@@ -15,7 +15,7 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     constructor({query, children}: QueryBHEConstructor<T>);
     /**Wrap an existing HTMLElement. Optionally cache existing `children`*/
     constructor({htmlElement, children}: ByHtmlElementBHEConstructor<T>);
-    constructor(elemOptions: BHEConstructor<T>) {
+    constructor(elemOptions) {
         const {
             tag, cls, setid, // create
             htmlElement, byid, query, children // wrap existing
@@ -396,11 +396,11 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     }
 
     /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child<K extends HTMLTag, T extends HTMLElementTagNameMap[K]>(selector: K): BetterHTMLElement<T>;
+    child<K extends Tag, T extends HTMLElementTagNameMap[K]>(selector: K): BetterHTMLElement<T>;
     child(selector: string): BetterHTMLElement
     child(selector) {
         const htmlElement = this.e.querySelector(selector);
-        const tag = htmlElement.tagName.toLowerCase() as HTMLTag;
+        const tag = htmlElement.tagName.toLowerCase() as Tag;
         const bhe = wrapWithBHE(tag, htmlElement);
         return bhe;
     }
@@ -409,9 +409,9 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     /**Return a `BetterHTMLElement` list of all children */
     children(): BetterHTMLElement[];
     /**Return a `BetterHTMLElement` list of all children selected by `selector` */
-    children<K extends HTMLTag>(selector: K): BetterHTMLElement[];
+    children<K extends Tag>(selector: K): BetterHTMLElement[];
     /**Return a `BetterHTMLElement` list of all children selected by `selector` */
-    children(selector: string | HTMLTag): BetterHTMLElement[];
+    children(selector: string | Tag): BetterHTMLElement[];
     children(selector?) {
         let childrenVanilla;
         let childrenCollection;
@@ -430,7 +430,7 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
         return new BetterHTMLElement({htmlElement: this.e.cloneNode(deep)});
     }
 
-    /**For each `[key, selector]` pair, where `selector` is either an `HTMLTag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
+    /**For each `[key, selector]` pair, where `selector` is either an `Tag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
      * @example
      * // Using `cacheChildren` directly
      * const navbar = elem({ id: 'navbar' });
@@ -925,8 +925,10 @@ class Input extends BetterHTMLElement<HTMLInputElement> {
         return this.e.disabled;
     }
 
-    value(val: string): this;
+    /**Returns `value`*/
     value(): string;
+    /**`value(null)` or `value('')` → reset. */
+    value(val: any): this;
     value(val?) {
         if (val === undefined) {
             return this.e.value;
@@ -934,7 +936,6 @@ class Input extends BetterHTMLElement<HTMLInputElement> {
             this.e.value = val;
             return this;
         }
-
     }
 
     placeholder(val: string): this;
@@ -1073,14 +1074,14 @@ customElements.define('better-a', Anchor, {extends: 'a'});*/
 // customElements.define('better-svg', Svg, {extends: 'svg'});
 
 /**Create an element of `create`. Optionally, set its `text` and / or `cls`*/
-function elem({tag, cls, setid}: NewBHEConstructor<HTMLElement>);
+function elem<T extends Tag>({tag, cls, setid}: { tag: T, cls?: string, setid?: string }): BetterHTMLElement<Tag2Element<T>>;
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({byid, children}: ByIdBHEConstructor);
+function elem({byid, children}: { byid: string, children?: ChildrenObj }): BetterHTMLElement;
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({query, children}: QueryBHEConstructor);
+function elem<Q extends QuerySelector>({query, children}: { query: Q, children?: ChildrenObj }): Q extends Tag ? BetterHTMLElement<Tag2Element<Q>> : BetterHTMLElement;
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({htmlElement, children}: ByHtmlElementBHEConstructor<HTMLElement>);
-function elem(elemOptions: BHEConstructor<HTMLElement>): BetterHTMLElement {
+function elem<E extends HTMLElement>({htmlElement, children}: { htmlElement: E; children?: ChildrenObj }): BetterHTMLElement<E>;
+function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
 
@@ -1124,7 +1125,7 @@ function anchor({setid, cls, text, href, target, byid, query, htmlElement, child
 }
 
 /*// ** get EXISTING vanilla HTMLElement: by id, query or htmlElement
-function getHtmlElement<K extends (HTMLTag | string)>(query: K): HTMLElementType<K>;
+function getHtmlElement<K extends (Tag | string)>(query: K): Tag2Element<K>;
 function getHtmlElement<T extends HTMLElement>(htmlElement: T): T;
 function getHtmlElement(idOrQueryOrHtmlElement) {
     if (idOrQueryOrHtmlElement instanceof HTMLElement) {
@@ -1134,7 +1135,7 @@ function getHtmlElement(idOrQueryOrHtmlElement) {
 }
 
 // ** create NEW vanilla HTMLElement: by tag
-function newHtmlElement<K extends HTMLTag>(tag: K) {
+function newHtmlElement<K extends Tag>(tag: K) {
     if (tag === undefined) {
         throw new NotEnoughArgs(1, {tag})
     }
@@ -1153,9 +1154,23 @@ function newHtmlElement<K extends HTMLTag>(tag: K) {
 // getHtmlElement("div");
 // newHtmlElement("div");
 */
-function wrapWithBHE<K extends HTMLTag, T extends HTMLElementType<K>>(tag: K, htmlElement: T): BetterHTMLElement<T> {
+
+const query_input = elem({query: 'input'});
+const tag_input = elem({tag: 'input'});
+
+
+const askjhf: Tag2Element<'input'> = undefined;
+
+const shdjgjkhdskj: BetterHTMLElement<Tag2Element<"input">> = undefined;
+
+const ashdjgjkhdskj: BetterHTMLElement<HTMLInputElement> = undefined;
+
+const ashdjgjkhdsskj: Input = undefined;
+
+
+function wrapWithBHE<K extends Tag, T extends Tag2Element<K>>(tag: K, htmlElement: T): BetterHTMLElement<T> {
 // function wrapWithBHE<K extends BHETag>(tag: K, htmlElement: BHETag2HTMLElement<K>): Tag2BHE<K> {
-// function wrapWithBHE<K extends BHETag, T extends HTMLElementType<K>>(tag: K, htmlElement: T): BetterHTMLElement<T> {
+// function wrapWithBHE<K extends BHETag, T extends Tag2Element<K>>(tag: K, htmlElement: T): BetterHTMLElement<T> {
 
     switch (tag) {
         case 'div':

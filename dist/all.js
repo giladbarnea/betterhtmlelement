@@ -836,6 +836,12 @@ function paragraph({ setid, cls, text, byid, query, htmlElement, children } = {}
 function anchor({ setid, cls, text, href, target, byid, query, htmlElement, children } = {}) {
     return new Anchor({ setid, cls, text, href, target, byid, query, htmlElement, children });
 }
+const query_input = elem({ query: 'input' });
+const tag_input = elem({ tag: 'input' });
+const askjhf = undefined;
+const shdjgjkhdskj = undefined;
+const ashdjgjkhdskj = undefined;
+const ashdjgjkhdsskj = undefined;
 function wrapWithBHE(tag, htmlElement) {
     switch (tag) {
         case 'div':
