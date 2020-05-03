@@ -1,13 +1,18 @@
 module.exports = {
     "//": "https://jestjs.io/docs/en/configuration",
-    "verbose": true,
     "preset": "ts-jest",
+    "verbose": true,
     "testEnvironment": "jsdom",
     "maxConcurrency": 500,
+    "bail": false,
     "globals": {
         "ts-jest": {
             "//": "https://kulshekhar.github.io/ts-jest/user/config/#options",
-            "diagnostics": false
+            "diagnostics": {
+                // pathRegex: /elem\b\.spec\.ts$/
+                warnOnly: true
+            }
+
         }
     }
 };

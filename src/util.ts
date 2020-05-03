@@ -1,3 +1,5 @@
+import {AnyFunction, Enumerated} from "./typings/misc";
+
 export function enumerate<T>(obj: T): Enumerated<T> {
     // undefined    []
     // {}           []

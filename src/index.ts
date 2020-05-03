@@ -1,22 +1,24 @@
 import {anyValue, noValue, enumerate, isFunction, isObject} from "./util";
+import {Tag2Element, ChildrenObj, Tag, QuerySelector, TEventFunctionMap, TEvent, TMap, TReturnBoolean, TRecMap, Element2Tag, Tag2BHE, BHETag} from "./typings/misc";
+import {NewBHEConstructor, ByIdBHEConstructor, QueryBHEConstructor, ByHtmlElementBHEConstructor, SubElemConstructor, DivConstructor, InputConstructor, ImgConstructor, AnchorConstructor} from "./typings/ctors";
 
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
 
-class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
+export class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     protected _htmlElement: T;
     private readonly _isSvg: boolean = false;
     private readonly _listeners: TEventFunctionMap<TEvent> = {};
     private _cachedChildren: TMap<BetterHTMLElement> = {};
 
     /**Create an element of `tag`. Optionally, set its `text`, `cls` or `id`. */
-    constructor({tag, cls, setid}: NewBHEConstructor<T>);
+    constructor({tag, cls, setid}: { tag: Element2Tag<T>, cls?: string, setid?: string });
     /**Wrap an existing element by `byid`. Optionally cache existing `children`*/
-    constructor({byid, children}: ByIdBHEConstructor);
+    constructor({byid, children}: { byid: string, children?: ChildrenObj });
     /**Wrap an existing element by `query`. Optionally cache existing `children`*/
-    constructor({query, children}: QueryBHEConstructor<T>);
+    constructor({query, children}: { query: QuerySelector, children?: ChildrenObj });
     /**Wrap an existing HTMLElement. Optionally cache existing `children`*/
-    constructor({htmlElement, children}: ByHtmlElementBHEConstructor<T>);
+    constructor({htmlElement, children}: { htmlElement: T; children?: ChildrenObj });
     constructor(elemOptions) {
         const {
             tag, cls, setid, // create
@@ -782,7 +784,7 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
 
 }
 
-class Div extends BetterHTMLElement<HTMLDivElement> {
+export class Div extends BetterHTMLElement<HTMLDivElement> {
 
     /**Create a new Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
     constructor({setid, cls, byid, text, query, htmlElement, children}: DivConstructor) {
@@ -805,7 +807,7 @@ class Div extends BetterHTMLElement<HTMLDivElement> {
 }
 
 
-class Button extends BetterHTMLElement<HTMLButtonElement> {
+export class Button extends BetterHTMLElement<HTMLButtonElement> {
 
 
     /**Create a new Button element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
@@ -829,7 +831,7 @@ class Button extends BetterHTMLElement<HTMLButtonElement> {
 }
 
 
-class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
+export class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
 
     /**Create a new Paragraph element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
     constructor({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLParagraphElement>) {
@@ -851,7 +853,7 @@ class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
     }
 }
 
-class Input extends BetterHTMLElement<HTMLInputElement> {
+export class Input extends BetterHTMLElement<HTMLInputElement> {
     constructor({setid, cls, type, placeholder, byid, query, htmlElement, children}: InputConstructor) {
         if (noValue(arguments[0])) {
             throw new NotEnoughArgs([1], arguments[0])
@@ -955,7 +957,7 @@ class Input extends BetterHTMLElement<HTMLInputElement> {
 
 }
 
-class Span extends BetterHTMLElement<HTMLSpanElement> {
+export class Span extends BetterHTMLElement<HTMLSpanElement> {
 
     /**Create a new Span element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
     constructor({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLSpanElement>) {
@@ -978,7 +980,7 @@ class Span extends BetterHTMLElement<HTMLSpanElement> {
     }
 }
 
-class Img extends BetterHTMLElement<HTMLImageElement> {
+export class Img extends BetterHTMLElement<HTMLImageElement> {
 
     /**Create a new Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
     constructor({setid, cls, src, byid, query, htmlElement, children}: ImgConstructor) {
@@ -1014,7 +1016,7 @@ class Img extends BetterHTMLElement<HTMLImageElement> {
 
 }
 
-class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
+export class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
 
 
     /**Create a new Input element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
@@ -1076,13 +1078,21 @@ customElements.define('better-a', Anchor, {extends: 'a'});*/
 // customElements.define('better-svg', Svg, {extends: 'svg'});
 
 /**Create an element of `create`. Optionally, set its `text` and / or `cls`*/
-export function elem<T extends Tag>({tag, cls, setid}: { tag: T, cls?: string, setid?: string }): BetterHTMLElement<Tag2Element<T>>;
+export function elem<T extends Tag>({tag, cls, setid}: { tag: T, cls?: string, setid?: string }):
+    T extends Tag ? BetterHTMLElement<HTMLElementTagNameMap[T]> : BetterHTMLElement;
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-export function elem({byid, children}: { byid: string, children?: ChildrenObj }): BetterHTMLElement;
+export function elem({byid, children}: { byid: string, children?: ChildrenObj }):
+    BetterHTMLElement;
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-export function elem<Q extends QuerySelector>({query, children}: { query: Q, children?: ChildrenObj }): Q extends Tag ? BetterHTMLElement<Tag2Element<Q>> : BetterHTMLElement;
+export function elem<Q extends QuerySelector>({query, children}: { query: Q, children?: ChildrenObj }):
+// Q extends BHETag ? Tag2BHE[Q] : Q extends Tag ? BetterHTMLElement<HTMLElementTagNameMap[Q]> : BetterHTMLElement;
+    Q extends Tag ? BetterHTMLElement<HTMLElementTagNameMap[Q]> : BetterHTMLElement;
+
+
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-export function elem<E extends HTMLElement>({htmlElement, children}: { htmlElement: E; children?: ChildrenObj }): BetterHTMLElement<E>;
+export function elem<E extends HTMLElement>({htmlElement, children}: { htmlElement: E; children?: ChildrenObj }):
+    BetterHTMLElement<E>;
+
 export function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }

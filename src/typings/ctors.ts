@@ -1,22 +1,24 @@
-interface NewBHEConstructor<T extends HTMLElement> {
-    tag: Element2Tag<T>,
+import {ChildrenObj, Element2Tag, QuerySelector} from "./misc"
+
+export interface NewBHEConstructor<H extends HTMLElement> {
+    tag: Element2Tag<H>,
     cls?: string,
     setid?: string
 }
 
 
-interface ByIdBHEConstructor {
+export interface ByIdBHEConstructor {
     byid: string,
     children?: ChildrenObj
 }
 
-interface QueryBHEConstructor<T extends HTMLElement> {
-    query: QuerySelector<Element2Tag<T>>,
+export interface QueryBHEConstructor<Q extends QuerySelector> {
+    query: Q,
     children?: ChildrenObj
 }
 
-interface ByHtmlElementBHEConstructor<T extends HTMLElement> {
-    htmlElement: T;
+export interface ByHtmlElementBHEConstructor<E extends HTMLElement> {
+    htmlElement: E;
     children?: ChildrenObj
 }
 
@@ -26,32 +28,32 @@ interface ByHtmlElementBHEConstructor<T extends HTMLElement> {
 //         QueryBHEConstructor<T>,
 //         ByHtmlElementBHEConstructor<T> {
 // }
-type BHEConstructor<T extends HTMLElement> =
+export type BHEConstructor<T extends HTMLElement> =
     NewBHEConstructor<T> |
     ByIdBHEConstructor |
-    QueryBHEConstructor<T> |
+    QueryBHEConstructor<Element2Tag<T>> |
     ByHtmlElementBHEConstructor<T>
 
-type SubElemConstructor<K extends HTMLElement> = BHEConstructor<K> & {
+export type SubElemConstructor<K extends HTMLElement> = BHEConstructor<K> & {
     text?: string;
 }
 
-type DivConstructor = SubElemConstructor<HTMLDivElement> & {
+export type DivConstructor = SubElemConstructor<HTMLDivElement> & {
     htmlElement?: HTMLDivElement;
 }
 
 
-type ImgConstructor = BHEConstructor<HTMLImageElement> & {
+export type ImgConstructor = BHEConstructor<HTMLImageElement> & {
     src?: string;
 }
 
-type InputConstructor = BHEConstructor<HTMLInputElement> & {
+export type InputConstructor = BHEConstructor<HTMLInputElement> & {
     type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local";
     placeholder?: string;
 }
 
 
-type AnchorConstructor = SubElemConstructor<HTMLAnchorElement> & {
+export type AnchorConstructor = SubElemConstructor<HTMLAnchorElement> & {
     href?: string;
     target?: string;
 }
