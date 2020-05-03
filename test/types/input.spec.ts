@@ -8,8 +8,8 @@ describe('{query: ...}', () => {
         let e = new Input({query: 'input[type=checkbox]'});
     });
     test("input({query: 'div'})", () => {
-        let a = input({query: 'div'});
-        let b = new Input({query: 'div'});
+        let SHOULDFAILa = input({query: 'div'});
+        let SHOULDFAILb = new Input({query: 'div'});
         let c = input({query: 'div.myclass'}); // can't squiggly
         let d = new Input({query: 'div.myclass'}); // can't squiggly
     });
@@ -19,7 +19,7 @@ describe('{htmlElement: ...}', () => {
         let a = input({htmlElement: document.createElement('input')});
     });
     test("input({query: 'div'})", () => {
-        let a = input({htmlElement: document.createElement('div')});
-        let b = new Input({htmlElement: document.createElement('div')});
+        let SHOULDFAILa = input({htmlElement: document.createElement('div')});
+        let SHOULDFAILb = new Input({htmlElement: document.createElement('div')});
     });
 });

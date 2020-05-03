@@ -1,6 +1,6 @@
-import {anyValue, noValue, enumerate, isFunction, isObject} from "./util";
-import {Tag2Element, ChildrenObj, Tag, QuerySelector, TEventFunctionMap, TEvent, TMap, TReturnBoolean, TRecMap, Element2Tag, Tag2BHE, BHETag} from "./typings/misc";
-import {NewBHEConstructor, ByIdBHEConstructor, QueryBHEConstructor, ByHtmlElementBHEConstructor, SubElemConstructor, DivConstructor, InputConstructor, ImgConstructor, AnchorConstructor} from "./typings/ctors";
+import {anyValue, enumerate, isFunction, isObject, noValue} from "./util";
+import {ChildrenObj, Element2Tag, NotTag, QuerySelector, Tag, Tag2BHE, Tag2Element, TEvent, TEventFunctionMap, TMap, TRecMap, TReturnBoolean} from "./typings/misc";
+import {AnchorConstructor, DivConstructor, ImgConstructor, SubElemConstructor} from "./typings/ctors";
 
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
@@ -860,7 +860,7 @@ export class Input<Q extends QuerySelector = QuerySelector> extends BetterHTMLEl
         placeholder?: string
     });
     constructor({byid, children}: { byid: string, children?: ChildrenObj });
-    constructor({query, children}: { query: Q extends QuerySelector<NotInput> ? never : Q, children?: ChildrenObj });
+    constructor({query, children}: { query: Q extends QuerySelector<NotTag<"input">> ? never : Q, children?: ChildrenObj });
     constructor({htmlElement, children}: { htmlElement: HTMLInputElement; children?: ChildrenObj });
     constructor(inputOpts) {
         const {setid, cls, type, placeholder, byid, query, htmlElement, children} = inputOpts;
@@ -966,10 +966,21 @@ export class Input<Q extends QuerySelector = QuerySelector> extends BetterHTMLEl
 
 }
 
-export class Span extends BetterHTMLElement<HTMLSpanElement> {
+export class Span<Q extends QuerySelector = QuerySelector> extends BetterHTMLElement<HTMLSpanElement> {
 
     /**Create a new Span element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLSpanElement>) {
+    constructor({cls, setid, text}: { cls?: string, setid?: string, text?: string })
+    constructor({byid, children}: { byid: string, children?: ChildrenObj })
+    constructor({query, children}: {
+        query: Q extends QuerySelector<NotTag<"span">> ? never : Q,
+        children?: ChildrenObj
+    })
+    constructor({htmlElement, children}: {
+        htmlElement: HTMLSpanElement;
+        children?: ChildrenObj
+    })
+    constructor(spanOpts) {
+        const {setid, cls, text, byid, query, htmlElement, children} = spanOpts;
         if (noValue(arguments[0])) {
             throw new NotEnoughArgs([1], arguments[0])
         }
@@ -1088,7 +1099,7 @@ customElements.define('better-a', Anchor, {extends: 'a'});*/
 
 /**Create an element of `create`. Optionally, set its `text` and / or `cls`*/
 export function elem<T extends Tag>({tag, cls, setid}: { tag: T, cls?: string, setid?: string }):
-    T extends Tag ? BetterHTMLElement<HTMLElementTagNameMap[T]> : BetterHTMLElement;
+    T extends Tag ? BetterHTMLElement<HTMLElementTagNameMap[T]> : never;
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
 export function elem({byid, children}: { byid: string, children?: ChildrenObj }):
     BetterHTMLElement;
@@ -1103,24 +1114,33 @@ export function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
 
-/**Create an Span element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function span({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLSpanElement> = {}): Span {
-    return new Span({setid, cls, text, byid, query, htmlElement, children});
+
+export function span({cls, setid, text}: { cls?: string, setid?: string, text?: string }): Span;
+
+export function span({byid, children}: { byid: string, children?: ChildrenObj }): Span;
+
+export function span<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"span">> ? never : Q,
+    children?: ChildrenObj
+}): Span;
+
+export function span<E extends HTMLSpanElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Span;
+export function span(spanOpts): Span {
+    return new Span(spanOpts)
 }
 
 /**Create a Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function div({setid, cls, text, byid, query, htmlElement, children}: DivConstructor = {}): Div {
+function div({setid, cls, text, byid, query, htmlElement, children}: DivConstructor): Div {
     return new Div({setid, cls, text, byid, query, htmlElement, children});
 }
 
 /**Create a Button element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function button({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLButtonElement> = {}): Button {
+function button({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLButtonElement>): Button {
     return new Button({setid, cls, text, byid, query, htmlElement, children});
 }
-
-type NotInput = Exclude<Tag, "input">;
-
-type InputTagOrString<T> = T extends NotInput ? never : T;
 
 
 export function input({cls, setid, type, placeholder}: {
@@ -1132,7 +1152,7 @@ export function input({cls, setid, type, placeholder}: {
 export function input({byid, children}: { byid: string, children?: ChildrenObj }): Input;
 
 export function input<Q extends QuerySelector>({query, children}: {
-    query: Q extends QuerySelector<NotInput> ? never : Q,
+    query: Q extends QuerySelector<NotTag<"input">> ? never : Q,
     children?: ChildrenObj
 }): Input;
 
@@ -1203,14 +1223,21 @@ const cc: BetterHTMLElement<HTMLInputElement> = undefined;
 const dd: Input = undefined;
 
 
-function wrapWithBHE<K extends Tag, T extends Tag2Element<K>>(tag: K, htmlElement: T): BetterHTMLElement<T> {
+export function wrapWithBHE(tag: "button", htmlElement: HTMLButtonElement): Button;
+export function wrapWithBHE(tag: "div", htmlElement: HTMLDivElement): Div;
+export function wrapWithBHE(tag: "div", htmlElement: HTMLDivElement): Div;
+export function wrapWithBHE(tag: "img", htmlElement: HTMLImageElement): Img;
+export function wrapWithBHE(tag: "input", htmlElement: HTMLInputElement): Input;
+export function wrapWithBHE(tag: "p", htmlElement: HTMLParagraphElement): Paragraph;
+export function wrapWithBHE(tag: "span", htmlElement: HTMLSpanElement): Span;
+export function wrapWithBHE(tag: "a", htmlElement: HTMLAnchorElement): Anchor;
+export function wrapWithBHE(tag, htmlElement) {
 // function wrapWithBHE<K extends BHETag>(tag: K, htmlElement: BHETag2HTMLElement<K>): Tag2BHE<K> {
 // function wrapWithBHE<K extends BHETag, T extends Tag2Element<K>>(tag: K, htmlElement: T): BetterHTMLElement<T> {
 
     switch (tag) {
         case 'div':
-            let e = div({htmlElement: htmlElement});
-            return e;
+            return div({htmlElement});
         case 'a':
             return anchor({htmlElement});
         case 'p':

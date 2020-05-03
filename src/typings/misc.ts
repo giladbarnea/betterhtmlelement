@@ -42,6 +42,7 @@ const b: HTMLTag2HTMLElement2["a"] = undefined;
  * foo("BAD") // error
  */
 export type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
+export type NotTag<T> = Exclude<Tag, T>;
 /**
  * "a", "div", "gilad".
  * Tag2Element expects a tag and returns an HTMLElement.

@@ -1,6 +1,11 @@
 import {elem, Div, Input, BetterHTMLElement} from "../../src/index";
 // npm test "elem\.spec\.ts"
 describe('{htmlElement: document.createElement("input")}', () => {
+    test("bad htmlElement", () => {
+        let SHOULDFAIL = elem({htmlElement: "input"});
+        let SHOULDFAIL2: BetterHTMLElement<HTMLInputElement> = elem({htmlElement: document.createElement("div")});
+    });
+
     test("elem()", () => {
         let actual: BetterHTMLElement<HTMLInputElement> = elem({htmlElement: document.createElement("input")});
         expect(actual).toBeInstanceOf(BetterHTMLElement);
@@ -33,13 +38,12 @@ describe('{query: ...}', () => {
     node.className = "myinput";
     node.type = 'checkbox';
     document.body.append(node);
+
     test("elem()", () => {
         let actual: BetterHTMLElement<HTMLInputElement> = elem({query: "input"});
         expect(actual).toBeInstanceOf(BetterHTMLElement);
         expect(actual.e).toBeInstanceOf(HTMLInputElement);
         expect(actual).not.toHaveProperty('toggleChecked');
-
-
     });
 
     test("elem()2", () => {
@@ -84,6 +88,9 @@ describe('{query: ...}', () => {
 
 });
 describe('{tag: ...}', () => {
+    test("bad tag", () => {
+        let SHOULDFAIL = elem({tag: "BAD"});
+    });
     test("elem()", () => {
         let actual: BetterHTMLElement<HTMLInputElement> = elem({tag: "input"});
         expect(actual).toBeInstanceOf(BetterHTMLElement);
