@@ -16,16 +16,11 @@ declare type HTMLTag2HTMLElement<K extends keyof HTMLElementTagNameMap> = {
 declare type HTMLTag2HTMLElement2 = {
     [P in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[P];
 };
-declare const a: HTMLTag2HTMLElement<"a">;
-declare const b: HTMLTag2HTMLElement2["a"];
 declare type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
 declare type NotTag<T extends Tag> = Exclude<Tag, T>;
 declare type Tag2Element<K extends Tag = Tag> = K extends Tag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[Tag];
 declare type TagOrString = Tag | string;
 declare type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
-declare const foo: <K extends "track" | "progress" | "a" | "abbr" | "address" | "applet" | "area" | "article" | "aside" | "audio" | "b" | "base" | "basefont" | "bdi" | "bdo" | "blockquote" | "body" | "br" | "button" | "canvas" | "caption" | "cite" | "code" | "col" | "colgroup" | "data" | "datalist" | "dd" | "del" | "details" | "dfn" | "dialog" | "dir" | "div" | "dl" | "dt" | "em" | "embed" | "fieldset" | "figcaption" | "figure" | "font" | "footer" | "form" | "frame" | "frameset" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "head" | "header" | "hgroup" | "hr" | "html" | "i" | "iframe" | "img" | "input" | "ins" | "kbd" | "label" | "legend" | "li" | "link" | "main" | "map" | "mark" | "marquee" | "menu" | "meta" | "meter" | "nav" | "noscript" | "ol" | "optgroup" | "option" | "output" | "p" | "param" | "picture" | "pre" | "q" | "rp" | "rt" | "ruby" | "s" | "samp" | "script" | "section" | "select" | "slot" | "small" | "source" | "span" | "strong" | "style" | "sub" | "summary" | "sup" | "table" | "tbody" | "td" | "template" | "textarea" | "tfoot" | "th" | "thead" | "time" | "title" | "tr" | "u" | "ul" | "var" | "video" | "wbr">(tag: K) => HTMLElementTagNameMap[K];
-declare const baz: <K extends string>(query: K) => Element;
-declare const bar: <K extends string>(query: QuerySelector<K>) => Element;
 interface Tag2BHE {
     "img": Img;
     "a": Anchor;

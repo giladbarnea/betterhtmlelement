@@ -30,8 +30,8 @@ type HTMLTag2HTMLElement2 = {
     [P in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[P]
 }
 
-const a: HTMLTag2HTMLElement<"a"> = undefined;
-const b: HTMLTag2HTMLElement2["a"] = undefined;
+// const a: HTMLTag2HTMLElement<"a"> = undefined;
+// const b: HTMLTag2HTMLElement2["a"] = undefined;
 
 
 /**
@@ -63,11 +63,11 @@ type TagOrString = Tag | string;
  */
 type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
 
-const foo = <K extends Tag>(tag: K) => document.createElement(tag);
+// const foo = <K extends Tag>(tag: K) => document.createElement(tag);
 
-const baz = <K extends Tag | string>(query: K) => document.querySelector(query);
+// const baz = <K extends Tag | string>(query: K) => document.querySelector(query);
 
-const bar = <K extends Tag | string>(query: QuerySelector<K>) => document.querySelector(query);
+// const bar = <K extends Tag | string>(query: QuerySelector<K>) => document.querySelector(query);
 
 // Tag2BHE["a"] → Anchor
 interface Tag2BHE {
