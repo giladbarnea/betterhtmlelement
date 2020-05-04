@@ -1,6 +1,5 @@
 import {anyValue, bool, enumerate, isFunction, isObject, noValue} from "./util";
 import {ChildrenObj, Element2Tag, NotTag, QuerySelector, Tag, TEvent, TEventFunctionMap, TMap, TRecMap, TReturnBoolean} from "./typings/misc";
-import {AnchorConstructor, ImgConstructor} from "./typings/ctors";
 import {MutuallyExclusiveArgs, NotEnoughArgs} from "./exceptions";
 
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
@@ -401,12 +400,22 @@ export class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     }
 
     /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child<K extends Tag, T extends HTMLElementTagNameMap[K]>(selector: K): BetterHTMLElement<T>;
-    child(selector: string): BetterHTMLElement
+    child(selector: "img"): Img
+    child(selector: "a"): Anchor
+    child(selector: "input"): Input
+    child(selector: "p"): Paragraph
+    child(selector: "span"): Span
+    child(selector: "button"): Button
+    child(selector: "div"): Div
+    child<T extends Tag>(selector: T): BetterHTMLElement
     child(selector) {
         const htmlElement = this.e.querySelector(selector);
+        if (htmlElement === null) {
+            console.warn(`${this.e}.child(${selector}): no child. returning undefined`);
+            return undefined;
+        }
         const tag = htmlElement.tagName.toLowerCase();
-        const bhe = wrapWithBHE(tag as Element2Tag<typeof htmlElement>, htmlElement);
+        const bhe = wrapWithBHE(tag, htmlElement);
         return bhe;
     }
 
@@ -788,9 +797,9 @@ export class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
 export class Div extends BetterHTMLElement<HTMLDivElement> {
 
     constructor(divOpts) {
-        if (noValue(arguments[0])) {
-            throw new NotEnoughArgs([1], arguments[0])
-        }
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
         const {setid, cls, text, byid, query, htmlElement, children} = divOpts;
         if (htmlElement !== undefined) {
             super({htmlElement, children});
@@ -811,9 +820,9 @@ export class Div extends BetterHTMLElement<HTMLDivElement> {
 export class Button extends BetterHTMLElement<HTMLButtonElement> {
 
     constructor(buttonOpts) {
-        if (noValue(arguments[0])) {
-            throw new NotEnoughArgs([1], arguments[0])
-        }
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
         const {setid, cls, text, byid, query, htmlElement, children} = buttonOpts;
         if (htmlElement !== undefined) {
             super({htmlElement, children});
@@ -834,9 +843,9 @@ export class Button extends BetterHTMLElement<HTMLButtonElement> {
 export class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
 
     constructor(pOpts) {
-        if (noValue(arguments[0])) {
-            throw new NotEnoughArgs([1], arguments[0])
-        }
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
         const {setid, cls, text, byid, query, htmlElement, children} = pOpts;
         if (htmlElement !== undefined) {
             super({htmlElement, children});
@@ -868,9 +877,9 @@ export class Span extends BetterHTMLElement<HTMLSpanElement> {
     })
     constructor(spanOpts) {
         const {setid, cls, text, byid, query, htmlElement, children} = spanOpts;
-        if (noValue(arguments[0])) {
-            throw new NotEnoughArgs([1], arguments[0])
-        }
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
         if (htmlElement !== undefined) {
             super({htmlElement, children});
         } else if (byid !== undefined) {
@@ -898,9 +907,9 @@ export class Input extends BetterHTMLElement<HTMLInputElement> {
     // constructor({htmlElement, children}: { htmlElement: HTMLInputElement; children?: ChildrenObj });
     constructor(inputOpts) {
         const {setid, cls, type, placeholder, byid, query, htmlElement, children} = inputOpts;
-        if (noValue(arguments[0])) {
-            throw new NotEnoughArgs([1], arguments[0])
-        }
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
 
         if (htmlElement !== undefined) {
             super({htmlElement, children});
@@ -1003,10 +1012,10 @@ export class Input extends BetterHTMLElement<HTMLInputElement> {
 export class Img extends BetterHTMLElement<HTMLImageElement> {
 
     /**Create a new Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
-    constructor({setid, cls, src, byid, query, htmlElement, children}: ImgConstructor) {
-        if (noValue(arguments[0])) {
-            throw new NotEnoughArgs([1], arguments[0])
-        }
+    constructor({setid, cls, src, byid, query, htmlElement, children}) {
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
         if (htmlElement !== undefined) {
             super({htmlElement, children});
         } else if (byid !== undefined) {
@@ -1040,10 +1049,10 @@ export class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
 
 
     /**Create a new Input element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
-    constructor({setid, cls, text, href, target, byid, query, htmlElement, children}: AnchorConstructor) {
-        if (noValue(arguments[0])) {
-            throw new NotEnoughArgs([1], arguments[0])
-        }
+    constructor({setid, cls, text, href, target, byid, query, htmlElement, children}) {
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
         if (htmlElement !== undefined) {
             super({htmlElement, children});
         } else if (byid !== undefined) {
@@ -1273,20 +1282,19 @@ export function anchor(anchorOpts?): Anchor {
 }
 
 
-export function wrapWithBHE(tag: "button", htmlElement: HTMLButtonElement): Button;
-export function wrapWithBHE(tag: "div", htmlElement: HTMLDivElement): Div;
 export function wrapWithBHE(tag: "img", htmlElement: HTMLImageElement): Img;
 export function wrapWithBHE(tag: "input", htmlElement: HTMLInputElement): Input;
+export function wrapWithBHE(tag: "a", htmlElement: HTMLAnchorElement): Anchor;
 export function wrapWithBHE(tag: "p", htmlElement: HTMLParagraphElement): Paragraph;
 export function wrapWithBHE(tag: "span", htmlElement: HTMLSpanElement): Span;
-export function wrapWithBHE(tag: "a", htmlElement: HTMLAnchorElement): Anchor;
+export function wrapWithBHE(tag: "button", htmlElement: HTMLButtonElement): Button;
+export function wrapWithBHE(tag: "div", htmlElement: HTMLDivElement): Div;
+export function wrapWithBHE(tag: any, htmlElement: HTMLElement): BetterHTMLElement;
 export function wrapWithBHE(tag, element) {
     if (tag === 'div') {
-        const d = div({htmlElement: element});
-        return d;
+        return div({htmlElement: element});
     } else if (tag === 'a') {
-        let a = anchor({htmlElement: element});
-        return a;
+        return anchor({htmlElement: element});
     } else if (tag === 'p') {
         return paragraph({htmlElement: element});
     } else if (tag === 'img') {

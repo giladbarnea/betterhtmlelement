@@ -1,7 +1,3 @@
-define("typings/ctors", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-});
 define("index", ["require", "exports", "util", "exceptions"], function (require, exports, util_1, exceptions_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -306,6 +302,10 @@ define("index", ["require", "exports", "util", "exceptions"], function (require,
         }
         child(selector) {
             const htmlElement = this.e.querySelector(selector);
+            if (htmlElement === null) {
+                console.warn(`${this.e}.child(${selector}): no child. returning undefined`);
+                return undefined;
+            }
             const tag = htmlElement.tagName.toLowerCase();
             const bhe = wrapWithBHE(tag, htmlElement);
             return bhe;
@@ -524,9 +524,6 @@ define("index", ["require", "exports", "util", "exceptions"], function (require,
     exports.BetterHTMLElement = BetterHTMLElement;
     class Div extends BetterHTMLElement {
         constructor(divOpts) {
-            if (util_1.noValue(arguments[0])) {
-                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
-            }
             const { setid, cls, text, byid, query, htmlElement, children } = divOpts;
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
@@ -548,9 +545,6 @@ define("index", ["require", "exports", "util", "exceptions"], function (require,
     exports.Div = Div;
     class Button extends BetterHTMLElement {
         constructor(buttonOpts) {
-            if (util_1.noValue(arguments[0])) {
-                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
-            }
             const { setid, cls, text, byid, query, htmlElement, children } = buttonOpts;
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
@@ -572,9 +566,6 @@ define("index", ["require", "exports", "util", "exceptions"], function (require,
     exports.Button = Button;
     class Paragraph extends BetterHTMLElement {
         constructor(pOpts) {
-            if (util_1.noValue(arguments[0])) {
-                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
-            }
             const { setid, cls, text, byid, query, htmlElement, children } = pOpts;
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
@@ -597,9 +588,6 @@ define("index", ["require", "exports", "util", "exceptions"], function (require,
     class Span extends BetterHTMLElement {
         constructor(spanOpts) {
             const { setid, cls, text, byid, query, htmlElement, children } = spanOpts;
-            if (util_1.noValue(arguments[0])) {
-                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
-            }
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
             }
@@ -621,9 +609,6 @@ define("index", ["require", "exports", "util", "exceptions"], function (require,
     class Input extends BetterHTMLElement {
         constructor(inputOpts) {
             const { setid, cls, type, placeholder, byid, query, htmlElement, children } = inputOpts;
-            if (util_1.noValue(arguments[0])) {
-                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
-            }
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
             }
@@ -713,9 +698,6 @@ define("index", ["require", "exports", "util", "exceptions"], function (require,
     exports.Input = Input;
     class Img extends BetterHTMLElement {
         constructor({ setid, cls, src, byid, query, htmlElement, children }) {
-            if (util_1.noValue(arguments[0])) {
-                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
-            }
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
             }
@@ -745,9 +727,6 @@ define("index", ["require", "exports", "util", "exceptions"], function (require,
     exports.Img = Img;
     class Anchor extends BetterHTMLElement {
         constructor({ setid, cls, text, href, target, byid, query, htmlElement, children }) {
-            if (util_1.noValue(arguments[0])) {
-                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
-            }
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
             }
@@ -843,12 +822,10 @@ define("index", ["require", "exports", "util", "exceptions"], function (require,
     exports.anchor = anchor;
     function wrapWithBHE(tag, element) {
         if (tag === 'div') {
-            const d = div({ htmlElement: element });
-            return d;
+            return div({ htmlElement: element });
         }
         else if (tag === 'a') {
-            let a = anchor({ htmlElement: element });
-            return a;
+            return anchor({ htmlElement: element });
         }
         else if (tag === 'p') {
             return paragraph({ htmlElement: element });
@@ -1044,5 +1021,9 @@ define("exceptions", ["require", "exports", "util"], function (require, exports,
         }
     }
     exports.NotEnoughArgs = NotEnoughArgs;
+});
+define("typings/ctors", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
 });
 //# sourceMappingURL=all.js.map

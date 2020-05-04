@@ -71,17 +71,17 @@ const bar = <K extends Tag | string>(query: QuerySelector<K>) => document.queryS
 
 // Tag2BHE["a"] → Anchor
 export interface Tag2BHE {
-    "div": Div,
-    "a": Anchor,
-    "p": Paragraph,
     "img": Img,
+    "a": Anchor,
     "input": Input,
+    "div": Div,
+    "p": Paragraph,
     "button": Button,
     "span": Span,
 }
 
 
-type BHETag = keyof Tag2BHE;
+export type BHETag = keyof Tag2BHE;
 type BHEHTMLElement =
     HTMLAnchorElement |
     HTMLInputElement |
@@ -125,3 +125,5 @@ export type Enumerated<T> =
 export type TReturnBoolean = (s: string) => boolean;
 export type AnyFunction = (...args: any[]) => any;
 
+export type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
+export type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
