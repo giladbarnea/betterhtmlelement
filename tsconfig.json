@@ -1,12 +1,12 @@
 // *** root tsconfig
 {
     "compilerOptions": {
-        "target": "ES2017",
+        "target": "ES2015",
         /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019' or 'ESNEXT'. */
         //        "module": "amd",
         /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
-        "moduleResolution": "classic",
-        "module": "umd",
+        //        "moduleResolution": "classic",
+        "module": "CommonJS",
         "lib": [
             "es2017",
             "es2015",
@@ -15,7 +15,7 @@
         "strict": false,
         "noImplicitAny": false,
         "declaration": true,
-//        "outFile": "./dist/all.js",
+        //        "outFile": "./dist/all.js",
         "outDir": "./dist",
         "sourceMap": true,
         "keyofStringsOnly": true,
@@ -25,11 +25,11 @@
         "removeComments": true
     },
     "include": [
-        "src/*"
-    ],
-    "exclude": [
-        "dist/*",
-        "misc/*",
-        "test/*"
+        "src/**/*"
     ]
+    //    "exclude": [
+    //        "dist/*",
+    //        "misc/*",
+    //        "test/*"
+    //    ]
 }
