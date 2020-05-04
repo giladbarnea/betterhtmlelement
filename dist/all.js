@@ -124,6 +124,22 @@ define("util", ["require", "exports"], function (require, exports) {
     function isEmptyObj(obj) {
         return isObject(obj) && Object.keys(obj).length === 0;
     }
+    function isHTMLInputElement(el) {
+        return (el instanceof HTMLInputElement);
+    }
+    exports.isHTMLInputElement = isHTMLInputElement;
+    function isHTMLButtonElement(el) {
+        return (el instanceof HTMLButtonElement);
+    }
+    exports.isHTMLButtonElement = isHTMLButtonElement;
+    function isBHE(bhe, bheSubType) {
+        return (bhe instanceof bheSubType);
+    }
+    exports.isBHE = isBHE;
+    function isType(arg) {
+        return true;
+    }
+    exports.isType = isType;
     function isFunction(fn) {
         return fn && {}.toString.call(fn) === '[object Function]';
     }
@@ -828,7 +844,8 @@ define("index", ["require", "exports", "util"], function (require, exports, util
     }
     exports.Input = Input;
     class Span extends BetterHTMLElement {
-        constructor({ setid, cls, text, byid, query, htmlElement, children }) {
+        constructor(spanOpts) {
+            const { setid, cls, text, byid, query, htmlElement, children } = spanOpts;
             if (util_1.noValue(arguments[0])) {
                 throw new NotEnoughArgs([1], arguments[0]);
             }
@@ -931,54 +948,58 @@ define("index", ["require", "exports", "util"], function (require, exports, util
         return new BetterHTMLElement(elemOptions);
     }
     exports.elem = elem;
-    function span({ setid, cls, text, byid, query, htmlElement, children } = {}) {
-        return new Span({ setid, cls, text, byid, query, htmlElement, children });
+    function span(spanOpts) {
+        return new Span(spanOpts);
     }
-    function div({ setid, cls, text, byid, query, htmlElement, children } = {}) {
+    exports.span = span;
+    function div({ setid, cls, text, byid, query, htmlElement, children }) {
         return new Div({ setid, cls, text, byid, query, htmlElement, children });
     }
-    function button({ setid, cls, text, byid, query, htmlElement, children } = {}) {
+    exports.div = div;
+    function button({ setid, cls, text, byid, query, htmlElement, children }) {
         return new Button({ setid, cls, text, byid, query, htmlElement, children });
     }
     function input(inputOpts) {
         return new Input(inputOpts);
     }
     exports.input = input;
-    function img({ setid, cls, src, byid, query, htmlElement, children } = {}) {
+    function img({ setid, cls, src, byid, query, htmlElement, children }) {
         return new Img({ setid, cls, src, byid, query, htmlElement, children });
     }
-    function paragraph({ setid, cls, text, byid, query, htmlElement, children } = {}) {
+    function paragraph({ setid, cls, text, byid, query, htmlElement, children }) {
         return new Paragraph({ setid, cls, text, byid, query, htmlElement, children });
     }
-    function anchor({ setid, cls, text, href, target, byid, query, htmlElement, children } = {}) {
+    function anchor({ setid, cls, text, href, target, byid, query, htmlElement, children }) {
         return new Anchor({ setid, cls, text, href, target, byid, query, htmlElement, children });
     }
-    const query_input = elem({ query: 'input' });
-    const tag_input = elem({ tag: 'input' });
-    const aa = undefined;
-    const bb = undefined;
-    const cc = undefined;
-    const dd = undefined;
-    function wrapWithBHE(tag, htmlElement) {
-        switch (tag) {
-            case 'div':
-                let e = div({ htmlElement: htmlElement });
-                return e;
-            case 'a':
-                return anchor({ htmlElement });
-            case 'p':
-                return paragraph({ htmlElement });
-            case 'img':
-                return img({ htmlElement });
-            case 'input':
-                return input({ htmlElement });
-            case 'button':
-                return button({ htmlElement });
-            case 'span':
-                return span({ htmlElement });
-            default:
-                return elem({ htmlElement });
+    function wrapWithBHE(tag, element) {
+        if (tag === 'div') {
+            const d = div({ htmlElement: element });
+            return d;
+        }
+        else if (tag === 'a') {
+            let a = anchor({ htmlElement: element });
+            return a;
+        }
+        else if (tag === 'p') {
+            return paragraph({ htmlElement: element });
+        }
+        else if (tag === 'img') {
+            return img({ htmlElement: element });
+        }
+        else if (tag === 'input') {
+            return input({ htmlElement: element });
+        }
+        else if (tag === 'button') {
+            return button({ htmlElement: element });
+        }
+        else if (tag === 'span') {
+            return span({ htmlElement: element });
+        }
+        else {
+            return elem({ htmlElement: element });
         }
     }
+    exports.wrapWithBHE = wrapWithBHE;
 });
 //# sourceMappingURL=all.js.map

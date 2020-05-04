@@ -34,9 +34,9 @@ export interface ByHtmlElementBHEConstructor<E extends HTMLElement> {
 //     QueryBHEConstructor<Element2Tag<T>> |
 //     ByHtmlElementBHEConstructor<T>
 
-export type SubElemConstructor<K extends HTMLElement> = BHEConstructor<K> & {
-    text?: string;
-}
+// export type SubElemConstructor<K extends HTMLElement> = BHEConstructor<K> & {
+//     text?: string;
+// }
 
 export type DivConstructor = SubElemConstructor<HTMLDivElement> & {
     htmlElement?: HTMLDivElement;

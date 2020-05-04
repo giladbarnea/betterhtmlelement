@@ -112,7 +112,7 @@ export type Element2Tag<T> =
                         : T extends HTMLSpanElement ? "span"
                             : any
 
-type MapValues<T> = { [K in keyof T]: T[K] }[keyof T];
+export type MapValues<T> = { [K in keyof T]: T[K] }[keyof T];
 
 // HTMLDivElement, ...
 type HTMLElements = MapValues<HTMLElementTagNameMap>;

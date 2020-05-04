@@ -4,22 +4,22 @@ import {isBHE} from "../../src/util";
 
 describe('wrapWithBHE', () => {
     test("ok scenarios", () => {
-        let btn1: Button = wrapWithBHE("button", document.createElement("button"));
-        expect(btn1).toBeInstanceOf(BetterHTMLElement);
-        expect(btn1.e).toBeInstanceOf(HTMLButtonElement);
-        let btn2 = wrapWithBHE("button", document.createElement("button"));
-        expect(btn2).toBeInstanceOf(Button);
-        expect(btn2.e).toBeInstanceOf(HTMLButtonElement);
+        const a: Button = wrapWithBHE("button", document.createElement("button"));
+        expect(a).toBeInstanceOf(BetterHTMLElement);
+        expect(a.e).toBeInstanceOf(HTMLButtonElement);
+        const b = wrapWithBHE("button", document.createElement("button"));
+        expect(b).toBeInstanceOf(Button);
+        expect(b.e).toBeInstanceOf(HTMLButtonElement);
         expect(isBHE(wrapWithBHE("button", document.createElement("button")), Button)).toStrictEqual(true);
         expect(isBHE(wrapWithBHE("button", document.createElement("button")), Div)).toStrictEqual(false);
-        let a: Anchor = wrapWithBHE("a", document.createElement("a"));
-        expect(isBHE(a, Anchor)).toStrictEqual(true);
-        let p: Paragraph = wrapWithBHE("p", document.createElement("p"));
-        expect(isBHE(p, Paragraph)).toStrictEqual(true);
-        expect(p.e).toBeInstanceOf(HTMLParagraphElement);
+        const c: Anchor = wrapWithBHE("a", document.createElement("a"));
+        expect(isBHE(c, Anchor)).toStrictEqual(true);
+        const d: Paragraph = wrapWithBHE("p", document.createElement("p"));
+        expect(isBHE(d, Paragraph)).toStrictEqual(true);
+        expect(d.e).toBeInstanceOf(HTMLParagraphElement);
 
-        let btn: Button = wrapWithBHE("button", document.createElement("button"));
-        let inp: Input = wrapWithBHE("input", document.createElement("input"));
+        const e: Button = wrapWithBHE("button", document.createElement("button"));
+        const f: Input = wrapWithBHE("input", document.createElement("input"));
     });
     test("fails", () => {
         expect(isBHE(wrapWithBHE("div", document.createElement("button")), Button)).toStrictEqual(false);
@@ -27,8 +27,9 @@ describe('wrapWithBHE', () => {
         expect(isBHE(wrapWithBHE("div", document.createElement("button")), Div)).toStrictEqual(true);
         expect(isBHE(wrapWithBHE("button", document.createElement("div")), Div)).toStrictEqual(false);
         expect(isBHE(wrapWithBHE("button", document.createElement("div")), Button)).toStrictEqual(true);
-        let btn: Span = wrapWithBHE("button", document.createElement("button"));
-        let inp: Div = wrapWithBHE("input", document.createElement("input"));
+        const g: Div = wrapWithBHE("button", document.createElement("button"));
+        const h: Span = wrapWithBHE("button", document.createElement("button"));
+        const i: Span = new Button({})
     });
 });
 

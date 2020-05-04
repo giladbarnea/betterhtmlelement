@@ -89,27 +89,7 @@ function isEmptyObj(obj): boolean {
     return isObject(obj) && Object.keys(obj).length === 0
 }
 
-/*function isHTMLElement<K extends BHETag>(tag: K, element: BHETag2HTMLElement<K>): element is BHETag2HTMLElement<K> {
-    switch (tag) {
-        case 'div':
-            return element instanceof HTMLDivElement;
-        case 'a':
-            return element instanceof HTMLAnchorElement;
-        case 'p':
-            return element instanceof HTMLParagraphElement;
-        case 'img':
-            return element instanceof HTMLImageElement;
-        case 'input':
-            return element instanceof HTMLInputElement;
-        case 'button':
-            return element instanceof HTMLButtonElement;
-        case 'span':
-            return element instanceof HTMLSpanElement;
-        default:
-            return element instanceof HTMLElement;
-    }
 
-}*/
 export function isHTMLInputElement(el: HTMLInputElement): el is HTMLInputElement {
     return (el instanceof HTMLInputElement)
 }

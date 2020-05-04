@@ -1,5 +1,5 @@
-import {anyValue, enumerate, isBHE, isFunction, isHTMLElement, isHTMLInputElement, isObject, isType, noValue} from "./util";
-import {BHEHTMLElement, BHETag, ChildrenObj, Element2Tag, NotTag, QuerySelector, Tag, Tag2BHE, Tag2Element, TEvent, TEventFunctionMap, TMap, TRecMap, TReturnBoolean, TTag2BHE} from "./typings/misc";
+import {anyValue, enumerate, isFunction, isObject, noValue} from "./util";
+import {ChildrenObj, Element2Tag, NotTag, QuerySelector, Tag, TEvent, TEventFunctionMap, TMap, TRecMap, TReturnBoolean} from "./typings/misc";
 import {AnchorConstructor, DivConstructor, ImgConstructor, SubElemConstructor} from "./typings/ctors";
 
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
@@ -787,7 +787,7 @@ export class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
 export class Div extends BetterHTMLElement<HTMLDivElement> {
 
     /**Create a new Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({setid, cls, byid, text, query, htmlElement, children}: DivConstructor) {
+    constructor({setid, cls, byid, text, query, htmlElement, children}) {
         if (noValue(arguments[0])) {
             throw new NotEnoughArgs([1], arguments[0])
         }
@@ -811,7 +811,7 @@ export class Button extends BetterHTMLElement<HTMLButtonElement> {
 
 
     /**Create a new Button element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLButtonElement>) {
+    constructor({setid, cls, text, byid, query, htmlElement, children}) {
         if (noValue(arguments[0])) {
             throw new NotEnoughArgs([1], arguments[0])
         }
@@ -1166,99 +1166,48 @@ export function input(inputOpts): Input {
 
 
 /**Create an Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
-function img({setid, cls, src, byid, query, htmlElement, children}: ImgConstructor = {}): Img {
+function img({setid, cls, src, byid, query, htmlElement, children}: ImgConstructor): Img {
     return new Img({setid, cls, src, byid, query, htmlElement, children});
 }
 
 
 /**Create a Paragraph element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function paragraph({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLParagraphElement> = {}): Paragraph {
+function paragraph({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLParagraphElement>): Paragraph {
     return new Paragraph({setid, cls, text, byid, query, htmlElement, children});
 }
 
 /**Create a new Anchor element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
-function anchor({setid, cls, text, href, target, byid, query, htmlElement, children}: AnchorConstructor = {}): Anchor {
+function anchor({setid, cls, text, href, target, byid, query, htmlElement, children}: AnchorConstructor): Anchor {
     return new Anchor({setid, cls, text, href, target, byid, query, htmlElement, children});
 }
 
-/*// ** get EXISTING vanilla HTMLElement: by id, query or htmlElement
-function getHtmlElement<K extends (Tag | string)>(query: K): Tag2Element<K>;
-function getHtmlElement<T extends HTMLElement>(htmlElement: T): T;
-function getHtmlElement(idOrQueryOrHtmlElement) {
-    if (idOrQueryOrHtmlElement instanceof HTMLElement) {
-        return idOrQueryOrHtmlElement;
-    }
-    return document.querySelector(idOrQueryOrHtmlElement);
-}
 
-// ** create NEW vanilla HTMLElement: by tag
-function newHtmlElement<K extends Tag>(tag: K) {
-    if (tag === undefined) {
-        throw new NotEnoughArgs(1, {tag})
-    }
-    if (['svg', 'path'].includes(tag.toLowerCase())) {
-        throw new Error("Not impl");
-        // this._isSvg = true;
-        // this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
-    } else {
-        return document.createElement(tag);
-    }
-}
-
-// getHtmlElement("diva");
-// getHtmlElement(document.createElement("div"));
-// getHtmlElement(5);
-// getHtmlElement("div");
-// newHtmlElement("div");
-*/
-
-const query_input = elem({query: 'input'});
-const tag_input = elem({tag: 'input'});
-const aa: Tag2Element<'input'> = undefined;
-
-const bb: BetterHTMLElement<Tag2Element<"input">> = undefined;
-
-const cc: BetterHTMLElement<HTMLInputElement> = undefined;
-
-const dd: Input = undefined;
-
-
-// export function wrapWithBHE(tag: "button", htmlElement: HTMLButtonElement): Button;
-// export function wrapWithBHE(tag: "div", htmlElement: HTMLDivElement): Div;
-// export function wrapWithBHE(tag: "div", htmlElement: HTMLDivElement): Div;
-// export function wrapWithBHE(tag: "img", htmlElement: HTMLImageElement): Img;
-// export function wrapWithBHE(tag: "input", htmlElement: HTMLInputElement): Input;
-// export function wrapWithBHE(tag: "p", htmlElement: HTMLParagraphElement): Paragraph;
-// export function wrapWithBHE(tag: "span", htmlElement: HTMLSpanElement): Span;
-// export function wrapWithBHE(tag: "a", htmlElement: HTMLAnchorElement): Anchor;
-export function wrapWithBHE<K extends "div">(tag: K, element):
-    Tag2BHE[K] {
-
-// function wrapWithBHE<K extends BHETag>(tag: K, htmlElement: BHETag2HTMLElement<K>): Tag2BHE<K> {
-// function wrapWithBHE<K extends BHETag, T extends Tag2Element<K>>(tag: K, htmlElement: T): BetterHTMLElement<T> {
-
-    if (isType<string>(tag)) {
-        if (isType<"div">(tag)) {
-            if (tag === "div") {
-                const d = div({htmlElement: element});
-                return d as Div;
-            }
-        }
-    }
-    if (tag as "div" === 'div') {
-        // } else if (tag === 'a') {
-        //     return anchor({htmlElement: element});
-        // } else if (tag === 'p') {
-        //     return paragraph({htmlElement: element});
-        // } else if (tag === 'img') {
-        //     return img({htmlElement: element});
-        // } else if (tag === 'input') {
-        //     return input({htmlElement: element});
-        // } else if (tag === 'button') {
-        //     return button({htmlElement: element});
-        // } else if (tag === 'span') {
-        //     return span({htmlElement: element});
+export function wrapWithBHE(tag: "button", htmlElement: HTMLButtonElement): Button;
+export function wrapWithBHE(tag: "div", htmlElement: HTMLDivElement): Div;
+export function wrapWithBHE(tag: "img", htmlElement: HTMLImageElement): Img;
+export function wrapWithBHE(tag: "input", htmlElement: HTMLInputElement): Input;
+export function wrapWithBHE(tag: "p", htmlElement: HTMLParagraphElement): Paragraph;
+export function wrapWithBHE(tag: "span", htmlElement: HTMLSpanElement): Span;
+export function wrapWithBHE(tag: "a", htmlElement: HTMLAnchorElement): Anchor;
+export function wrapWithBHE(tag, element) {
+    if (tag === 'div') {
+        const d = div({htmlElement: element});
+        return d;
+    } else if (tag === 'a') {
+        let a = anchor({htmlElement: element});
+        return a;
+    } else if (tag === 'p') {
+        return paragraph({htmlElement: element});
+    } else if (tag === 'img') {
+        return img({htmlElement: element});
+    } else if (tag === 'input') {
+        return input({htmlElement: element});
+    } else if (tag === 'button') {
+        return button({htmlElement: element});
+    } else if (tag === 'span') {
+        return span({htmlElement: element});
     } else {
         return elem({htmlElement: element});
     }
 }
+
