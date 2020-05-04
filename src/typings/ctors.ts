@@ -1,4 +1,4 @@
-import {ChildrenObj, Element2Tag, QuerySelector, Tag} from "./misc"
+// import {ChildrenObj, Element2Tag, QuerySelector, Tag} from "./misc"
 
 interface NewBHEConstructor<H extends HTMLElement> {
     tag: Element2Tag<H>,

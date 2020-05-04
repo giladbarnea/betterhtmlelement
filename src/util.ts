@@ -1,7 +1,7 @@
-import {AnyFunction, Enumerated} from "./typings/misc";
-import {BetterHTMLElement} from "./index";
+// import {AnyFunction, Enumerated} from "./typings/misc";
+// import {BetterHTMLElement} from "./index";
 
-export function enumerate<T>(obj: T): Enumerated<T> {
+function enumerate<T>(obj: T): Enumerated<T> {
     // undefined    []
     // {}           []
     // []           []
@@ -49,7 +49,7 @@ export function enumerate<T>(obj: T): Enumerated<T> {
 }
 
 
-export function bool(val: any): boolean {
+function bool(val: any): boolean {
 
     if (val === null) {
         return false
@@ -70,7 +70,7 @@ function wait(ms: number): Promise<any> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function anyValue(obj): boolean {
+function anyValue(obj): boolean {
     let array;
     if (isObject(obj)) {
         array = Object.values(obj)
@@ -82,7 +82,7 @@ export function anyValue(obj): boolean {
     return array.filter(x => Boolean(x)).length > 0
 }
 
-export function noValue(obj): boolean {
+function noValue(obj): boolean {
     let array;
     if (isObject(obj)) {
         array = Object.values(obj)
@@ -94,7 +94,7 @@ export function noValue(obj): boolean {
     return array.filter(x => Boolean(x)).length === 0
 }
 
-export function isArray<T>(obj): obj is Array<T> {
+function isArray<T>(obj): obj is Array<T> {
     return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
 
@@ -107,29 +107,29 @@ function isEmptyObj(obj): boolean {
 }
 
 
-/*export function isHTMLInputElement(el: HTMLInputElement): el is HTMLInputElement {
+/*function isHTMLInputElement(el: HTMLInputElement): el is HTMLInputElement {
     return (el instanceof HTMLInputElement)
 }
 
-export function isHTMLButtonElement(el: HTMLButtonElement): el is HTMLButtonElement {
+function isHTMLButtonElement(el: HTMLButtonElement): el is HTMLButtonElement {
     return (el instanceof HTMLButtonElement)
 }*/
 
-export function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType): bhe is T {
+function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType): bhe is T {
     return (bhe instanceof bheSubType)
 }
 
-export function isType<T>(arg: T): arg is T {
+function isType<T>(arg: T): arg is T {
     return true
 }
 
-export function isFunction(fn: AnyFunction): fn is AnyFunction {
+function isFunction(fn: AnyFunction): fn is AnyFunction {
     return fn && {}.toString.call(fn) === '[object Function]'
 }
 
 
 // *  underscore.js
-export function isObject(obj): boolean {
+function isObject(obj): boolean {
     return typeof obj === 'object' && !!obj;
 }
 

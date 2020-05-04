@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const a = undefined;
 const b = undefined;
 const foo = (tag) => document.createElement(tag);

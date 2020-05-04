@@ -6,7 +6,7 @@
         //        "module": "amd",
         /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
         //        "moduleResolution": "classic",
-        "module": "CommonJS",
+//        "module": "CommonJS",
         "lib": [
             "es2017",
             "es2015",

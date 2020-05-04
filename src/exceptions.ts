@@ -1,4 +1,4 @@
-import {isArray} from "./util";
+// import {isArray} from "./util";
 
 function getArgNamesValues(argsWithValues: object): string {
     return Object.entries(argsWithValues)
@@ -18,7 +18,7 @@ function getArgsWithValues(passedArgs: object) {
 }
 
 /**Prints what was expected and what was actually passed.*/
-export class MutuallyExclusiveArgs extends Error {
+class MutuallyExclusiveArgs extends Error {
     constructor(passedArgs: object, details?: string) {
         const argsWithValues = getArgsWithValues(passedArgs);
         const argNamesValues: string = getArgNamesValues(argsWithValues);
@@ -30,7 +30,7 @@ export class MutuallyExclusiveArgs extends Error {
 
 }
 
-export class NotEnoughArgs extends Error {
+class NotEnoughArgs extends Error {
     constructor(expected: number | number[], passedArgs: object, details?: string) {
         const argsWithValues = getArgsWithValues(passedArgs);
         const argNamesValues: string = getArgNamesValues(argsWithValues);

@@ -1,7 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const util_1 = require("./util");
-const exceptions_1 = require("./exceptions");
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 class BetterHTMLElement {
     constructor(elemOptions) {
@@ -10,26 +6,26 @@ class BetterHTMLElement {
         this._cachedChildren = {};
         const { tag, cls, setid, htmlElement, byid, query, children } = elemOptions;
         if ([byid, htmlElement, query].filter(x => Boolean(x)).length > 1) {
-            throw new exceptions_1.MutuallyExclusiveArgs({
+            throw new MutuallyExclusiveArgs({
                 byid, query, htmlElement
             }, `Choose only one way to get an existing element; by its id, query, or actual element`);
         }
-        if (tag !== undefined && util_1.anyValue([children, byid, htmlElement, query])) {
-            throw new exceptions_1.MutuallyExclusiveArgs({
+        if (tag !== undefined && anyValue([children, byid, htmlElement, query])) {
+            throw new MutuallyExclusiveArgs({
                 tag,
                 byid,
                 htmlElement,
                 query
             }, `Either create a new elem via "tag", or get an existing one via either "byid", "htmlElement", or "query" (and maybe cache its "children")`);
         }
-        if (util_1.anyValue([tag, cls, setid]) && util_1.anyValue([children, byid, htmlElement, query])) {
-            throw new exceptions_1.MutuallyExclusiveArgs({
+        if (anyValue([tag, cls, setid]) && anyValue([children, byid, htmlElement, query])) {
+            throw new MutuallyExclusiveArgs({
                 group1: { cls, setid },
                 group2: { children, byid, htmlElement, query }
             }, `Can't have args from both groups`);
         }
-        if (util_1.noValue([tag, cls, setid]) && util_1.noValue([children, byid, htmlElement, query])) {
-            throw new exceptions_1.NotEnoughArgs([1], {
+        if (noValue([tag, cls, setid]) && noValue([children, byid, htmlElement, query])) {
+            throw new NotEnoughArgs([1], {
                 group1: { cls, setid },
                 group2: { children, byid, htmlElement, query }
             }, `Expecting at least one arg from a given group`);
@@ -74,7 +70,7 @@ class BetterHTMLElement {
         if (newHtmlElement instanceof BetterHTMLElement) {
             this._htmlElement.replaceWith(newHtmlElement.e);
             this._htmlElement = newHtmlElement.e;
-            for (let [_key, _cachedChild] of util_1.enumerate(newHtmlElement._cachedChildren)) {
+            for (let [_key, _cachedChild] of enumerate(newHtmlElement._cachedChildren)) {
                 this._cache(_key, _cachedChild);
             }
             if (Object.keys(this._cachedChildren).length
@@ -128,7 +124,7 @@ class BetterHTMLElement {
             return this.e.style[css];
         }
         else {
-            for (let [styleAttr, styleVal] of util_1.enumerate(css)) {
+            for (let [styleAttr, styleVal] of enumerate(css)) {
                 this.e.style[styleAttr] = styleVal;
             }
             return this;
@@ -145,7 +141,7 @@ class BetterHTMLElement {
         if (cls === undefined) {
             return Array.from(this.e.classList);
         }
-        else if (util_1.isFunction(cls)) {
+        else if (isFunction(cls)) {
             return Array.from(this.e.classList).find(cls);
         }
         else {
@@ -166,7 +162,7 @@ class BetterHTMLElement {
         return this;
     }
     removeClass(cls, ...clses) {
-        if (util_1.isFunction(cls)) {
+        if (isFunction(cls)) {
             this.e.classList.remove(this.class(cls));
             for (let c of clses) {
                 this.e.classList.remove(this.class(c));
@@ -181,7 +177,7 @@ class BetterHTMLElement {
         return this;
     }
     replaceClass(oldToken, newToken) {
-        if (util_1.isFunction(oldToken)) {
+        if (isFunction(oldToken)) {
             this.e.classList.replace(this.class(oldToken), newToken);
         }
         else {
@@ -190,7 +186,7 @@ class BetterHTMLElement {
         return this;
     }
     toggleClass(cls, force) {
-        if (util_1.isFunction(cls)) {
+        if (isFunction(cls)) {
             this.e.classList.toggle(this.class(cls), force);
         }
         else {
@@ -199,7 +195,7 @@ class BetterHTMLElement {
         return this;
     }
     hasClass(cls) {
-        if (util_1.isFunction(cls)) {
+        if (isFunction(cls)) {
             return this.class(cls) !== undefined;
         }
         else {
@@ -295,7 +291,7 @@ class BetterHTMLElement {
             }
         }
         else {
-            for (let [key, child] of util_1.enumerate(keyChildPairs)) {
+            for (let [key, child] of enumerate(keyChildPairs)) {
                 _cacheAppend(key, child);
             }
         }
@@ -328,9 +324,9 @@ class BetterHTMLElement {
         return new BetterHTMLElement({ htmlElement: this.e.cloneNode(deep) });
     }
     cacheChildren(map) {
-        for (let [key, value] of util_1.enumerate(map)) {
+        for (let [key, value] of enumerate(map)) {
             let type = typeof value;
-            if (util_1.isObject(value)) {
+            if (isObject(value)) {
                 if (value instanceof BetterHTMLElement) {
                     this._cache(key, value);
                 }
@@ -369,7 +365,7 @@ class BetterHTMLElement {
         return this;
     }
     on(evTypeFnPairs, options) {
-        for (let [evType, evFn] of util_1.enumerate(evTypeFnPairs)) {
+        for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
                 evFn(evt);
             };
@@ -492,7 +488,7 @@ class BetterHTMLElement {
             return this.e.getAttribute(attrValPairs);
         }
         else {
-            for (let [attr, val] of util_1.enumerate(attrValPairs)) {
+            for (let [attr, val] of enumerate(attrValPairs)) {
                 this.e.setAttribute(attr, val);
             }
             return this;
@@ -522,7 +518,6 @@ class BetterHTMLElement {
         }
     }
 }
-exports.BetterHTMLElement = BetterHTMLElement;
 class Div extends BetterHTMLElement {
     constructor(divOpts) {
         const { setid, cls, text, byid, query, htmlElement, children } = divOpts;
@@ -543,7 +538,6 @@ class Div extends BetterHTMLElement {
         }
     }
 }
-exports.Div = Div;
 class Button extends BetterHTMLElement {
     constructor(buttonOpts) {
         const { setid, cls, text, byid, query, htmlElement, children } = buttonOpts;
@@ -564,7 +558,6 @@ class Button extends BetterHTMLElement {
         }
     }
 }
-exports.Button = Button;
 class Paragraph extends BetterHTMLElement {
     constructor(pOpts) {
         const { setid, cls, text, byid, query, htmlElement, children } = pOpts;
@@ -585,7 +578,6 @@ class Paragraph extends BetterHTMLElement {
         }
     }
 }
-exports.Paragraph = Paragraph;
 class Span extends BetterHTMLElement {
     constructor(spanOpts) {
         const { setid, cls, text, byid, query, htmlElement, children } = spanOpts;
@@ -606,7 +598,6 @@ class Span extends BetterHTMLElement {
         }
     }
 }
-exports.Span = Span;
 class Input extends BetterHTMLElement {
     constructor(inputOpts) {
         const { setid, cls, type, placeholder, byid, query, htmlElement, children } = inputOpts;
@@ -696,7 +687,6 @@ class Input extends BetterHTMLElement {
         }
     }
 }
-exports.Input = Input;
 class Img extends BetterHTMLElement {
     constructor({ setid, cls, src, byid, query, htmlElement, children }) {
         if (htmlElement !== undefined) {
@@ -725,7 +715,6 @@ class Img extends BetterHTMLElement {
         }
     }
 }
-exports.Img = Img;
 class Anchor extends BetterHTMLElement {
     constructor({ setid, cls, text, href, target, byid, query, htmlElement, children }) {
         if (htmlElement !== undefined) {
@@ -767,60 +756,51 @@ class Anchor extends BetterHTMLElement {
         }
     }
 }
-exports.Anchor = Anchor;
 function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
-exports.elem = elem;
 function span(spanOpts) {
-    if (!util_1.bool(spanOpts)) {
+    if (!bool(spanOpts)) {
         spanOpts = {};
     }
     return new Span(spanOpts);
 }
-exports.span = span;
 function div(divOpts) {
-    if (!util_1.bool(divOpts)) {
+    if (!bool(divOpts)) {
         divOpts = {};
     }
     return new Div(divOpts);
 }
-exports.div = div;
 function button(buttonOpts) {
-    if (!util_1.bool(buttonOpts)) {
+    if (!bool(buttonOpts)) {
         buttonOpts = {};
     }
     return new Button(buttonOpts);
 }
-exports.button = button;
 function input(inputOpts) {
-    if (!util_1.bool(inputOpts)) {
+    if (!bool(inputOpts)) {
         inputOpts = {};
     }
     return new Input(inputOpts);
 }
-exports.input = input;
 function img(imgOpts) {
-    if (!util_1.bool(imgOpts)) {
+    if (!bool(imgOpts)) {
         imgOpts = {};
     }
     return new Img(imgOpts);
 }
-exports.img = img;
 function paragraph(pOpts) {
-    if (!util_1.bool(pOpts)) {
+    if (!bool(pOpts)) {
         pOpts = {};
     }
     return new Paragraph(pOpts);
 }
-exports.paragraph = paragraph;
 function anchor(anchorOpts) {
-    if (!util_1.bool(anchorOpts)) {
+    if (!bool(anchorOpts)) {
         anchorOpts = {};
     }
     return new Anchor(anchorOpts);
 }
-exports.anchor = anchor;
 function wrapWithBHE(tag, element) {
     if (tag === 'div') {
         return div({ htmlElement: element });
@@ -847,5 +827,4 @@ function wrapWithBHE(tag, element) {
         return elem({ htmlElement: element });
     }
 }
-exports.wrapWithBHE = wrapWithBHE;
 //# sourceMappingURL=index.js.map

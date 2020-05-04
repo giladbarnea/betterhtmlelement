@@ -1,6 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const util_1 = require("./util");
 function getArgNamesValues(argsWithValues) {
     return Object.entries(argsWithValues)
         .flatMap(([argname, argval]) => `${argname}: ${argval}`)
@@ -24,13 +21,12 @@ class MutuallyExclusiveArgs extends Error {
         super(message);
     }
 }
-exports.MutuallyExclusiveArgs = MutuallyExclusiveArgs;
 class NotEnoughArgs extends Error {
     constructor(expected, passedArgs, details) {
         const argsWithValues = getArgsWithValues(passedArgs);
         const argNamesValues = getArgNamesValues(argsWithValues);
         let message;
-        if (util_1.isArray(expected)) {
+        if (isArray(expected)) {
             let [min, max] = expected;
             if (max === undefined) {
                 message = `Didn't receive enough args: expected at least ${min}. `;
@@ -46,5 +42,4 @@ class NotEnoughArgs extends Error {
         super(message);
     }
 }
-exports.NotEnoughArgs = NotEnoughArgs;
 //# sourceMappingURL=exceptions.js.map

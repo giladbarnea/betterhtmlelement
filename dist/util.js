@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 function enumerate(obj) {
     let typeofObj = typeof obj;
     if (obj === undefined
@@ -29,7 +27,6 @@ function enumerate(obj) {
     }
     return array;
 }
-exports.enumerate = enumerate;
 function bool(val) {
     if (val === null) {
         return false;
@@ -45,7 +42,6 @@ function bool(val) {
     }
     return Object.keys(val).length !== 0;
 }
-exports.bool = bool;
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -62,7 +58,6 @@ function anyValue(obj) {
     }
     return array.filter(x => Boolean(x)).length > 0;
 }
-exports.anyValue = anyValue;
 function noValue(obj) {
     let array;
     if (isObject(obj)) {
@@ -76,11 +71,9 @@ function noValue(obj) {
     }
     return array.filter(x => Boolean(x)).length === 0;
 }
-exports.noValue = noValue;
 function isArray(obj) {
     return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
-exports.isArray = isArray;
 function isEmptyArr(collection) {
     return isArray(collection) && getLength(collection) === 0;
 }
@@ -90,19 +83,15 @@ function isEmptyObj(obj) {
 function isBHE(bhe, bheSubType) {
     return (bhe instanceof bheSubType);
 }
-exports.isBHE = isBHE;
 function isType(arg) {
     return true;
 }
-exports.isType = isType;
 function isFunction(fn) {
     return fn && {}.toString.call(fn) === '[object Function]';
 }
-exports.isFunction = isFunction;
 function isObject(obj) {
     return typeof obj === 'object' && !!obj;
 }
-exports.isObject = isObject;
 function shallowProperty(key) {
     return function (obj) {
         return obj == null ? void 0 : obj[key];

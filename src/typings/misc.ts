@@ -1,22 +1,22 @@
-import {Div, Anchor, Paragraph, Img, Input, Button, Span} from "../index";
+// import {Div, Anchor, Paragraph, Img, Input, Button, Span} from "../index";
 
 // TODO: why <TEvent> needed in allOff()?
-export interface TMap<T> {
+interface TMap<T> {
     [s: string]: T;
 
     [s: number]: T
 }
 
-export interface TRecMap<T> {
+interface TRecMap<T> {
     [s: string]: T | TRecMap<T>;
 
     [s: number]: T | TRecMap<T>
 }
 
 
-export type TEvent = keyof HTMLElementEventMap;
+type TEvent = keyof HTMLElementEventMap;
 // for each event ("click"), create a `(event: MouseEvent) => void` function.
-export type TEventFunctionMap<K extends TEvent> = {
+type TEventFunctionMap<K extends TEvent> = {
     [P in K]?: (event: HTMLElementEventMap[P]) => void;
 };
 
@@ -41,8 +41,8 @@ const b: HTMLTag2HTMLElement2["a"] = undefined;
  * foo("a") → HTMLAnchorElement
  * foo("BAD") // error
  */
-export type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
-export type NotTag<T extends Tag> = Exclude<Tag, T>;
+type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
+type NotTag<T extends Tag> = Exclude<Tag, T>;
 /**
  * "a", "div", "gilad".
  * Tag2Element expects a tag and returns an HTMLElement.
@@ -51,7 +51,7 @@ export type NotTag<T extends Tag> = Exclude<Tag, T>;
  * baz("div") → HTMLDivElement
  * baz("diva") → HTMLSelectElement | HTMLLegendElement | ...
  */
-export type Tag2Element<K extends Tag = Tag> = K extends Tag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[Tag]
+type Tag2Element<K extends Tag = Tag> = K extends Tag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[Tag]
 type TagOrString = Tag | string;
 /**
  * "a", "div", "gilad".
@@ -61,7 +61,7 @@ type TagOrString = Tag | string;
  * bar("a") → HTMLAnchorElement
  * bar("gilad") → HTMLSelectElement | HTMLLegendElement | ...
  */
-export type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
+type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
 
 const foo = <K extends Tag>(tag: K) => document.createElement(tag);
 
@@ -70,7 +70,7 @@ const baz = <K extends Tag | string>(query: K) => document.querySelector(query);
 const bar = <K extends Tag | string>(query: QuerySelector<K>) => document.querySelector(query);
 
 // Tag2BHE["a"] → Anchor
-export interface Tag2BHE {
+interface Tag2BHE {
     "img": Img,
     "a": Anchor,
     "input": Input,
@@ -81,7 +81,7 @@ export interface Tag2BHE {
 }
 
 
-export type BHETag = keyof Tag2BHE;
+type BHETag = keyof Tag2BHE;
 type BHEHTMLElement =
     HTMLAnchorElement |
     HTMLInputElement |
@@ -97,13 +97,13 @@ type StdBHEHTMLElement =
     HTMLButtonElement |
     HTMLSpanElement
 
-export type Element2Tag<T> =
+type Element2Tag<T> =
     T extends HTMLInputElement ? "input"
         : T extends HTMLAnchorElement ? "a"
         : T extends HTMLImageElement ? "img"
             : Tag
 
-export type MapValues<T> = { [K in keyof T]: T[K] }[keyof T];
+type MapValues<T> = { [K in keyof T]: T[K] }[keyof T];
 
 // HTMLDivElement, ...
 type HTMLElements = MapValues<HTMLElementTagNameMap>;
@@ -117,13 +117,13 @@ type GenericFilter<T, U> = T extends U ? T : never;
 
 
 // type ChildrenObj = TMap<Tag2Element> | TRecMap<Tag2Element>
-export type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
-export type Enumerated<T> =
+type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
+type Enumerated<T> =
     T extends (infer U)[] ? [number, U][]
         : T extends TMap<(infer U)> ? [keyof T, U][]
         : T extends boolean ? never : any;
-export type TReturnBoolean = (s: string) => boolean;
-export type AnyFunction = (...args: any[]) => any;
+type TReturnBoolean = (s: string) => boolean;
+type AnyFunction = (...args: any[]) => any;
 
-export type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
-export type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
+type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
+type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
