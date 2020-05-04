@@ -1,0 +1,11 @@
+import { AnyFunction, Enumerated } from "./typings/misc";
+import { BetterHTMLElement } from "./index";
+export declare function enumerate<T>(obj: T): Enumerated<T>;
+export declare function bool(val: any): boolean;
+export declare function anyValue(obj: any): boolean;
+export declare function noValue(obj: any): boolean;
+export declare function isArray<T>(obj: any): obj is Array<T>;
+export declare function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType: any): bhe is T;
+export declare function isType<T>(arg: T): arg is T;
+export declare function isFunction(fn: AnyFunction): fn is AnyFunction;
+export declare function isObject(obj: any): boolean;

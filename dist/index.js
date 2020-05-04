@@ -1,6 +1,16 @@
-define("index", ["require", "exports", "util", "exceptions"], function (require, exports, util_1, exceptions_1) {
+(function (factory) {
+    if (typeof module === "object" && typeof module.exports === "object") {
+        var v = factory(require, exports);
+        if (v !== undefined) module.exports = v;
+    }
+    else if (typeof define === "function" && define.amd) {
+        define(["require", "exports", "./util", "./exceptions"], factory);
+    }
+})(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    const util_1 = require("./util");
+    const exceptions_1 = require("./exceptions");
     const SVG_NS_URI = 'http://www.w3.org/2000/svg';
     class BetterHTMLElement {
         constructor(elemOptions) {
@@ -848,182 +858,4 @@ define("index", ["require", "exports", "util", "exceptions"], function (require,
     }
     exports.wrapWithBHE = wrapWithBHE;
 });
-define("typings/misc", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    const a = undefined;
-    const b = undefined;
-    const foo = (tag) => document.createElement(tag);
-    const baz = (query) => document.querySelector(query);
-    const bar = (query) => document.querySelector(query);
-});
-define("util", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    function enumerate(obj) {
-        let typeofObj = typeof obj;
-        if (obj === undefined
-            || isEmptyObj(obj)
-            || isEmptyArr(obj)
-            || obj === "") {
-            return [];
-        }
-        if (obj === null
-            || typeofObj === "boolean"
-            || typeofObj === "number"
-            || typeofObj === "function") {
-            throw new TypeError(`${typeofObj} object is not iterable`);
-        }
-        let array = [];
-        if (isArray(obj)) {
-            let i = 0;
-            for (let x of obj) {
-                array.push([i, x]);
-                i++;
-            }
-        }
-        else {
-            for (let prop in obj) {
-                array.push([prop, obj[prop]]);
-            }
-        }
-        return array;
-    }
-    exports.enumerate = enumerate;
-    function bool(val) {
-        if (val === null) {
-            return false;
-        }
-        const typeofval = typeof val;
-        if (typeofval !== 'object') {
-            if (typeofval === 'function') {
-                return true;
-            }
-            else {
-                return !!val;
-            }
-        }
-        return Object.keys(val).length !== 0;
-    }
-    exports.bool = bool;
-    function wait(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    function anyValue(obj) {
-        let array;
-        if (isObject(obj)) {
-            array = Object.values(obj);
-        }
-        else if (isArray(obj)) {
-            array = obj;
-        }
-        else {
-            throw new TypeError(`expected array or obj, got: ${typeof obj}`);
-        }
-        return array.filter(x => Boolean(x)).length > 0;
-    }
-    exports.anyValue = anyValue;
-    function noValue(obj) {
-        let array;
-        if (isObject(obj)) {
-            array = Object.values(obj);
-        }
-        else if (isArray(obj)) {
-            array = obj;
-        }
-        else {
-            throw new TypeError(`expected array or obj, got: ${typeof obj}`);
-        }
-        return array.filter(x => Boolean(x)).length === 0;
-    }
-    exports.noValue = noValue;
-    function isArray(obj) {
-        return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
-    }
-    exports.isArray = isArray;
-    function isEmptyArr(collection) {
-        return isArray(collection) && getLength(collection) === 0;
-    }
-    function isEmptyObj(obj) {
-        return isObject(obj) && Object.keys(obj).length === 0;
-    }
-    function isBHE(bhe, bheSubType) {
-        return (bhe instanceof bheSubType);
-    }
-    exports.isBHE = isBHE;
-    function isType(arg) {
-        return true;
-    }
-    exports.isType = isType;
-    function isFunction(fn) {
-        return fn && {}.toString.call(fn) === '[object Function]';
-    }
-    exports.isFunction = isFunction;
-    function isObject(obj) {
-        return typeof obj === 'object' && !!obj;
-    }
-    exports.isObject = isObject;
-    function shallowProperty(key) {
-        return function (obj) {
-            return obj == null ? void 0 : obj[key];
-        };
-    }
-    function getLength(collection) {
-        return shallowProperty('length')(collection);
-    }
-});
-define("exceptions", ["require", "exports", "util"], function (require, exports, util_2) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    function getArgNamesValues(argsWithValues) {
-        return Object.entries(argsWithValues)
-            .flatMap(([argname, argval]) => `${argname}: ${argval}`)
-            .join('", "');
-    }
-    function getArgsWithValues(passedArgs) {
-        const argsWithValues = {};
-        for (let [argname, argval] of Object.entries(passedArgs)) {
-            if (argval !== undefined) {
-                argsWithValues[argname] = argval;
-            }
-        }
-        return argsWithValues;
-    }
-    class MutuallyExclusiveArgs extends Error {
-        constructor(passedArgs, details) {
-            const argsWithValues = getArgsWithValues(passedArgs);
-            const argNamesValues = getArgNamesValues(argsWithValues);
-            let message = `Didn't receive exactly one arg. `;
-            message += `Instead, out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
-            super(message);
-        }
-    }
-    exports.MutuallyExclusiveArgs = MutuallyExclusiveArgs;
-    class NotEnoughArgs extends Error {
-        constructor(expected, passedArgs, details) {
-            const argsWithValues = getArgsWithValues(passedArgs);
-            const argNamesValues = getArgNamesValues(argsWithValues);
-            let message;
-            if (util_2.isArray(expected)) {
-                let [min, max] = expected;
-                if (max === undefined) {
-                    message = `Didn't receive enough args: expected at least ${min}. `;
-                }
-                else {
-                    message = `Didn't receive enough args: expected between ${min} and ${max}. `;
-                }
-            }
-            else {
-                message = `Didn't receive enough args: expected exactly ${expected}. `;
-            }
-            message += `Out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
-            super(message);
-        }
-    }
-    exports.NotEnoughArgs = NotEnoughArgs;
-});
-define("typings/ctors", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-});
-//# sourceMappingURL=all.js.map
+//# sourceMappingURL=index.js.map
