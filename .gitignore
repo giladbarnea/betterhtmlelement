@@ -63,4 +63,3 @@ jspm_packages/
 .next
 
 \.directory
-*.js.map
