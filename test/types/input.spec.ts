@@ -1,25 +1,35 @@
-import {input, Div, Input, BetterHTMLElement} from "../../src/index";
+import {input, Input} from "../../src/index";
 // npm test "input\.spec\.ts"
 describe('{query: ...}', () => {
-    test("input()", () => {
-        let a = input({query: 'input'});
-        let b = input({query: 'input[type=checkbox]'});
-        let d = new Input({query: 'input'});
-        let e = new Input({query: 'input[type=checkbox]'});
+    test("sanity", () => {
+        const a: Input = input({query: 'input'});
+        const b: Input = input({query: 'input[type=checkbox]'});
+        const d: Input = new Input({query: 'input'});
+        const e: Input = new Input({query: 'input[type=checkbox]'});
     });
     test("input({query: 'div'})", () => {
-        let SHOULDFAILa = input({query: 'div'});
-        let SHOULDFAILb = new Input({query: 'div'});
-        let c = input({query: 'div.myclass'}); // can't squiggly
-        let d = new Input({query: 'div.myclass'}); // can't squiggly
+
+        const c = input({query: 'div.myclass'}); // can't squiggly
+        const d = new Input({query: 'div.myclass'}); // can't squiggly
     });
 });
 describe('{htmlElement: ...}', () => {
-    test("input()", () => {
-        let a = input({htmlElement: document.createElement('input')});
+    test("sanity", () => {
+        const a = input({htmlElement: document.createElement('input')});
     });
     test("input({query: 'div'})", () => {
-        let SHOULDFAILa = input({htmlElement: document.createElement('div')});
-        let SHOULDFAILb = new Input({htmlElement: document.createElement('div')});
+        const SHOULDFAILa = input({htmlElement: document.createElement('div')});
+        const SHOULDFAILb = input({query: 'div'});
     });
 });
+
+describe("badctor", () => {
+    test("badctor", () => {
+        expect(() => {
+            input({});
+            input();
+        }).not.toThrowError();
+    })
+
+});
+

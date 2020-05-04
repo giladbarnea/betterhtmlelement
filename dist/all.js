@@ -1,167 +1,8 @@
-function getArgNamesValues(argsWithValues) {
-    return Object.entries(argsWithValues)
-        .flatMap(([argname, argval]) => `${argname}: ${argval}`)
-        .join('", "');
-}
-function getArgsWithValues(passedArgs) {
-    const argsWithValues = {};
-    for (let [argname, argval] of Object.entries(passedArgs)) {
-        if (argval !== undefined) {
-            argsWithValues[argname] = argval;
-        }
-    }
-    return argsWithValues;
-}
-class MutuallyExclusiveArgs extends Error {
-    constructor(passedArgs, details) {
-        const argsWithValues = getArgsWithValues(passedArgs);
-        const argNamesValues = getArgNamesValues(argsWithValues);
-        let message = `Didn't receive exactly one arg. `;
-        message += `Instead, out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
-        super(message);
-    }
-}
-class NotEnoughArgs extends Error {
-    constructor(expected, passedArgs, details) {
-        const argsWithValues = getArgsWithValues(passedArgs);
-        const argNamesValues = getArgNamesValues(argsWithValues);
-        let message;
-        if (isArray(expected)) {
-            let [min, max] = expected;
-            if (max === undefined) {
-                message = `Didn't receive enough args: expected at least ${min}. `;
-            }
-            else {
-                message = `Didn't receive enough args: expected between ${min} and ${max}. `;
-            }
-        }
-        else {
-            message = `Didn't receive enough args: expected exactly ${expected}. `;
-        }
-        message += `Out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
-        super(message);
-    }
-}
-define("typings/misc", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    const a = undefined;
-    const b = undefined;
-    const foo = (tag) => document.createElement(tag);
-    const baz = (query) => document.querySelector(query);
-    const bar = (query) => document.querySelector(query);
-});
-define("util", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    function enumerate(obj) {
-        let typeofObj = typeof obj;
-        if (obj === undefined
-            || isEmptyObj(obj)
-            || isEmptyArr(obj)
-            || obj === "") {
-            return [];
-        }
-        if (obj === null
-            || typeofObj === "boolean"
-            || typeofObj === "number"
-            || typeofObj === "function") {
-            throw new TypeError(`${typeofObj} object is not iterable`);
-        }
-        let array = [];
-        if (isArray(obj)) {
-            let i = 0;
-            for (let x of obj) {
-                array.push([i, x]);
-                i++;
-            }
-        }
-        else {
-            for (let prop in obj) {
-                array.push([prop, obj[prop]]);
-            }
-        }
-        return array;
-    }
-    exports.enumerate = enumerate;
-    function wait(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    function anyValue(obj) {
-        let array;
-        if (isObject(obj)) {
-            array = Object.values(obj);
-        }
-        else if (isArray(obj)) {
-            array = obj;
-        }
-        else {
-            throw new TypeError(`expected array or obj, got: ${typeof obj}`);
-        }
-        return array.filter(x => Boolean(x)).length > 0;
-    }
-    exports.anyValue = anyValue;
-    function noValue(obj) {
-        let array;
-        if (isObject(obj)) {
-            array = Object.values(obj);
-        }
-        else if (isArray(obj)) {
-            array = obj;
-        }
-        else {
-            throw new TypeError(`expected array or obj, got: ${typeof obj}`);
-        }
-        return array.filter(x => Boolean(x)).length === 0;
-    }
-    exports.noValue = noValue;
-    function isArray(obj) {
-        return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
-    }
-    function isEmptyArr(collection) {
-        return isArray(collection) && getLength(collection) === 0;
-    }
-    function isEmptyObj(obj) {
-        return isObject(obj) && Object.keys(obj).length === 0;
-    }
-    function isHTMLInputElement(el) {
-        return (el instanceof HTMLInputElement);
-    }
-    exports.isHTMLInputElement = isHTMLInputElement;
-    function isHTMLButtonElement(el) {
-        return (el instanceof HTMLButtonElement);
-    }
-    exports.isHTMLButtonElement = isHTMLButtonElement;
-    function isBHE(bhe, bheSubType) {
-        return (bhe instanceof bheSubType);
-    }
-    exports.isBHE = isBHE;
-    function isType(arg) {
-        return true;
-    }
-    exports.isType = isType;
-    function isFunction(fn) {
-        return fn && {}.toString.call(fn) === '[object Function]';
-    }
-    exports.isFunction = isFunction;
-    function isObject(obj) {
-        return typeof obj === 'object' && !!obj;
-    }
-    exports.isObject = isObject;
-    function shallowProperty(key) {
-        return function (obj) {
-            return obj == null ? void 0 : obj[key];
-        };
-    }
-    function getLength(collection) {
-        return shallowProperty('length')(collection);
-    }
-});
 define("typings/ctors", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("index", ["require", "exports", "util"], function (require, exports, util_1) {
+define("index", ["require", "exports", "util", "exceptions"], function (require, exports, util_1, exceptions_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const SVG_NS_URI = 'http://www.w3.org/2000/svg';
@@ -172,12 +13,12 @@ define("index", ["require", "exports", "util"], function (require, exports, util
             this._cachedChildren = {};
             const { tag, cls, setid, htmlElement, byid, query, children } = elemOptions;
             if ([byid, htmlElement, query].filter(x => Boolean(x)).length > 1) {
-                throw new MutuallyExclusiveArgs({
+                throw new exceptions_1.MutuallyExclusiveArgs({
                     byid, query, htmlElement
                 }, `Choose only one way to get an existing element; by its id, query, or actual element`);
             }
             if (tag !== undefined && util_1.anyValue([children, byid, htmlElement, query])) {
-                throw new MutuallyExclusiveArgs({
+                throw new exceptions_1.MutuallyExclusiveArgs({
                     tag,
                     byid,
                     htmlElement,
@@ -185,13 +26,13 @@ define("index", ["require", "exports", "util"], function (require, exports, util
                 }, `Either create a new elem via "tag", or get an existing one via either "byid", "htmlElement", or "query" (and maybe cache its "children")`);
             }
             if (util_1.anyValue([tag, cls, setid]) && util_1.anyValue([children, byid, htmlElement, query])) {
-                throw new MutuallyExclusiveArgs({
+                throw new exceptions_1.MutuallyExclusiveArgs({
                     group1: { cls, setid },
                     group2: { children, byid, htmlElement, query }
                 }, `Can't have args from both groups`);
             }
             if (util_1.noValue([tag, cls, setid]) && util_1.noValue([children, byid, htmlElement, query])) {
-                throw new NotEnoughArgs([1], {
+                throw new exceptions_1.NotEnoughArgs([1], {
                     group1: { cls, setid },
                     group2: { children, byid, htmlElement, query }
                 }, `Expecting at least one arg from a given group`);
@@ -682,10 +523,11 @@ define("index", ["require", "exports", "util"], function (require, exports, util
     }
     exports.BetterHTMLElement = BetterHTMLElement;
     class Div extends BetterHTMLElement {
-        constructor({ setid, cls, byid, text, query, htmlElement, children }) {
+        constructor(divOpts) {
             if (util_1.noValue(arguments[0])) {
-                throw new NotEnoughArgs([1], arguments[0]);
+                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
             }
+            const { setid, cls, text, byid, query, htmlElement, children } = divOpts;
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
             }
@@ -696,7 +538,7 @@ define("index", ["require", "exports", "util"], function (require, exports, util
                 super({ query, children });
             }
             else {
-                super({ tag: "div", cls, setid });
+                super({ tag: "div", setid, cls });
             }
             if (text !== undefined) {
                 this.text(text);
@@ -705,10 +547,11 @@ define("index", ["require", "exports", "util"], function (require, exports, util
     }
     exports.Div = Div;
     class Button extends BetterHTMLElement {
-        constructor({ setid, cls, text, byid, query, htmlElement, children }) {
+        constructor(buttonOpts) {
             if (util_1.noValue(arguments[0])) {
-                throw new NotEnoughArgs([1], arguments[0]);
+                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
             }
+            const { setid, cls, text, byid, query, htmlElement, children } = buttonOpts;
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
             }
@@ -728,10 +571,11 @@ define("index", ["require", "exports", "util"], function (require, exports, util
     }
     exports.Button = Button;
     class Paragraph extends BetterHTMLElement {
-        constructor({ setid, cls, text, byid, query, htmlElement, children }) {
+        constructor(pOpts) {
             if (util_1.noValue(arguments[0])) {
-                throw new NotEnoughArgs([1], arguments[0]);
+                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
             }
+            const { setid, cls, text, byid, query, htmlElement, children } = pOpts;
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
             }
@@ -750,11 +594,35 @@ define("index", ["require", "exports", "util"], function (require, exports, util
         }
     }
     exports.Paragraph = Paragraph;
+    class Span extends BetterHTMLElement {
+        constructor(spanOpts) {
+            const { setid, cls, text, byid, query, htmlElement, children } = spanOpts;
+            if (util_1.noValue(arguments[0])) {
+                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
+            }
+            if (htmlElement !== undefined) {
+                super({ htmlElement, children });
+            }
+            else if (byid !== undefined) {
+                super({ byid, children });
+            }
+            else if (query !== undefined) {
+                super({ query, children });
+            }
+            else {
+                super({ tag: "span", setid, cls });
+            }
+            if (text !== undefined) {
+                this.text(text);
+            }
+        }
+    }
+    exports.Span = Span;
     class Input extends BetterHTMLElement {
         constructor(inputOpts) {
             const { setid, cls, type, placeholder, byid, query, htmlElement, children } = inputOpts;
             if (util_1.noValue(arguments[0])) {
-                throw new NotEnoughArgs([1], arguments[0]);
+                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
             }
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
@@ -843,34 +711,10 @@ define("index", ["require", "exports", "util"], function (require, exports, util
         }
     }
     exports.Input = Input;
-    class Span extends BetterHTMLElement {
-        constructor(spanOpts) {
-            const { setid, cls, text, byid, query, htmlElement, children } = spanOpts;
-            if (util_1.noValue(arguments[0])) {
-                throw new NotEnoughArgs([1], arguments[0]);
-            }
-            if (htmlElement !== undefined) {
-                super({ htmlElement, children });
-            }
-            else if (byid !== undefined) {
-                super({ byid, children });
-            }
-            else if (query !== undefined) {
-                super({ query, children });
-            }
-            else {
-                super({ tag: "span", setid, cls });
-            }
-            if (text !== undefined) {
-                this.text(text);
-            }
-        }
-    }
-    exports.Span = Span;
     class Img extends BetterHTMLElement {
         constructor({ setid, cls, src, byid, query, htmlElement, children }) {
             if (util_1.noValue(arguments[0])) {
-                throw new NotEnoughArgs([1], arguments[0]);
+                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
             }
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
@@ -902,7 +746,7 @@ define("index", ["require", "exports", "util"], function (require, exports, util
     class Anchor extends BetterHTMLElement {
         constructor({ setid, cls, text, href, target, byid, query, htmlElement, children }) {
             if (util_1.noValue(arguments[0])) {
-                throw new NotEnoughArgs([1], arguments[0]);
+                throw new exceptions_1.NotEnoughArgs([1], arguments[0]);
             }
             if (htmlElement !== undefined) {
                 super({ htmlElement, children });
@@ -949,29 +793,54 @@ define("index", ["require", "exports", "util"], function (require, exports, util
     }
     exports.elem = elem;
     function span(spanOpts) {
+        if (!util_1.bool(spanOpts)) {
+            spanOpts = {};
+        }
         return new Span(spanOpts);
     }
     exports.span = span;
-    function div({ setid, cls, text, byid, query, htmlElement, children }) {
-        return new Div({ setid, cls, text, byid, query, htmlElement, children });
+    function div(divOpts) {
+        if (!util_1.bool(divOpts)) {
+            divOpts = {};
+        }
+        return new Div(divOpts);
     }
     exports.div = div;
-    function button({ setid, cls, text, byid, query, htmlElement, children }) {
-        return new Button({ setid, cls, text, byid, query, htmlElement, children });
+    function button(buttonOpts) {
+        if (!util_1.bool(buttonOpts)) {
+            buttonOpts = {};
+        }
+        return new Button(buttonOpts);
     }
+    exports.button = button;
     function input(inputOpts) {
+        if (!util_1.bool(inputOpts)) {
+            inputOpts = {};
+        }
         return new Input(inputOpts);
     }
     exports.input = input;
-    function img({ setid, cls, src, byid, query, htmlElement, children }) {
-        return new Img({ setid, cls, src, byid, query, htmlElement, children });
+    function img(imgOpts) {
+        if (!util_1.bool(imgOpts)) {
+            imgOpts = {};
+        }
+        return new Img(imgOpts);
     }
-    function paragraph({ setid, cls, text, byid, query, htmlElement, children }) {
-        return new Paragraph({ setid, cls, text, byid, query, htmlElement, children });
+    exports.img = img;
+    function paragraph(pOpts) {
+        if (!util_1.bool(pOpts)) {
+            pOpts = {};
+        }
+        return new Paragraph(pOpts);
     }
-    function anchor({ setid, cls, text, href, target, byid, query, htmlElement, children }) {
-        return new Anchor({ setid, cls, text, href, target, byid, query, htmlElement, children });
+    exports.paragraph = paragraph;
+    function anchor(anchorOpts) {
+        if (!util_1.bool(anchorOpts)) {
+            anchorOpts = {};
+        }
+        return new Anchor(anchorOpts);
     }
+    exports.anchor = anchor;
     function wrapWithBHE(tag, element) {
         if (tag === 'div') {
             const d = div({ htmlElement: element });
@@ -1001,5 +870,179 @@ define("index", ["require", "exports", "util"], function (require, exports, util
         }
     }
     exports.wrapWithBHE = wrapWithBHE;
+});
+define("typings/misc", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    const a = undefined;
+    const b = undefined;
+    const foo = (tag) => document.createElement(tag);
+    const baz = (query) => document.querySelector(query);
+    const bar = (query) => document.querySelector(query);
+});
+define("util", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    function enumerate(obj) {
+        let typeofObj = typeof obj;
+        if (obj === undefined
+            || isEmptyObj(obj)
+            || isEmptyArr(obj)
+            || obj === "") {
+            return [];
+        }
+        if (obj === null
+            || typeofObj === "boolean"
+            || typeofObj === "number"
+            || typeofObj === "function") {
+            throw new TypeError(`${typeofObj} object is not iterable`);
+        }
+        let array = [];
+        if (isArray(obj)) {
+            let i = 0;
+            for (let x of obj) {
+                array.push([i, x]);
+                i++;
+            }
+        }
+        else {
+            for (let prop in obj) {
+                array.push([prop, obj[prop]]);
+            }
+        }
+        return array;
+    }
+    exports.enumerate = enumerate;
+    function bool(val) {
+        if (val === null) {
+            return false;
+        }
+        const typeofval = typeof val;
+        if (typeofval !== 'object') {
+            if (typeofval === 'function') {
+                return true;
+            }
+            else {
+                return !!val;
+            }
+        }
+        return Object.keys(val).length !== 0;
+    }
+    exports.bool = bool;
+    function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    function anyValue(obj) {
+        let array;
+        if (isObject(obj)) {
+            array = Object.values(obj);
+        }
+        else if (isArray(obj)) {
+            array = obj;
+        }
+        else {
+            throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+        }
+        return array.filter(x => Boolean(x)).length > 0;
+    }
+    exports.anyValue = anyValue;
+    function noValue(obj) {
+        let array;
+        if (isObject(obj)) {
+            array = Object.values(obj);
+        }
+        else if (isArray(obj)) {
+            array = obj;
+        }
+        else {
+            throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+        }
+        return array.filter(x => Boolean(x)).length === 0;
+    }
+    exports.noValue = noValue;
+    function isArray(obj) {
+        return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+    }
+    exports.isArray = isArray;
+    function isEmptyArr(collection) {
+        return isArray(collection) && getLength(collection) === 0;
+    }
+    function isEmptyObj(obj) {
+        return isObject(obj) && Object.keys(obj).length === 0;
+    }
+    function isBHE(bhe, bheSubType) {
+        return (bhe instanceof bheSubType);
+    }
+    exports.isBHE = isBHE;
+    function isType(arg) {
+        return true;
+    }
+    exports.isType = isType;
+    function isFunction(fn) {
+        return fn && {}.toString.call(fn) === '[object Function]';
+    }
+    exports.isFunction = isFunction;
+    function isObject(obj) {
+        return typeof obj === 'object' && !!obj;
+    }
+    exports.isObject = isObject;
+    function shallowProperty(key) {
+        return function (obj) {
+            return obj == null ? void 0 : obj[key];
+        };
+    }
+    function getLength(collection) {
+        return shallowProperty('length')(collection);
+    }
+});
+define("exceptions", ["require", "exports", "util"], function (require, exports, util_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    function getArgNamesValues(argsWithValues) {
+        return Object.entries(argsWithValues)
+            .flatMap(([argname, argval]) => `${argname}: ${argval}`)
+            .join('", "');
+    }
+    function getArgsWithValues(passedArgs) {
+        const argsWithValues = {};
+        for (let [argname, argval] of Object.entries(passedArgs)) {
+            if (argval !== undefined) {
+                argsWithValues[argname] = argval;
+            }
+        }
+        return argsWithValues;
+    }
+    class MutuallyExclusiveArgs extends Error {
+        constructor(passedArgs, details) {
+            const argsWithValues = getArgsWithValues(passedArgs);
+            const argNamesValues = getArgNamesValues(argsWithValues);
+            let message = `Didn't receive exactly one arg. `;
+            message += `Instead, out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
+            super(message);
+        }
+    }
+    exports.MutuallyExclusiveArgs = MutuallyExclusiveArgs;
+    class NotEnoughArgs extends Error {
+        constructor(expected, passedArgs, details) {
+            const argsWithValues = getArgsWithValues(passedArgs);
+            const argNamesValues = getArgNamesValues(argsWithValues);
+            let message;
+            if (util_2.isArray(expected)) {
+                let [min, max] = expected;
+                if (max === undefined) {
+                    message = `Didn't receive enough args: expected at least ${min}. `;
+                }
+                else {
+                    message = `Didn't receive enough args: expected between ${min} and ${max}. `;
+                }
+            }
+            else {
+                message = `Didn't receive enough args: expected exactly ${expected}. `;
+            }
+            message += `Out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
+            super(message);
+        }
+    }
+    exports.NotEnoughArgs = NotEnoughArgs;
 });
 //# sourceMappingURL=all.js.map

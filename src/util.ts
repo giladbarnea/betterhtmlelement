@@ -49,6 +49,23 @@ export function enumerate<T>(obj: T): Enumerated<T> {
 }
 
 
+export function bool(val: any): boolean {
+
+    if (val === null) {
+        return false
+    }
+    const typeofval = typeof val;
+    if (typeofval !== 'object') {
+        if (typeofval === 'function') {
+            return true
+        } else {
+            return !!val;
+        }
+    }
+    return Object.keys(val).length !== 0;
+
+}
+
 function wait(ms: number): Promise<any> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -77,7 +94,7 @@ export function noValue(obj): boolean {
     return array.filter(x => Boolean(x)).length === 0
 }
 
-function isArray<T>(obj): obj is Array<T> {
+export function isArray<T>(obj): obj is Array<T> {
     return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
 }
 
@@ -90,13 +107,13 @@ function isEmptyObj(obj): boolean {
 }
 
 
-export function isHTMLInputElement(el: HTMLInputElement): el is HTMLInputElement {
+/*export function isHTMLInputElement(el: HTMLInputElement): el is HTMLInputElement {
     return (el instanceof HTMLInputElement)
 }
 
 export function isHTMLButtonElement(el: HTMLButtonElement): el is HTMLButtonElement {
     return (el instanceof HTMLButtonElement)
-}
+}*/
 
 export function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType): bhe is T {
     return (bhe instanceof bheSubType)

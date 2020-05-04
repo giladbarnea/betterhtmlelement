@@ -42,7 +42,7 @@ const b: HTMLTag2HTMLElement2["a"] = undefined;
  * foo("BAD") // error
  */
 export type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
-export type NotTag<T> = Exclude<Tag, T>;
+export type NotTag<T extends Tag> = Exclude<Tag, T>;
 /**
  * "a", "div", "gilad".
  * Tag2Element expects a tag and returns an HTMLElement.
@@ -81,36 +81,27 @@ export interface Tag2BHE {
 }
 
 
-export type BHETag = keyof Tag2BHE;
-export type BHEHTMLElement =
-    HTMLDivElement |
+type BHETag = keyof Tag2BHE;
+type BHEHTMLElement =
     HTMLAnchorElement |
-    HTMLParagraphElement |
-    HTMLImageElement |
     HTMLInputElement |
+    HTMLImageElement |
+    HTMLParagraphElement |
+    HTMLDivElement |
     HTMLButtonElement |
     HTMLSpanElement;
 
-interface IElement2Tag {
-    HTMLDivElement: "div",
-    HTMLAnchorElement: "a",
-    HTMLParagraphElement: "p",
-    HTMLImageElement: "img",
-    HTMLInputElement: "input",
-    HTMLButtonElement: "button",
-    HTMLSpanElement: "span"
-}
-
+type StdBHEHTMLElement =
+    HTMLParagraphElement |
+    HTMLDivElement |
+    HTMLButtonElement |
+    HTMLSpanElement
 
 export type Element2Tag<T> =
     T extends HTMLInputElement ? "input"
-        : T extends HTMLDivElement ? "div"
         : T extends HTMLAnchorElement ? "a"
-            : T extends HTMLParagraphElement ? "p"
-                : T extends HTMLImageElement ? "img"
-                    : T extends HTMLButtonElement ? "button"
-                        : T extends HTMLSpanElement ? "span"
-                            : any
+        : T extends HTMLImageElement ? "img"
+            : Tag
 
 export type MapValues<T> = { [K in keyof T]: T[K] }[keyof T];
 

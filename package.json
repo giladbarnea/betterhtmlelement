@@ -19,6 +19,7 @@
         "url": "https://github.com/giladbarnea/betterhtmlelement"
     },
     "scripts": {
+        "//": "--testNamePattern='badctor '",
         "test": "jest",
         "test:watch": "jest --watch"
     },

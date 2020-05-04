@@ -1,6 +1,7 @@
-import {anyValue, enumerate, isFunction, isObject, noValue} from "./util";
+import {anyValue, bool, enumerate, isFunction, isObject, noValue} from "./util";
 import {ChildrenObj, Element2Tag, NotTag, QuerySelector, Tag, TEvent, TEventFunctionMap, TMap, TRecMap, TReturnBoolean} from "./typings/misc";
-import {AnchorConstructor, DivConstructor, ImgConstructor, SubElemConstructor} from "./typings/ctors";
+import {AnchorConstructor, ImgConstructor} from "./typings/ctors";
+import {MutuallyExclusiveArgs, NotEnoughArgs} from "./exceptions";
 
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
@@ -786,11 +787,11 @@ export class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
 
 export class Div extends BetterHTMLElement<HTMLDivElement> {
 
-    /**Create a new Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({setid, cls, byid, text, query, htmlElement, children}) {
+    constructor(divOpts) {
         if (noValue(arguments[0])) {
             throw new NotEnoughArgs([1], arguments[0])
         }
+        const {setid, cls, text, byid, query, htmlElement, children} = divOpts;
         if (htmlElement !== undefined) {
             super({htmlElement, children});
         } else if (byid !== undefined) {
@@ -798,23 +799,22 @@ export class Div extends BetterHTMLElement<HTMLDivElement> {
         } else if (query !== undefined) {
             super({query, children});
         } else {
-            super({tag: "div", cls, setid})
+            super({tag: "div", setid, cls})
         }
         if (text !== undefined) {
             this.text(text);
         }
     }
-}
 
+}
 
 export class Button extends BetterHTMLElement<HTMLButtonElement> {
 
-
-    /**Create a new Button element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({setid, cls, text, byid, query, htmlElement, children}) {
+    constructor(buttonOpts) {
         if (noValue(arguments[0])) {
             throw new NotEnoughArgs([1], arguments[0])
         }
+        const {setid, cls, text, byid, query, htmlElement, children} = buttonOpts;
         if (htmlElement !== undefined) {
             super({htmlElement, children});
         } else if (byid !== undefined) {
@@ -828,16 +828,16 @@ export class Button extends BetterHTMLElement<HTMLButtonElement> {
             this.text(text);
         }
     }
-}
 
+}
 
 export class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
 
-    /**Create a new Paragraph element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLParagraphElement>) {
+    constructor(pOpts) {
         if (noValue(arguments[0])) {
             throw new NotEnoughArgs([1], arguments[0])
         }
+        const {setid, cls, text, byid, query, htmlElement, children} = pOpts;
         if (htmlElement !== undefined) {
             super({htmlElement, children});
         } else if (byid !== undefined) {
@@ -853,15 +853,49 @@ export class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
     }
 }
 
+export class Span extends BetterHTMLElement<HTMLSpanElement> {
+
+    /**Create a new Span element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+    constructor({cls, setid, text}: { cls?: string, setid?: string, text?: string })
+    constructor({byid, children}: { byid: string, children?: ChildrenObj })
+    constructor({query, children}: {
+        query: string,
+        children?: ChildrenObj
+    })
+    constructor({htmlElement, children}: {
+        htmlElement: HTMLSpanElement;
+        children?: ChildrenObj
+    })
+    constructor(spanOpts) {
+        const {setid, cls, text, byid, query, htmlElement, children} = spanOpts;
+        if (noValue(arguments[0])) {
+            throw new NotEnoughArgs([1], arguments[0])
+        }
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "span", setid, cls})
+        }
+        if (text !== undefined) {
+            this.text(text);
+        }
+
+    }
+}
+
 export class Input extends BetterHTMLElement<HTMLInputElement> {
-    constructor({cls, setid, type, placeholder}: {
-        cls?: string, setid?: string,
-        type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
-        placeholder?: string
-    });
-    constructor({byid, children}: { byid: string, children?: ChildrenObj });
-    constructor({query, children}: { query: string, children?: ChildrenObj });
-    constructor({htmlElement, children}: { htmlElement: HTMLInputElement; children?: ChildrenObj });
+    // constructor({cls, setid, type, placeholder}: {
+    //     cls?: string, setid?: string,
+    //     type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
+    //     placeholder?: string
+    // });
+    // constructor({byid, children}: { byid: string, children?: ChildrenObj });
+    // constructor({query, children}: { query: string, children?: ChildrenObj });
+    // constructor({htmlElement, children}: { htmlElement: HTMLInputElement; children?: ChildrenObj });
     constructor(inputOpts) {
         const {setid, cls, type, placeholder, byid, query, htmlElement, children} = inputOpts;
         if (noValue(arguments[0])) {
@@ -964,40 +998,6 @@ export class Input extends BetterHTMLElement<HTMLInputElement> {
     }
 
 
-}
-
-export class Span extends BetterHTMLElement<HTMLSpanElement> {
-
-    /**Create a new Span element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-    constructor({cls, setid, text}: { cls?: string, setid?: string, text?: string })
-    constructor({byid, children}: { byid: string, children?: ChildrenObj })
-    constructor({query, children}: {
-        query: string,
-        children?: ChildrenObj
-    })
-    constructor({htmlElement, children}: {
-        htmlElement: HTMLSpanElement;
-        children?: ChildrenObj
-    })
-    constructor(spanOpts) {
-        const {setid, cls, text, byid, query, htmlElement, children} = spanOpts;
-        if (noValue(arguments[0])) {
-            throw new NotEnoughArgs([1], arguments[0])
-        }
-        if (htmlElement !== undefined) {
-            super({htmlElement, children});
-        } else if (byid !== undefined) {
-            super({byid, children});
-        } else if (query !== undefined) {
-            super({query, children});
-        } else {
-            super({tag: "span", setid, cls})
-        }
-        if (text !== undefined) {
-            this.text(text);
-        }
-
-    }
 }
 
 export class Img extends BetterHTMLElement<HTMLImageElement> {
@@ -1116,30 +1116,67 @@ export function elem(elemOptions) {
 
 
 export function span({cls, setid, text}: { cls?: string, setid?: string, text?: string }): Span;
-
 export function span({byid, children}: { byid: string, children?: ChildrenObj }): Span;
-
 export function span<Q extends QuerySelector>({query, children}: {
     query: Q extends QuerySelector<NotTag<"span">> ? never : Q,
     children?: ChildrenObj
 }): Span;
-
 export function span<E extends HTMLSpanElement>({htmlElement, children}: {
     htmlElement: E;
     children?: ChildrenObj
 }): Span;
-export function span(spanOpts): Span {
+export function span(): Span
+export function span(spanOpts?): Span {
+    if (!bool(spanOpts)) {
+        spanOpts = {}
+    }
     return new Span(spanOpts)
 }
 
 /**Create a Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-export function div({setid, cls, text, byid, query, htmlElement, children}: DivConstructor): Div {
-    return new Div({setid, cls, text, byid, query, htmlElement, children});
+export function div({cls, setid, text}: {
+    cls?: string, setid?: string, text?: string
+}): Div;
+export function div({byid, children}: {
+    byid: string, children?: ChildrenObj
+}): Div;
+export function div<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"div">> ? never : Q,
+    children?: ChildrenObj
+}): Div;
+export function div<E extends HTMLDivElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Div;
+export function div(): Div
+export function div(divOpts?): Div {
+    if (!bool(divOpts)) {
+        divOpts = {}
+    }
+    return new Div(divOpts)
 }
 
-/**Create a Button element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function button({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLButtonElement>): Button {
-    return new Button({setid, cls, text, byid, query, htmlElement, children});
+
+export function button({cls, setid, text}: {
+    cls?: string, setid?: string, text?: string
+}): Button;
+export function button({byid, children}: {
+    byid: string, children?: ChildrenObj
+}): Button;
+export function button<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"button">> ? never : Q,
+    children?: ChildrenObj
+}): Button;
+export function button<E extends HTMLButtonElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Button;
+export function button(): Button
+export function button(buttonOpts?): Button {
+    if (!bool(buttonOpts)) {
+        buttonOpts = {}
+    }
+    return new Button(buttonOpts)
 }
 
 
@@ -1148,37 +1185,91 @@ export function input({cls, setid, type, placeholder}: {
     type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
     placeholder?: string
 }): Input;
-
 export function input({byid, children}: { byid: string, children?: ChildrenObj }): Input;
-
 export function input<Q extends QuerySelector>({query, children}: {
     query: Q extends QuerySelector<NotTag<"input">> ? never : Q,
     children?: ChildrenObj
 }): Input;
-
 export function input<E extends HTMLInputElement>({htmlElement, children}: {
     htmlElement: E;
     children?: ChildrenObj
 }): Input;
-export function input(inputOpts): Input {
+export function input(): Input
+export function input(inputOpts?): Input {
+    if (!bool(inputOpts)) {
+        inputOpts = {}
+    }
     return new Input(inputOpts)
 }
 
 
 /**Create an Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
-function img({setid, cls, src, byid, query, htmlElement, children}: ImgConstructor): Img {
-    return new Img({setid, cls, src, byid, query, htmlElement, children});
+export function img({cls, setid, src}: {
+    cls?: string, setid?: string,
+    src?: string
+}): Img;
+export function img({byid, children}: {
+    byid: string, children?: ChildrenObj
+}): Img;
+export function img<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"img">> ? never : Q,
+    children?: ChildrenObj
+}): Img;
+export function img<E extends HTMLImageElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Img;
+export function img(): Img
+export function img(imgOpts?): Img {
+    if (!bool(imgOpts)) {
+        imgOpts = {}
+    }
+    return new Img(imgOpts)
 }
 
 
-/**Create a Paragraph element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
-function paragraph({setid, cls, text, byid, query, htmlElement, children}: SubElemConstructor<HTMLParagraphElement>): Paragraph {
-    return new Paragraph({setid, cls, text, byid, query, htmlElement, children});
+export function paragraph({cls, setid, text}: { cls?: string, setid?: string, text?: string }): Paragraph;
+export function paragraph({byid, children}: { byid: string, children?: ChildrenObj }): Paragraph;
+export function paragraph<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"p">> ? never : Q,
+    children?: ChildrenObj
+}): Paragraph;
+export function paragraph<E extends HTMLParagraphElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Paragraph;
+export function paragraph(): Paragraph
+export function paragraph(pOpts?): Paragraph {
+    if (!bool(pOpts)) {
+        pOpts = {}
+    }
+    return new Paragraph(pOpts)
 }
 
 /**Create a new Anchor element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
-function anchor({setid, cls, text, href, target, byid, query, htmlElement, children}: AnchorConstructor): Anchor {
-    return new Anchor({setid, cls, text, href, target, byid, query, htmlElement, children});
+export function anchor({cls, setid, href, target}: {
+    cls?: string,
+    setid?: string,
+    href?: string
+    target?: string
+}): Anchor;
+export function anchor({byid, children}: {
+    byid: string, children?: ChildrenObj
+}): Anchor;
+export function anchor<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"a">> ? never : Q,
+    children?: ChildrenObj
+}): Anchor;
+export function anchor<E extends HTMLImageElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Anchor;
+export function anchor(): Anchor
+export function anchor(anchorOpts?): Anchor {
+    if (!bool(anchorOpts)) {
+        anchorOpts = {}
+    }
+    return new Anchor(anchorOpts)
 }
 
 

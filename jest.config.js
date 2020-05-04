@@ -5,6 +5,7 @@ module.exports = {
     "testEnvironment": "jsdom",
     "maxConcurrency": 500,
     "bail": false,
+    // "testMatch": ["**/input.spec.ts"],
     "globals": {
         "ts-jest": {
             "//": "https://kulshekhar.github.io/ts-jest/user/config/#options",

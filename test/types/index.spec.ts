@@ -1,4 +1,4 @@
-import {Anchor, BetterHTMLElement, Button, Div, Input, Paragraph, Span, wrapWithBHE} from "../../src/index";
+import {Anchor, BetterHTMLElement, Button, Div, Img, input, Input, Paragraph, Span, wrapWithBHE} from "../../src/index";
 import {Tag} from "../../src/typings/misc";
 import {isBHE} from "../../src/util";
 
@@ -20,6 +20,14 @@ describe('wrapWithBHE', () => {
 
         const e: Button = wrapWithBHE("button", document.createElement("button"));
         const f: Input = wrapWithBHE("input", document.createElement("input"));
+
+        // should NOT fail because has 100% same props as Button
+        const l: Span = wrapWithBHE("button", document.createElement("button"));
+        const j: BetterHTMLElement<HTMLButtonElement> = wrapWithBHE("button", document.createElement("button"))
+        const k: Input = wrapWithBHE("input", document.createElement("input"));
+        const m: Input = new Input({});
+        const n: BetterHTMLElement<HTMLInputElement> = new Input({});
+        const o: BetterHTMLElement<HTMLInputElement> = input({placeholder: "wow"})
     });
     test("fails", () => {
         expect(isBHE(wrapWithBHE("div", document.createElement("button")), Button)).toStrictEqual(false);
@@ -28,8 +36,13 @@ describe('wrapWithBHE', () => {
         expect(isBHE(wrapWithBHE("button", document.createElement("div")), Div)).toStrictEqual(false);
         expect(isBHE(wrapWithBHE("button", document.createElement("div")), Button)).toStrictEqual(true);
         const g: Div = wrapWithBHE("button", document.createElement("button"));
-        const h: Span = wrapWithBHE("button", document.createElement("button"));
-        const i: Span = new Button({})
+        const i: Img = wrapWithBHE("button", document.createElement("button"));
+        const h: BetterHTMLElement<HTMLImageElement> = wrapWithBHE("button", document.createElement("button"))
+        const p: Img = wrapWithBHE("input", document.createElement("input"));
+        const q: Img = new Input({});
+        const r: BetterHTMLElement<HTMLImageElement> = new Input({});
+        const s: BetterHTMLElement<HTMLImageElement> = input({placeholder: "wow"})
+
     });
 });
 
