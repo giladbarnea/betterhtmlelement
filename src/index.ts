@@ -409,13 +409,12 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     child(selector: "div"): Div;
     child(selector: QuerySelector): BetterHTMLElement;
     child(selector) {
-        const htmlElement = this.e.querySelector(selector);
+        const htmlElement = this.e.querySelector(selector) as HTMLElement;
         if (htmlElement === null) {
             console.warn(`${this.e}.child(${selector}): no child. returning undefined`);
             return undefined;
         }
-        const tag = htmlElement.tagName.toLowerCase() as Tag;
-        const bhe = wrapWithBHE(tag, htmlElement);
+        const bhe = wrapWithBHE(htmlElement);
         return bhe;
     }
 
@@ -425,7 +424,7 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     /**Return a `BetterHTMLElement` list of all children selected by `selector` */
     children<K extends Tag>(selector: K): BetterHTMLElement[];
     /**Return a `BetterHTMLElement` list of all children selected by `selector` */
-    children(selector: string | Tag): BetterHTMLElement[];
+    children(selector: QuerySelector): BetterHTMLElement[];
     children(selector?) {
         let childrenVanilla;
         let childrenCollection;
@@ -434,14 +433,16 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
         } else {
             childrenCollection = this.e.querySelectorAll(selector);
         }
-        childrenVanilla = <HTMLElement[]>Array.from(childrenCollection);
-        const toElem = (c: HTMLElement) => new BetterHTMLElement({htmlElement: c});
-        return childrenVanilla.map(toElem);
+
+        childrenVanilla = Array.from(childrenCollection);
+
+        return childrenVanilla.map(wrapWithBHE);
     }
 
     clone(deep?: boolean): BetterHTMLElement {
-        // @ts-ignore
-        return new BetterHTMLElement({htmlElement: this.e.cloneNode(deep)});
+        console.warn(`${this}.clone() doesnt return a matching BHE subtype, but a regular BHE`);
+        // TODO: return new this()?
+        return new BetterHTMLElement({htmlElement: this.e.cloneNode(deep) as HTMLElement});
     }
 
     /**For each `[key, selector]` pair, where `selector` is either an `Tag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
@@ -1013,9 +1014,7 @@ class Img extends BetterHTMLElement<HTMLImageElement> {
 
     /**Create a new Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
     constructor({setid, cls, src, byid, query, htmlElement, children}) {
-        // if (noValue(arguments[0])) {
-        //     throw new NotEnoughArgs([1], arguments[0])
-        // }
+
         if (htmlElement !== undefined) {
             super({htmlElement, children});
         } else if (byid !== undefined) {
@@ -1050,9 +1049,7 @@ class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
 
     /**Create a new Input element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
     constructor({setid, cls, text, href, target, byid, query, htmlElement, children}) {
-        // if (noValue(arguments[0])) {
-        //     throw new NotEnoughArgs([1], arguments[0])
-        // }
+
         if (htmlElement !== undefined) {
             super({htmlElement, children});
         } else if (byid !== undefined) {
@@ -1282,15 +1279,17 @@ function anchor(anchorOpts?): Anchor {
 }
 
 
-function wrapWithBHE(tag: "a", htmlElement: HTMLAnchorElement): Anchor;
-function wrapWithBHE(tag: "input", htmlElement: HTMLInputElement): Input;
-function wrapWithBHE(tag: "img", htmlElement: HTMLImageElement): Img;
-function wrapWithBHE(tag: "p", htmlElement: HTMLParagraphElement): Paragraph;
-function wrapWithBHE(tag: "span", htmlElement: HTMLSpanElement): Span;
-function wrapWithBHE(tag: "button", htmlElement: HTMLButtonElement): Button;
-function wrapWithBHE(tag: "div", htmlElement: HTMLDivElement): Div;
-function wrapWithBHE(tag: Tag, htmlElement): BetterHTMLElement;
-function wrapWithBHE(tag, element) {
+function wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
+function wrapWithBHE(htmlElement: HTMLInputElement): Input;
+function wrapWithBHE(htmlElement: HTMLImageElement): Img;
+function wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
+function wrapWithBHE(htmlElement: HTMLSpanElement): Span;
+function wrapWithBHE(htmlElement: HTMLButtonElement): Button;
+function wrapWithBHE(htmlElement: HTMLDivElement): Div;
+function wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
+function wrapWithBHE(element) {
+    const tag = element.tagName.toLowerCase() as Element2Tag<typeof element>;
+    // const tag = element.tagName.toLowerCase() as Tag;
     if (tag === 'div') {
         return div({htmlElement: element});
     } else if (tag === 'a') {

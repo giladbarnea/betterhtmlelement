@@ -66,7 +66,7 @@ declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     child(selector: QuerySelector): BetterHTMLElement;
     children(): BetterHTMLElement[];
     children<K extends Tag>(selector: K): BetterHTMLElement[];
-    children(selector: string | Tag): BetterHTMLElement[];
+    children(selector: QuerySelector): BetterHTMLElement[];
     clone(deep?: boolean): BetterHTMLElement;
     cacheChildren(queryMap: TMap<QuerySelector>): this;
     cacheChildren(recursiveQueryMap: TRecMap<QuerySelector>): this;
@@ -317,11 +317,11 @@ declare function anchor<E extends HTMLImageElement>({ htmlElement, children }: {
     children?: ChildrenObj;
 }): Anchor;
 declare function anchor(): Anchor;
-declare function wrapWithBHE(tag: "a", htmlElement: HTMLAnchorElement): Anchor;
-declare function wrapWithBHE(tag: "input", htmlElement: HTMLInputElement): Input;
-declare function wrapWithBHE(tag: "img", htmlElement: HTMLImageElement): Img;
-declare function wrapWithBHE(tag: "p", htmlElement: HTMLParagraphElement): Paragraph;
-declare function wrapWithBHE(tag: "span", htmlElement: HTMLSpanElement): Span;
-declare function wrapWithBHE(tag: "button", htmlElement: HTMLButtonElement): Button;
-declare function wrapWithBHE(tag: "div", htmlElement: HTMLDivElement): Div;
-declare function wrapWithBHE(tag: Tag, htmlElement: any): BetterHTMLElement;
+declare function wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
+declare function wrapWithBHE(htmlElement: HTMLInputElement): Input;
+declare function wrapWithBHE(htmlElement: HTMLImageElement): Img;
+declare function wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
+declare function wrapWithBHE(htmlElement: HTMLSpanElement): Span;
+declare function wrapWithBHE(htmlElement: HTMLButtonElement): Button;
+declare function wrapWithBHE(htmlElement: HTMLDivElement): Div;
+declare function wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;

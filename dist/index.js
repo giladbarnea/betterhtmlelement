@@ -303,8 +303,7 @@ class BetterHTMLElement {
             console.warn(`${this.e}.child(${selector}): no child. returning undefined`);
             return undefined;
         }
-        const tag = htmlElement.tagName.toLowerCase();
-        const bhe = wrapWithBHE(tag, htmlElement);
+        const bhe = wrapWithBHE(htmlElement);
         return bhe;
     }
     children(selector) {
@@ -317,10 +316,10 @@ class BetterHTMLElement {
             childrenCollection = this.e.querySelectorAll(selector);
         }
         childrenVanilla = Array.from(childrenCollection);
-        const toElem = (c) => new BetterHTMLElement({ htmlElement: c });
-        return childrenVanilla.map(toElem);
+        return childrenVanilla.map(wrapWithBHE);
     }
     clone(deep) {
+        console.warn(`${this}.clone() doesnt return a matching BHE subtype, but a regular BHE`);
         return new BetterHTMLElement({ htmlElement: this.e.cloneNode(deep) });
     }
     cacheChildren(map) {
@@ -801,7 +800,8 @@ function anchor(anchorOpts) {
     }
     return new Anchor(anchorOpts);
 }
-function wrapWithBHE(tag, element) {
+function wrapWithBHE(element) {
+    const tag = element.tagName.toLowerCase();
     if (tag === 'div') {
         return div({ htmlElement: element });
     }
