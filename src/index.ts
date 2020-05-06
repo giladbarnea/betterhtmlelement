@@ -399,22 +399,22 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child(selector: "img"): Img
-    child(selector: "a"): Anchor
-    child(selector: "input"): Input
-    child(selector: "p"): Paragraph
-    child(selector: "span"): Span
-    child(selector: "button"): Button
-    child(selector: "div"): Div
-    child<T extends Tag>(selector: T): BetterHTMLElement
+
+    child(selector: "img"): Img;
+    child(selector: "a"): Anchor;
+    child(selector: "input"): Input;
+    child(selector: "p"): Paragraph;
+    child(selector: "span"): Span;
+    child(selector: "button"): Button;
+    child(selector: "div"): Div;
+    child(selector: QuerySelector): BetterHTMLElement;
     child(selector) {
         const htmlElement = this.e.querySelector(selector);
         if (htmlElement === null) {
             console.warn(`${this.e}.child(${selector}): no child. returning undefined`);
             return undefined;
         }
-        const tag = htmlElement.tagName.toLowerCase();
+        const tag = htmlElement.tagName.toLowerCase() as Tag;
         const bhe = wrapWithBHE(tag, htmlElement);
         return bhe;
     }
@@ -1282,14 +1282,14 @@ function anchor(anchorOpts?): Anchor {
 }
 
 
-function wrapWithBHE(tag: "img", htmlElement: HTMLImageElement): Img;
-function wrapWithBHE(tag: "input", htmlElement: HTMLInputElement): Input;
 function wrapWithBHE(tag: "a", htmlElement: HTMLAnchorElement): Anchor;
+function wrapWithBHE(tag: "input", htmlElement: HTMLInputElement): Input;
+function wrapWithBHE(tag: "img", htmlElement: HTMLImageElement): Img;
 function wrapWithBHE(tag: "p", htmlElement: HTMLParagraphElement): Paragraph;
 function wrapWithBHE(tag: "span", htmlElement: HTMLSpanElement): Span;
 function wrapWithBHE(tag: "button", htmlElement: HTMLButtonElement): Button;
 function wrapWithBHE(tag: "div", htmlElement: HTMLDivElement): Div;
-function wrapWithBHE(tag: any, htmlElement: HTMLElement): BetterHTMLElement;
+function wrapWithBHE(tag: Tag, htmlElement): BetterHTMLElement;
 function wrapWithBHE(tag, element) {
     if (tag === 'div') {
         return div({htmlElement: element});

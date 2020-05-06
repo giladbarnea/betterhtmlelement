@@ -40,7 +40,7 @@ declare type MapValues<T> = {
 declare type HTMLElements = MapValues<HTMLElementTagNameMap>;
 declare type Filter<T> = T extends HTMLElements ? T : never;
 declare type GenericFilter<T, U> = T extends U ? T : never;
-declare type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>;
+declare type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector> | TMap<BetterHTMLElement> | TRecMap<BetterHTMLElement>;
 declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
 declare type TReturnBoolean = (s: string) => boolean;
 declare type AnyFunction = (...args: any[]) => any;
