@@ -511,9 +511,10 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
             let type = typeof value;
             if (isObject(value)) {
                 if (value instanceof BetterHTMLElement) {
+                    // { "myimg": img(...) }
                     this._cache(key, value)
                 } else {
-                    // let entries = Object.entries(<TMap<QuerySelector> | TRecMap<QuerySelector>>value);
+                    // { "mydiv": { "myimg": img(...), "myinput": input(...) } }
                     let entries = Object.entries(value);
                     if (entries[1] !== undefined) {
                         console.warn(
@@ -525,13 +526,12 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
                             }
                         );
                     }
-                    // only first because 1:1 for key:selector.
-                    // (ie can't do {right: {.right: {...}, .right2: {...}})
                     let [selector, obj] = entries[0];
                     this._cache(key, this.child(selector));
                     this[key].cacheChildren(obj)
                 }
             } else if (type === "string") {
+                // { "myinput": "input[type=checkbox]" }
                 this._cache(key, this.child(value));
             } else {
                 console.warn(`cacheChildren, bad value type: "${type}". key: "${key}", value: "${value}". map:`, map,);

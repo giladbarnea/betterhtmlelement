@@ -117,7 +117,8 @@ type GenericFilter<T, U> = T extends U ? T : never;
 
 
 // type ChildrenObj = TMap<Tag2Element> | TRecMap<Tag2Element>
-type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
+// type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
+type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector> | TMap<BetterHTMLElement> | TRecMap<BetterHTMLElement>
 type Enumerated<T> =
     T extends (infer U)[] ? [number, U][]
         : T extends TMap<(infer U)> ? [keyof T, U][]
