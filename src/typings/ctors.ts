@@ -1,4 +1,4 @@
-// import {ChildrenObj, Element2Tag, QuerySelector, Tag} from "./misc"
+
 
 interface NewBHEConstructor<H extends HTMLElement> {
     tag: Element2Tag<H>,
@@ -28,26 +28,26 @@ interface ByHtmlElementBHEConstructor<E extends HTMLElement> {
 //         QueryBHEConstructor<T>,
 //         ByHtmlElementBHEConstructor<T> {
 // }
-// export type BHEConstructor<T extends HTMLElement> =
+// type BHEConstructor<T extends HTMLElement> =
 //     NewBHEConstructor<T> |
 //     ByIdBHEConstructor |
 //     QueryBHEConstructor<Element2Tag<T>> |
 //     ByHtmlElementBHEConstructor<T>
 
-// export type SubElemConstructor<K extends HTMLElement> = BHEConstructor<K> & {
+// type SubElemConstructor<K extends HTMLElement> = BHEConstructor<K> & {
 //     text?: string;
 // }
 
-// export type DivConstructor = SubElemConstructor<HTMLDivElement> & {
+// type DivConstructor = SubElemConstructor<HTMLDivElement> & {
 //     htmlElement?: HTMLDivElement;
 // }
 //
 //
-// export type ImgConstructor = BHEConstructor<HTMLImageElement> & {
+// type ImgConstructor = BHEConstructor<HTMLImageElement> & {
 //     src?: string;
 // }
 
-// export type InputConstructor = BHEConstructor<HTMLInputElement> & {
+// type InputConstructor = BHEConstructor<HTMLInputElement> & {
 //     type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local";
 //     placeholder?: string;
 // }
@@ -59,7 +59,7 @@ type InputConstructor<T> =
         :
         { byid: string, children?: ChildrenObj }
 
-// export type AnchorConstructor = SubElemConstructor<HTMLAnchorElement> & {
+// type AnchorConstructor = SubElemConstructor<HTMLAnchorElement> & {
 //     href?: string;
 //     target?: string;
 // }

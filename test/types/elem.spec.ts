@@ -1,4 +1,3 @@
-import {elem, Div, Input, BetterHTMLElement} from "../../src/index";
 // npm test "elem\.spec\.ts"
 describe('{htmlElement: document.createElement("input")}', () => {
     test("bad htmlElement", () => {

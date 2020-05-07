@@ -63,15 +63,13 @@ declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     child(selector: "span"): Span;
     child(selector: "button"): Button;
     child(selector: "div"): Div;
-    child(selector: QuerySelector): BetterHTMLElement;
+    child<T extends Tag>(selector: T): BetterHTMLElement<HTMLElementTagNameMap[T]>;
+    child(selector: string): BetterHTMLElement;
     children(): BetterHTMLElement[];
     children<K extends Tag>(selector: K): BetterHTMLElement[];
     children(selector: QuerySelector): BetterHTMLElement[];
     clone(deep?: boolean): BetterHTMLElement;
-    cacheChildren(queryMap: TMap<QuerySelector>): this;
-    cacheChildren(recursiveQueryMap: TRecMap<QuerySelector>): this;
-    cacheChildren(bheMap: TMap<BetterHTMLElement>): this;
-    cacheChildren(recursiveBHEMap: TRecMap<BetterHTMLElement>): this;
+    cacheChildren(childrenObj: ChildrenObj): this;
     empty(): this;
     remove(): this;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;

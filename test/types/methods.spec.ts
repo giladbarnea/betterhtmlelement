@@ -1,8 +1,3 @@
-import {Anchor, anchor, Button, div, elem, Img, img, Input, input, wrapWithBHE} from "../../src/index";
-import {isBHE} from "../../src/util";
-import {Callable, Callable2} from "../../src/typings/misc";
-
-
 // type GenericReturnType<X> = X extends Callable<X> ? R extends infer U ? U : R : any;
 
 describe('methods', () => {

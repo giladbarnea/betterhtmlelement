@@ -1,4 +1,3 @@
-import {input, Input} from "../../src/index";
 // npm test "input\.spec\.ts"
 describe('{query: ...}', () => {
     test("sanity", () => {

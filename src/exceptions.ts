@@ -1,4 +1,4 @@
-// import {isArray} from "./util";
+
 
 function getArgNamesValues(argsWithValues: object): string {
     return Object.entries(argsWithValues)

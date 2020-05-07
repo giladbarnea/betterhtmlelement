@@ -1,5 +1,5 @@
-// import {AnyFunction, Enumerated} from "./typings/misc";
-// import {BetterHTMLElement} from "./index";
+
+
 
 function enumerate<T>(obj: T): Enumerated<T> {
     // undefined    []

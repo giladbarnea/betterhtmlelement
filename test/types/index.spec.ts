@@ -1,7 +1,3 @@
-import {Anchor, BetterHTMLElement, Button, Div, Img, input, Input, Paragraph, Span, wrapWithBHE} from "../../src/index";
-import {Tag} from "../../src/typings/misc";
-import {isBHE} from "../../src/util";
-
 describe('wrapWithBHE', () => {
     test("ok scenarios", () => {
         const a: Button = wrapWithBHE("button", document.createElement("button"));

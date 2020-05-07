@@ -1,4 +1,4 @@
-// import {Div, Anchor, Paragraph, Img, Input, Button, Span} from "../index";
+
 
 // TODO: why <TEvent> needed in allOff()?
 interface TMap<T> {
@@ -61,6 +61,7 @@ type TagOrString = Tag | string;
  * bar("a") → HTMLAnchorElement
  * bar("gilad") → HTMLSelectElement | HTMLLegendElement | ...
  */
+// type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
 type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
 
 // const foo = <K extends Tag>(tag: K) => document.createElement(tag);
@@ -118,7 +119,7 @@ type GenericFilter<T, U> = T extends U ? T : never;
 
 // type ChildrenObj = TMap<Tag2Element> | TRecMap<Tag2Element>
 // type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
-type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector> | TMap<BetterHTMLElement> | TRecMap<BetterHTMLElement>
+type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement>
 type Enumerated<T> =
     T extends (infer U)[] ? [number, U][]
         : T extends TMap<(infer U)> ? [keyof T, U][]

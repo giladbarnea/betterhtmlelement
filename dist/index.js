@@ -322,8 +322,8 @@ class BetterHTMLElement {
         console.warn(`${this}.clone() doesnt return a matching BHE subtype, but a regular BHE`);
         return new BetterHTMLElement({ htmlElement: this.e.cloneNode(deep) });
     }
-    cacheChildren(map) {
-        for (let [key, value] of enumerate(map)) {
+    cacheChildren(childrenObj) {
+        for (let [key, value] of enumerate(childrenObj)) {
             let type = typeof value;
             if (isObject(value)) {
                 if (value instanceof BetterHTMLElement) {
@@ -348,7 +348,7 @@ class BetterHTMLElement {
                 this._cache(key, this.child(value));
             }
             else {
-                console.warn(`cacheChildren, bad value type: "${type}". key: "${key}", value: "${value}". map:`, map);
+                console.warn(`cacheChildren, bad value type: "${type}". key: "${key}", value: "${value}". childrenObj:`, childrenObj);
             }
         }
         return this;
