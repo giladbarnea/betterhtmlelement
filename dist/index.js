@@ -363,25 +363,6 @@ class BetterHTMLElement {
         this.e.remove();
         return this;
     }
-    disable() {
-        this.e.disabled = true;
-        return this;
-    }
-    enable() {
-        this.e.disabled = false;
-        return this;
-    }
-    toggleEnabled(on) {
-        if (on) {
-            return this.enable();
-        }
-        else {
-            return this.disable();
-        }
-    }
-    get disabled() {
-        return this.e.disabled;
-    }
     on(evTypeFnPairs, options) {
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
@@ -556,7 +537,37 @@ class Div extends BetterHTMLElement {
         }
     }
 }
-class Button extends BetterHTMLElement {
+class Form extends BetterHTMLElement {
+    disable() {
+        this.e.disabled = true;
+        return this;
+    }
+    enable() {
+        this.e.disabled = false;
+        return this;
+    }
+    toggleEnabled(on) {
+        if (on) {
+            return this.enable();
+        }
+        else {
+            return this.disable();
+        }
+    }
+    get disabled() {
+        return this.e.disabled;
+    }
+    value(val) {
+        if (val === undefined) {
+            return this.e.value;
+        }
+        else {
+            this.e.value = val;
+            return this;
+        }
+    }
+}
+class Button extends Form {
     constructor(buttonOpts) {
         const { setid, cls, text, byid, query, htmlElement, children } = buttonOpts;
         if (htmlElement !== undefined) {
@@ -616,7 +627,7 @@ class Span extends BetterHTMLElement {
         }
     }
 }
-class Input extends BetterHTMLElement {
+class Input extends Form {
     constructor(inputOpts) {
         const { setid, cls, type, placeholder, byid, query, htmlElement, children } = inputOpts;
         if (htmlElement !== undefined) {
@@ -666,15 +677,6 @@ class Input extends BetterHTMLElement {
     }
     get checked() {
         return this.e.checked;
-    }
-    value(val) {
-        if (val === undefined) {
-            return this.e.value;
-        }
-        else {
-            this.e.value = val;
-            return this;
-        }
     }
     placeholder(val) {
         if (val === undefined) {

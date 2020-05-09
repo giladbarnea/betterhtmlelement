@@ -1,5 +1,3 @@
-
-
 // TODO: why <TEvent> needed in allOff()?
 interface TMap<T> {
     [s: string]: T;
@@ -130,8 +128,3 @@ type AnyFunction = (...args: any[]) => any;
 type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
 type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
 
-type Whatever = Exclude<keyof HTMLInputElement & keyof HTMLButtonElement, keyof HTMLElement>;
-function whatever(x:Whatever){
-
-}
-whatever()

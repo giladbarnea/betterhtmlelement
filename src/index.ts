@@ -774,6 +774,8 @@ class Div extends BetterHTMLElement<HTMLDivElement> {
 
 abstract class Form<E extends HTMLButtonElement | HTMLInputElement>
     extends BetterHTMLElement<E> {
+    /**Props in comming with HTMLButtonElement and HTMLInputElement:
+     Exclude<keyof HTMLInputElement & keyof HTMLButtonElement, keyof HTMLElement>*/
     disable(): this {
         this.e.disabled = true;
         return this;
@@ -795,9 +797,22 @@ abstract class Form<E extends HTMLButtonElement | HTMLInputElement>
     get disabled(): boolean {
         return this.e.disabled;
     }
+
+    /**Returns `value`*/
+    value(): string;
+    /**`value(null)` or `value('')` → reset. */
+    value(val: any): this;
+    value(val?) {
+        if (val === undefined) {
+            return this.e.value;
+        } else {
+            this.e.value = val;
+            return this;
+        }
+    }
 }
 
-class Button extends BetterHTMLElement<HTMLButtonElement> {
+class Button extends Form<HTMLButtonElement> {
 
     constructor(buttonOpts) {
         // if (noValue(arguments[0])) {
@@ -876,7 +891,7 @@ class Span extends BetterHTMLElement<HTMLSpanElement> {
     }
 }
 
-class Input extends BetterHTMLElement<HTMLInputElement> {
+class Input extends Form<HTMLInputElement> {
     // constructor({cls, setid, type, placeholder}: {
     //     cls?: string, setid?: string,
     //     type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
@@ -939,19 +954,6 @@ class Input extends BetterHTMLElement<HTMLInputElement> {
         return this.e.checked;
     }
 
-
-    /**Returns `value`*/
-    value(): string;
-    /**`value(null)` or `value('')` → reset. */
-    value(val: any): this;
-    value(val?) {
-        if (val === undefined) {
-            return this.e.value;
-        } else {
-            this.e.value = val;
-            return this;
-        }
-    }
 
     placeholder(val: string): this;
     placeholder(): string;

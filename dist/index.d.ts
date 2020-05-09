@@ -72,10 +72,6 @@ declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     cacheChildren(childrenObj: ChildrenObj): this;
     empty(): this;
     remove(): this;
-    disable(): this;
-    enable(): this;
-    toggleEnabled(on: boolean): this;
-    get disabled(): boolean;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
     pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this;
@@ -104,7 +100,15 @@ declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
 declare class Div extends BetterHTMLElement<HTMLDivElement> {
     constructor(divOpts: any);
 }
-declare class Button extends BetterHTMLElement<HTMLButtonElement> {
+declare abstract class Form<E extends HTMLButtonElement | HTMLInputElement> extends BetterHTMLElement<E> {
+    disable(): this;
+    enable(): this;
+    toggleEnabled(on: boolean): this;
+    get disabled(): boolean;
+    value(): string;
+    value(val: any): this;
+}
+declare class Button extends Form<HTMLButtonElement> {
     constructor(buttonOpts: any);
 }
 declare class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
@@ -129,14 +133,12 @@ declare class Span extends BetterHTMLElement<HTMLSpanElement> {
         children?: ChildrenObj;
     });
 }
-declare class Input extends BetterHTMLElement<HTMLInputElement> {
+declare class Input extends Form<HTMLInputElement> {
     constructor(inputOpts: any);
     check(): this;
     uncheck(): this;
     toggleChecked(on: boolean): this;
     get checked(): boolean;
-    value(): string;
-    value(val: any): this;
     placeholder(val: string): this;
     placeholder(): string;
 }
