@@ -510,28 +510,6 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    disable(): this {
-        this.e.disabled = true;
-        return this;
-    }
-
-    enable(): this {
-        this.e.disabled = false;
-        return this;
-    }
-
-    toggleEnabled(on: boolean): this {
-        if (on) {
-            return this.enable()
-        } else {
-            return this.disable()
-        }
-    }
-
-    get disabled(): boolean {
-        return this.e.disabled;
-    }
-
 
     // *** Events
 
@@ -792,6 +770,31 @@ class Div extends BetterHTMLElement<HTMLDivElement> {
         }
     }
 
+}
+
+abstract class Form<E extends HTMLButtonElement | HTMLInputElement>
+    extends BetterHTMLElement<E> {
+    disable(): this {
+        this.e.disabled = true;
+        return this;
+    }
+
+    enable(): this {
+        this.e.disabled = false;
+        return this;
+    }
+
+    toggleEnabled(on: boolean): this {
+        if (on) {
+            return this.enable()
+        } else {
+            return this.disable()
+        }
+    }
+
+    get disabled(): boolean {
+        return this.e.disabled;
+    }
 }
 
 class Button extends BetterHTMLElement<HTMLButtonElement> {

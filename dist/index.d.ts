@@ -72,6 +72,10 @@ declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     cacheChildren(childrenObj: ChildrenObj): this;
     empty(): this;
     remove(): this;
+    disable(): this;
+    enable(): this;
+    toggleEnabled(on: boolean): this;
+    get disabled(): boolean;
     on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
     pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this;
@@ -131,10 +135,6 @@ declare class Input extends BetterHTMLElement<HTMLInputElement> {
     uncheck(): this;
     toggleChecked(on: boolean): this;
     get checked(): boolean;
-    disable(): this;
-    enable(): this;
-    toggleEnabled(on: boolean): this;
-    get disabled(): boolean;
     value(): string;
     value(val: any): this;
     placeholder(val: string): this;

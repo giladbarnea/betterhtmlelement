@@ -363,6 +363,25 @@ class BetterHTMLElement {
         this.e.remove();
         return this;
     }
+    disable() {
+        this.e.disabled = true;
+        return this;
+    }
+    enable() {
+        this.e.disabled = false;
+        return this;
+    }
+    toggleEnabled(on) {
+        if (on) {
+            return this.enable();
+        }
+        else {
+            return this.disable();
+        }
+    }
+    get disabled() {
+        return this.e.disabled;
+    }
     on(evTypeFnPairs, options) {
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
@@ -647,25 +666,6 @@ class Input extends BetterHTMLElement {
     }
     get checked() {
         return this.e.checked;
-    }
-    disable() {
-        this.e.disabled = true;
-        return this;
-    }
-    enable() {
-        this.e.disabled = false;
-        return this;
-    }
-    toggleEnabled(on) {
-        if (on) {
-            return this.enable();
-        }
-        else {
-            return this.disable();
-        }
-    }
-    get disabled() {
-        return this.e.disabled;
     }
     value(val) {
         if (val === undefined) {
