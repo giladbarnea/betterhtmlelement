@@ -1,7 +1,3 @@
-
-
-
-
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
 
@@ -514,6 +510,28 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
         return this;
     }
 
+    disable(): this {
+        this.e.disabled = true;
+        return this;
+    }
+
+    enable(): this {
+        this.e.disabled = false;
+        return this;
+    }
+
+    toggleEnabled(on: boolean): this {
+        if (on) {
+            return this.enable()
+        } else {
+            return this.disable()
+        }
+    }
+
+    get disabled(): boolean {
+        return this.e.disabled;
+    }
+
 
     // *** Events
 
@@ -918,27 +936,6 @@ class Input extends BetterHTMLElement<HTMLInputElement> {
         return this.e.checked;
     }
 
-    disable(): this {
-        this.e.disabled = true;
-        return this;
-    }
-
-    enable(): this {
-        this.e.disabled = false;
-        return this;
-    }
-
-    toggleEnabled(on: boolean): this {
-        if (on) {
-            return this.enable()
-        } else {
-            return this.disable()
-        }
-    }
-
-    get disabled(): boolean {
-        return this.e.disabled;
-    }
 
     /**Returns `value`*/
     value(): string;
