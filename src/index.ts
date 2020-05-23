@@ -1,5 +1,5 @@
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
-
+const TAG_RE = /<(\w+)>$/.compile();
 
 class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     protected _htmlElement: T;
@@ -486,8 +486,20 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
                     this[key].cacheChildren(obj)
                 }
             } else if (type === "string") {
-                // { "myinput": "input[type=checkbox]" }
-                this._cache(key, this.child(value as TagOrString));
+                let tagName = TAG_RE.exec(value as string)[1] as Tag;
+                if (tagName) {
+                    // { "options": "<option>" }
+                    // @ts-ignore
+                    const htmlElements = [...this.e.getElementsByTagName(tagName)] as Array<HTMLElementTagNameMap[typeof tagName]>;
+                    let bhes = [];
+                    for (let htmlElement of htmlElements) {
+                        bhes.push(wrapWithBHE(htmlElement));
+                    }
+                    this._cache(key, bhes);
+                } else {
+                    // { "myinput": "input[type=checkbox]" }
+                    this._cache(key, this.child(value as TagOrString));
+                }
             } else {
                 console.warn(`cacheChildren, bad value type: "${type}". key: "${key}", value: "${value}". childrenObj:`, childrenObj,);
             }
