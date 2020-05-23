@@ -1,5 +1,4 @@
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
-const TAG_RE = /<(\w+)>$/.compile();
 class BetterHTMLElement {
     constructor(elemOptions) {
         this._isSvg = false;
@@ -346,7 +345,7 @@ class BetterHTMLElement {
                 }
             }
             else if (type === "string") {
-                let tagName = TAG_RE.exec(value)[1];
+                let tagName = /<(\w+)>$/.exec(value)[1];
                 if (tagName) {
                     const htmlElements = [...this.e.getElementsByTagName(tagName)];
                     let bhes = [];

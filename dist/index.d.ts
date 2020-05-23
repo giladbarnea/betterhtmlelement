@@ -1,5 +1,4 @@
 declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
-declare const TAG_RE: RegExp;
 declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     protected _htmlElement: T;
     private readonly _isSvg;

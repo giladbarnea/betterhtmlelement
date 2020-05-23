@@ -1,5 +1,5 @@
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
-const TAG_RE = /<(\w+)>$/.compile();
+// const TAG_RE = /<(\w+)>$/.compile();
 
 class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     protected _htmlElement: T;
@@ -486,7 +486,7 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
                     this[key].cacheChildren(obj)
                 }
             } else if (type === "string") {
-                let tagName = TAG_RE.exec(value as string)[1] as Tag;
+                let tagName = /<(\w+)>$/.exec(value as string)[1] as Tag;
 
                 if (tagName) {
                     // { "options": "<option>" }
