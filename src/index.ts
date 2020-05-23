@@ -487,6 +487,7 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
                 }
             } else if (type === "string") {
                 let tagName = TAG_RE.exec(value as string)[1] as Tag;
+
                 if (tagName) {
                     // { "options": "<option>" }
                     // @ts-ignore
