@@ -100,7 +100,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 declare class Div extends BetterHTMLElement<HTMLDivElement> {
     constructor(divOpts: any);
 }
-declare abstract class Form<E extends HTMLButtonElement | HTMLInputElement> extends BetterHTMLElement<E> {
+declare abstract class Form<E extends HTMLButtonElement | HTMLInputElement | HTMLOptionElement> extends BetterHTMLElement<E> {
     disable(): this;
     enable(): this;
     toggleEnabled(on: boolean): this;
@@ -141,6 +141,9 @@ declare class Input extends Form<HTMLInputElement> {
     get checked(): boolean;
     placeholder(val: string): this;
     placeholder(): string;
+}
+declare class OptionBHE extends Form<HTMLOptionElement> {
+    constructor(optionOpts: any);
 }
 declare class Img extends BetterHTMLElement<HTMLImageElement> {
     constructor({ setid, cls, src, byid, query, htmlElement, children }: {

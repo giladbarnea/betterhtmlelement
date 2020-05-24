@@ -991,7 +991,7 @@ class Input extends Form<HTMLInputElement> {
 
 }
 
-class Option extends Form<HTMLOptionElement> {
+class OptionBHE extends Form<HTMLOptionElement> {
     constructor(optionOpts) {
         const {setid, cls, byid, query, htmlElement, children, selected, value} = optionOpts;
         // if (noValue(arguments[0])) {

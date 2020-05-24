@@ -702,6 +702,29 @@ class Input extends Form {
         }
     }
 }
+class OptionBHE extends Form {
+    constructor(optionOpts) {
+        const { setid, cls, byid, query, htmlElement, children, selected, value } = optionOpts;
+        if (htmlElement !== undefined) {
+            super({ htmlElement, children });
+        }
+        else if (byid !== undefined) {
+            super({ byid, children });
+        }
+        else if (query !== undefined) {
+            super({ query, children });
+        }
+        else {
+            super({ tag: "input", cls, setid });
+        }
+        if (selected !== undefined) {
+            this._htmlElement.selected = selected;
+        }
+        if (value !== undefined) {
+            this._htmlElement.value = value;
+        }
+    }
+}
 class Img extends BetterHTMLElement {
     constructor({ setid, cls, src, byid, query, htmlElement, children }) {
         if (htmlElement !== undefined) {
