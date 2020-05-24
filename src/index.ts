@@ -794,7 +794,7 @@ class Div extends BetterHTMLElement<HTMLDivElement> {
 
 }
 
-abstract class Form<E extends HTMLButtonElement | HTMLInputElement>
+abstract class Form<E extends HTMLButtonElement | HTMLInputElement | HTMLOptionElement>
     extends BetterHTMLElement<E> {
     /**Props in comming with HTMLButtonElement and HTMLInputElement:
      Exclude<keyof HTMLInputElement & keyof HTMLButtonElement, keyof HTMLElement>*/
@@ -989,7 +989,32 @@ class Input extends Form<HTMLInputElement> {
 
     }
 
+}
 
+class Option extends Form<HTMLOptionElement> {
+    constructor(optionOpts) {
+        const {setid, cls, byid, query, htmlElement, children, selected, value} = optionOpts;
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
+
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "input", cls, setid})
+        }
+
+        if (selected !== undefined) {
+            this._htmlElement.selected = selected;
+        }
+        if (value !== undefined) {
+            this._htmlElement.value = value;
+        }
+    }
 }
 
 class Img extends BetterHTMLElement<HTMLImageElement> {
