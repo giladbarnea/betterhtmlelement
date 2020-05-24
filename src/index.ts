@@ -796,17 +796,22 @@ abstract class Form<E extends HTMLButtonElement | HTMLInputElement | HTMLSelectE
     extends BetterHTMLElement<E> {
     /**
      Button < Input
-     Select - Input = add(), item(), length, namedItem(), options, remove(), selectedIndex, selectedOptions, ITERATOR
-     Form - Input = acceptCharset, action, elements, encoding, enctype, length, method, noValidate, reset(), submit(), target, ITERATOR, GETITEM
+     Select - Input: add(), item(), length, namedItem(), options, remove(), selectedIndex, selectedOptions, ITERATOR
+     Select - Button: add() autocomplete item() length multiple namedItem() options remove() required selectedIndex selectedOptions size ITERATOR
+     Button - Select: formAction formEnctype formMethod formNoValidate formTarget
 
      Input uniques:
-     accept align alt checked defaultChecked defaultValue dirName files indeterminate list max maxLength min minLength pattern placeholder readOnly select() selectionDirection selectionEnd selectionStart setRangeText() setSelectionRange() step stepDown() stepUp() useMap valueAsDate valueAsNumber
-
-     Form uniques:
-     acceptCharset action elements encoding enctype method noValidate reset() submit() target GETITEM
+     accept checked defaultChecked defaultValue dirName files indeterminate list max maxLength min minLength pattern placeholder readOnly select() selectionDirection selectionEnd selectionStart setRangeText() setSelectionRange() src step stepDown() stepUp() useMap valueAsDate valueAsNumber
 
      Select uniques:
-     add() item() namedItem() options remove() selectedIndex selectedOptions
+     add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
+
+     Shared among Button, Select and Input: (or Button and Select, same)
+     checkValidity() disabled form labels name reportValidity() setCustomValidity() type validationMessage validity value willValidate
+
+     Shared ammong Selecct and Input:
+     autocomplete checkValidity() disabled form labels multiple name reportValidity() required setCustomValidity() type validationMessage validity value willValidate
+
      */
     disable(): this {
         this.e.disabled = true;
@@ -1000,8 +1005,8 @@ class Input extends Form<HTMLInputElement> {
 
 
 class Select extends Form<HTMLInputElement> {
-    // HTMLSelectElement props that aren't in HTMLInputElement:
-    // length, item(), options, selectedIndex, selectedOptions, add(), namedItem(), remove(), ITERATOR
+    // Select uniques:
+    // add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
 }
 
 

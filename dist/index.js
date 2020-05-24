@@ -581,23 +581,6 @@ class Form extends BetterHTMLElement {
         }
     }
 }
-["disabled",
-    "form",
-    "formAction",
-    "formEnctype",
-    "formMethod",
-    "formNoValidate",
-    "formTarget",
-    "labels",
-    "name",
-    "type",
-    "validationMessage",
-    "validity",
-    "value",
-    "willValidate",
-    "checkValidity()",
-    "reportValidity()",
-    "setCustomValidity()",];
 class Button extends Form {
     constructor(buttonOpts) {
         const { setid, cls, text, byid, query, htmlElement, children } = buttonOpts;

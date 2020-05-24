@@ -105,20 +105,24 @@ selectprops
 
 buttonprops
 ------------
-disabled
-form
-formAction
-formEnctype
-formMethod
-formNoValidate
-formTarget
-labels
-name
-type
-validationMessage
-validity
-value
-willValidate
-checkValidity()
-reportValidity()
-setCustomValidity()
+"disabled",
+"form",
+"formAction",
+"formEnctype",
+"formMethod",
+"formNoValidate",
+"formTarget",
+"labels",
+"name",
+"type",
+"validationMessage",
+"validity",
+"value",
+"willValidate",
+"checkValidity()",
+"reportValidity()",
+"setCustomValidity()",
+
+import pickle
+with open('pickle','rb') as f: 
+   d = pickle.load(f)
