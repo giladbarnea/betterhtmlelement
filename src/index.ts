@@ -5,7 +5,7 @@ const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     protected _htmlElement: Generic;
     private readonly _isSvg: boolean = false;
-    private readonly _listeners: EventNameFunctionMap5;
+    private readonly _listeners: MapOfEventName2Function = {};
     private _cachedChildren: TMap<BetterHTMLElement | BetterHTMLElement[]> = {};
 
     /**Create an element of `tag`. Optionally, set its `text`, `cls` or `id`. */
@@ -530,7 +530,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     // *** Events
 
-    on(evTypeFnPairs: TMap<EventNameFunctionMap5>, options?: AddEventListenerOptions): this {
+    on(evTypeFnPairs: TMap<EventName2Function>, options?: AddEventListenerOptions): this {
         const foo = evTypeFnPairs["abort"];
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
@@ -715,14 +715,12 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     /** Remove all event listeners in `_listeners`*/
     allOff(): this {
-        const foo = this._listeners["abort"];
-        for (let i = 0; i < this._listeners.length; i++) {
+
+        for (let i = 0; i < Object.keys(this._listeners).length; i++) {
             let event = this._listeners[i];
             this.off(event);
         }
-        // for (let event in this._listeners) {
-        //     this.off(event);
-        // }
+
         return this;
     }
 

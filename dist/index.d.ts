@@ -72,7 +72,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     cacheChildren(childrenObj: ChildrenObj): this;
     empty(): this;
     remove(): this;
-    on(evTypeFnPairs: TMap<EventNameFunctionMap5>, options?: AddEventListenerOptions): this;
+    on(evTypeFnPairs: TMap<EventName2Function>, options?: AddEventListenerOptions): this;
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
     pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this;
     click(): this;

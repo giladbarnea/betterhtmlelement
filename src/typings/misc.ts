@@ -11,45 +11,51 @@ interface TRecMap<T> {
     [s: number]: T | TRecMap<T>
 }
 
-type IMap<T> = {
-    [s in keyof T]: T
-}
+// type IMap<T> = {
+//     [s in keyof T]: T
+// }
 
 
+// type EventNameFunctionMapOrig<E extends EventName> = {
+//     [P in E]?: (event: HTMLElementEventMap[P]) => void;
+// }[E];
+//
+// type EventNameFunctionMap2<E extends EventName> = E extends EventName ? (event: HTMLElementEventMap[E]) => void : never;
+// type EventNameFunctionMap3 = {
+//     [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+// }
+// type EventNameFunctionMap4<E extends EventName> = {
+//     [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+// }
 type EventName = keyof HTMLElementEventMap;
-// EventNameFunctionMap<"click"> → function(event: MouseEvent) { }
-type EventNameFunctionMap<E extends EventName> = {
-    [P in E]?: (event: HTMLElementEventMap[P]) => void;
-}[E];
-
-type EventNameFunctionMap2<E extends EventName> = E extends EventName ? (event: HTMLElementEventMap[E]) => void : never;
-type EventNameFunctionMap3 = {
-    [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
-}
-type EventNameFunctionMap4<E extends EventName> = {
-    [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
-}
-type EventNameFunctionMap5<E extends EventName = EventName> = {
+// EventName2Function<"click"> → function(event: MouseEvent) { }
+type EventName2Function<E extends EventName = EventName> = {
     [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
 }[E]
+// e.g. { "mouseover" : MouseEvent, ... }
+type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventName2Function>>
 
 
-type TEv1 = EventNameFunctionMap5<"mouseover">;
-let ev1: TEv1;
+type MouseOverFunction = EventName2Function<"mouseover">;
+
 
 function expectsMouseEventFunction(fn: (event: MouseEvent) => void) {
 
 }
 
-const mouseEventFunction: TEv1 = (event: MouseEvent) => {
+const mouseEventFunction: MouseOverFunction = (event: MouseEvent) => {
 };
+
 expectsMouseEventFunction(mouseEventFunction);
 
-function expectsMouseEventFunctionPairs(pairs: TMap<(event: MouseEvent) => void>) {
+function expectsMouseEventFunctionPairs(pairs: MapOfEventName2Function) {
+    for (let [evName, evFn] of Object.entries(pairs)) {
+        expectsMouseEventFunction(evFn)
+    }
 
 }
 
-const pairs = {"mouseoverz": mouseEventFunction};
+const pairs: MapOfEventName2Function = {"mouseover": mouseEventFunction};
 expectsMouseEventFunctionPairs(pairs);
 // // HTMLTag2HTMLElement<"a"> → HTMLAnchorElement
 // type HTMLTag2HTMLElement<K extends keyof HTMLElementTagNameMap> = {

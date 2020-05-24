@@ -2,6 +2,7 @@ const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 class BetterHTMLElement {
     constructor(elemOptions) {
         this._isSvg = false;
+        this._listeners = {};
         this._cachedChildren = {};
         const { tag, cls, setid, htmlElement, byid, query, children } = elemOptions;
         if ([byid, htmlElement, query].filter(x => Boolean(x)).length > 1) {
@@ -489,8 +490,7 @@ class BetterHTMLElement {
         return this;
     }
     allOff() {
-        const foo = this._listeners["abort"];
-        for (let i = 0; i < this._listeners.length; i++) {
+        for (let i = 0; i < Object.keys(this._listeners).length; i++) {
             let event = this._listeners[i];
             this.off(event);
         }
