@@ -1004,9 +1004,43 @@ class Input extends Form<HTMLInputElement> {
 }
 
 
-class Select extends Form<HTMLInputElement> {
+class Select extends Form<HTMLSelectElement> {
     // Select uniques:
     // add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
+    constructor(selectOpts) {
+        super(selectOpts);
+    }
+
+    get selectedIndex(): number {
+        return this.e.selectedIndex
+    }
+
+    get selected(): HTMLOptionElement {
+        return this.item(this.selectedIndex)
+    }
+
+    get options(): HTMLOptionsCollection {
+        return this.e.options
+    }
+
+    item(index): HTMLOptionElement {
+        return this.e.item(index) as HTMLOptionElement
+    }
+
+    /*[Symbol.iterator]() {
+        let options = this.options;
+        let currentIndex = 0;
+        return {
+            next() {
+                currentIndex += 1;
+                return {
+                    value: undefined,
+                    done: true
+                };
+
+            }
+        }
+    }*/
 }
 
 

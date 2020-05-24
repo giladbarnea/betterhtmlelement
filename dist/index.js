@@ -703,6 +703,21 @@ class Input extends Form {
     }
 }
 class Select extends Form {
+    constructor(selectOpts) {
+        super(selectOpts);
+    }
+    get selectedIndex() {
+        return this.e.selectedIndex;
+    }
+    get selected() {
+        return this.item(this.selectedIndex);
+    }
+    get options() {
+        return this.e.options;
+    }
+    item(index) {
+        return this.e.item(index);
+    }
 }
 class Img extends BetterHTMLElement {
     constructor({ setid, cls, src, byid, query, htmlElement, children }) {

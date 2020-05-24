@@ -142,7 +142,12 @@ declare class Input extends Form<HTMLInputElement> {
     placeholder(val: string): this;
     placeholder(): string;
 }
-declare class Select extends Form<HTMLInputElement> {
+declare class Select extends Form<HTMLSelectElement> {
+    constructor(selectOpts: any);
+    get selectedIndex(): number;
+    get selected(): HTMLOptionElement;
+    get options(): HTMLOptionsCollection;
+    item(index: any): HTMLOptionElement;
 }
 declare class Img extends BetterHTMLElement<HTMLImageElement> {
     constructor({ setid, cls, src, byid, query, htmlElement, children }: {
