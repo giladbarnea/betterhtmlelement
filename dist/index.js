@@ -277,6 +277,10 @@ class BetterHTMLElement {
         return this;
     }
     _cache(key, child) {
+        const oldchild = this._cachedChildren[key];
+        if (oldchild !== undefined) {
+            console.warn(`Overwriting this._cachedChildren[${key}]!`, 'old value:', oldchild, 'new value:', child, `they're different: ${oldchild == child}`);
+        }
         this[key] = child;
         this._cachedChildren[key] = child;
     }
