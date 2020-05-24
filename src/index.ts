@@ -1,20 +1,21 @@
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
+
 // const TAG_RE = /<(\w+)>$/.compile();
 
-class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
-    protected _htmlElement: T;
+class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
+    protected _htmlElement: Generic;
     private readonly _isSvg: boolean = false;
-    private readonly _listeners: TEventFunctionMap<TEvent> = {};
-    private _cachedChildren: TMap<BetterHTMLElement> = {};
+    private readonly _listeners: EventNameFunctionMap5;
+    private _cachedChildren: TMap<BetterHTMLElement | BetterHTMLElement[]> = {};
 
     /**Create an element of `tag`. Optionally, set its `text`, `cls` or `id`. */
-    constructor({tag, cls, setid}: { tag: Element2Tag<T>, cls?: string, setid?: string });
+    constructor({tag, cls, setid}: { tag: Element2Tag<Generic>, cls?: string, setid?: string });
     /**Wrap an existing element by `byid`. Optionally cache existing `children`*/
     constructor({byid, children}: { byid: string, children?: ChildrenObj });
     /**Wrap an existing element by `query`. Optionally cache existing `children`*/
     constructor({query, children}: { query: QuerySelector, children?: ChildrenObj });
     /**Wrap an existing HTMLElement. Optionally cache existing `children`*/
-    constructor({htmlElement, children}: { htmlElement: T; children?: ChildrenObj });
+    constructor({htmlElement, children}: { htmlElement: Generic; children?: ChildrenObj });
     constructor(elemOptions) {
         const {
             tag, cls, setid, // create
@@ -57,16 +58,16 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
                 this._isSvg = true;
                 this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
             } else {
-                this._htmlElement = document.createElement(tag) as T;
+                this._htmlElement = document.createElement(tag) as Generic;
             }
             // ** wrap EXISTING element
             // * byid
         } else if (byid !== undefined) {
-            this._htmlElement = document.getElementById(byid) as T;
+            this._htmlElement = document.getElementById(byid) as Generic;
         } else {
             // * query
             if (query !== undefined) {
-                this._htmlElement = document.querySelector(query) as T;
+                this._htmlElement = document.querySelector(query) as Generic;
             } else {
                 // * htmlElement
                 if (htmlElement !== undefined) {
@@ -97,7 +98,7 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     /**Sets `this._htmlElement` to `newHtmlElement._htmlElement`.
      * Resets `this._cachedChildren` and caches `newHtmlElement._cachedChildren`.
      * Adds event listeners from `newHtmlElement._listeners`, while keeping `this._listeners`.*/
-    wrapSomethingElse(newHtmlElement: BetterHTMLElement): this
+    wrapSomethingElse<T extends HTMLElement>(newHtmlElement: BetterHTMLElement<T>): this
     /**Sets `this._htmlElement` to `newHtmlElement`.
      * Keeps `this._listeners`.
      * NOTE: this reinitializes `this._cachedChildren` and all event listeners belonging to `newHtmlElement` are lost. Pass a `BetterHTMLElement` to keep them.*/
@@ -369,7 +370,9 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    private _cache(key: string, child: BetterHTMLElement<any>) {
+    // private _cache(key: string, child: BetterHTMLElement): void
+    // private _cache(key: string, child: BetterHTMLElement[]): void
+    private _cache(key, child: BetterHTMLElement | BetterHTMLElement[]): void {
         this[key] = child;
         this._cachedChildren[key] = child;
     }
@@ -486,12 +489,13 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
                     this[key].cacheChildren(obj)
                 }
             } else if (type === "string") {
-                let tagName = /<(\w+)>$/.exec(value as string)[1] as Tag;
+                let match = /<(\w+)>$/.exec(value as string);
 
-                if (tagName) {
+                if (match) {
                     // { "options": "<option>" }
+                    let tagName = match[1] as Tag;
                     // @ts-ignore
-                    const htmlElements = [...this.e.getElementsByTagName(tagName)] as Array<HTMLElementTagNameMap[typeof tagName]>;
+                    const htmlElements = [...this.e.getElementsByTagName(tagName)] as HTMLElementTagNameMap[typeof tagName][];
                     let bhes = [];
                     for (let htmlElement of htmlElements) {
                         bhes.push(wrapWithBHE(htmlElement));
@@ -526,7 +530,8 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
 
     // *** Events
 
-    on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this {
+    on(evTypeFnPairs: TMap<EventNameFunctionMap5>, options?: AddEventListenerOptions): this {
+        const foo = evTypeFnPairs["abort"];
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
                 evFn(evt);
@@ -693,15 +698,16 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
 
 
     /**Add a `mouseover` event listener*/
-    mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this {
+    mouseover(fn: (event: MouseEvent) => void, options?: AddEventListenerOptions): this {
         // mouseover: also child elements
         // mouseenter: only bound element
-        return this.on({mouseover: fn}, options)
+        // return this.on({mouseover: fn}, options)
+        return this.on({mouseover: fn})
     }
 
 
     /** Remove the event listener of `event`, if exists.*/
-    off(event: TEvent): this {
+    off(event: EventName): this {
         // TODO: Should remove listener from this._listeners?
         this.e.removeEventListener(event, this._listeners[event]);
         return this;
@@ -709,9 +715,14 @@ class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
 
     /** Remove all event listeners in `_listeners`*/
     allOff(): this {
-        for (let event in this._listeners) {
-            this.off(<TEvent>event);
+        const foo = this._listeners["abort"];
+        for (let i = 0; i < this._listeners.length; i++) {
+            let event = this._listeners[i];
+            this.off(event);
         }
+        // for (let event in this._listeners) {
+        //     this.off(event);
+        // }
         return this;
     }
 

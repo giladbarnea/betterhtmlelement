@@ -1,4 +1,4 @@
-// TODO: why <TEvent> needed in allOff()?
+// TODO: why <EventName> needed in allOff()?
 interface TMap<T> {
     [s: string]: T;
 
@@ -11,25 +11,58 @@ interface TRecMap<T> {
     [s: number]: T | TRecMap<T>
 }
 
-
-type TEvent = keyof HTMLElementEventMap;
-// for each event ("click"), create a `(event: MouseEvent) => void` function.
-type TEventFunctionMap<K extends TEvent> = {
-    [P in K]?: (event: HTMLElementEventMap[P]) => void;
-};
-
-// HTMLTag2HTMLElement<"a"> → HTMLAnchorElement
-type HTMLTag2HTMLElement<K extends keyof HTMLElementTagNameMap> = {
-    [P in K]: HTMLElementTagNameMap[P]
-}[K]
-
-// HTMLTag2HTMLElement2["a"] → HTMLAnchorElement
-type HTMLTag2HTMLElement2 = {
-    [P in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[P]
+type IMap<T> = {
+    [s in keyof T]: T
 }
 
-// const a: HTMLTag2HTMLElement<"a"> = undefined;
-// const b: HTMLTag2HTMLElement2["a"] = undefined;
+
+type EventName = keyof HTMLElementEventMap;
+// EventNameFunctionMap<"click"> → function(event: MouseEvent) { }
+type EventNameFunctionMap<E extends EventName> = {
+    [P in E]?: (event: HTMLElementEventMap[P]) => void;
+}[E];
+
+type EventNameFunctionMap2<E extends EventName> = E extends EventName ? (event: HTMLElementEventMap[E]) => void : never;
+type EventNameFunctionMap3 = {
+    [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+}
+type EventNameFunctionMap4<E extends EventName> = {
+    [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+}
+type EventNameFunctionMap5<E extends EventName = EventName> = {
+    [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+}[E]
+
+
+type TEv1 = EventNameFunctionMap5<"mouseover">;
+let ev1: TEv1;
+
+function expectsMouseEventFunction(fn: (event: MouseEvent) => void) {
+
+}
+
+const mouseEventFunction: TEv1 = (event: MouseEvent) => {
+};
+expectsMouseEventFunction(mouseEventFunction);
+
+function expectsMouseEventFunctionPairs(pairs: TMap<(event: MouseEvent) => void>) {
+
+}
+
+const pairs = {"mouseoverz": mouseEventFunction};
+expectsMouseEventFunctionPairs(pairs);
+// // HTMLTag2HTMLElement<"a"> → HTMLAnchorElement
+// type HTMLTag2HTMLElement<K extends keyof HTMLElementTagNameMap> = {
+//     [P in K]: HTMLElementTagNameMap[P]
+// }[K]
+//
+// // HTMLTag2HTMLElement2["a"] → HTMLAnchorElement
+// type HTMLTag2HTMLElement2 = {
+//     [P in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[P]
+// }
+//
+// // const a: HTMLTag2HTMLElement<"a"> = undefined;
+// // const b: HTMLTag2HTMLElement2["a"] = undefined;
 
 
 /**
@@ -41,15 +74,15 @@ type HTMLTag2HTMLElement2 = {
  */
 type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
 type NotTag<T extends Tag> = Exclude<Tag, T>;
-/**
- * "a", "div", "gilad".
- * Tag2Element expects a tag and returns an HTMLElement.
- * @example
- * const baz = <K extends Tag | string>(query: K) => document.querySelector(query);
- * baz("div") → HTMLDivElement
- * baz("diva") → HTMLSelectElement | HTMLLegendElement | ...
- */
-type Tag2Element<K extends Tag = Tag> = K extends Tag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[Tag]
+// /**
+//  *"a", "div", "gilad".
+//  *Tag2Element expects a tag and returns an HTMLElement.
+//  *@example
+//  *const baz = <K extends Tag | string>(query: K) => document.querySelector(query);
+//  *baz("div") → HTMLDivElement
+//  *baz("diva") → HTMLSelectElement | HTMLLegendElement | ...
+//  */
+// type Tag2Element<K extends Tag = Tag> = K extends Tag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[Tag]
 type TagOrString = Tag | string;
 /**
  * "a", "div", "gilad".
@@ -59,7 +92,6 @@ type TagOrString = Tag | string;
  * bar("a") → HTMLAnchorElement
  * bar("gilad") → HTMLSelectElement | HTMLLegendElement | ...
  */
-// type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
 type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
 
 // const foo = <K extends Tag>(tag: K) => document.createElement(tag);
@@ -80,21 +112,21 @@ interface Tag2BHE {
 }
 
 
-type BHETag = keyof Tag2BHE;
-type BHEHTMLElement =
-    HTMLAnchorElement |
-    HTMLInputElement |
-    HTMLImageElement |
-    HTMLParagraphElement |
-    HTMLDivElement |
-    HTMLButtonElement |
-    HTMLSpanElement;
-
-type StdBHEHTMLElement =
-    HTMLParagraphElement |
-    HTMLDivElement |
-    HTMLButtonElement |
-    HTMLSpanElement
+// type BHETag = keyof Tag2BHE;
+// type BHEHTMLElement =
+//     HTMLAnchorElement |
+//     HTMLInputElement |
+//     HTMLImageElement |
+//     HTMLParagraphElement |
+//     HTMLDivElement |
+//     HTMLButtonElement |
+//     HTMLSpanElement;
+//
+// type StdBHEHTMLElement =
+//     HTMLParagraphElement |
+//     HTMLDivElement |
+//     HTMLButtonElement |
+//     HTMLSpanElement
 
 type Element2Tag<T> =
     T extends HTMLInputElement ? "input"
@@ -102,13 +134,13 @@ type Element2Tag<T> =
         : T extends HTMLImageElement ? "img"
             : Tag
 
-type MapValues<T> = { [K in keyof T]: T[K] }[keyof T];
+// type MapValues<T> = { [K in keyof T]: T[K] }[keyof T];
 
 // HTMLDivElement, ...
-type HTMLElements = MapValues<HTMLElementTagNameMap>;
-type Filter<T> = T extends HTMLElements ? T : never;
+// type HTMLElements = MapValues<HTMLElementTagNameMap>;
+// type Filter<T> = T extends HTMLElements ? T : never;
+// type GenericFilter<T, U> = T extends U ? T : never;
 
-type GenericFilter<T, U> = T extends U ? T : never;
 // const what: Element2Tag<HTMLDivElement> = undefined;
 // const what: Filter<HTMLInputElement, HTMLElements> = undefined;
 // const what: Filter<HTMLInputElement> = undefined;

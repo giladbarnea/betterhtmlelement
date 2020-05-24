@@ -1,11 +1,11 @@
 declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
-declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
-    protected _htmlElement: T;
+declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
+    protected _htmlElement: Generic;
     private readonly _isSvg;
     private readonly _listeners;
     private _cachedChildren;
     constructor({ tag, cls, setid }: {
-        tag: Element2Tag<T>;
+        tag: Element2Tag<Generic>;
         cls?: string;
         setid?: string;
     });
@@ -18,11 +18,11 @@ declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
         children?: ChildrenObj;
     });
     constructor({ htmlElement, children }: {
-        htmlElement: T;
+        htmlElement: Generic;
         children?: ChildrenObj;
     });
-    get e(): T;
-    wrapSomethingElse(newHtmlElement: BetterHTMLElement): this;
+    get e(): Generic;
+    wrapSomethingElse<T extends HTMLElement>(newHtmlElement: BetterHTMLElement<T>): this;
     wrapSomethingElse(newHtmlElement: Node): this;
     html(html: string): this;
     html(): string;
@@ -72,7 +72,7 @@ declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     cacheChildren(childrenObj: ChildrenObj): this;
     empty(): this;
     remove(): this;
-    on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this;
+    on(evTypeFnPairs: TMap<EventNameFunctionMap5>, options?: AddEventListenerOptions): this;
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
     pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this;
     click(): this;
@@ -89,8 +89,8 @@ declare class BetterHTMLElement<T extends HTMLElement = HTMLElement> {
     mouseenter(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
     keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this;
     mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    off(event: TEvent): this;
+    mouseover(fn: (event: MouseEvent) => void, options?: AddEventListenerOptions): this;
+    off(event: EventName): this;
     allOff(): this;
     attr(attrValPairs: TMap<string | boolean>): this;
     attr(attributeName: string): string;

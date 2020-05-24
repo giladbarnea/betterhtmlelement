@@ -2,7 +2,6 @@ const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 class BetterHTMLElement {
     constructor(elemOptions) {
         this._isSvg = false;
-        this._listeners = {};
         this._cachedChildren = {};
         const { tag, cls, setid, htmlElement, byid, query, children } = elemOptions;
         if ([byid, htmlElement, query].filter(x => Boolean(x)).length > 1) {
@@ -345,8 +344,9 @@ class BetterHTMLElement {
                 }
             }
             else if (type === "string") {
-                let tagName = /<(\w+)>$/.exec(value)[1];
-                if (tagName) {
+                let match = /<(\w+)>$/.exec(value);
+                if (match) {
+                    let tagName = match[1];
                     const htmlElements = [...this.e.getElementsByTagName(tagName)];
                     let bhes = [];
                     for (let htmlElement of htmlElements) {
@@ -375,6 +375,7 @@ class BetterHTMLElement {
         return this;
     }
     on(evTypeFnPairs, options) {
+        const foo = evTypeFnPairs["abort"];
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
                 evFn(evt);
@@ -481,14 +482,16 @@ class BetterHTMLElement {
         return this.on({ mouseout: fn }, options);
     }
     mouseover(fn, options) {
-        return this.on({ mouseover: fn }, options);
+        return this.on({ mouseover: fn });
     }
     off(event) {
         this.e.removeEventListener(event, this._listeners[event]);
         return this;
     }
     allOff() {
-        for (let event in this._listeners) {
+        const foo = this._listeners["abort"];
+        for (let i = 0; i < this._listeners.length; i++) {
+            let event = this._listeners[i];
             this.off(event);
         }
         return this;
