@@ -1,7 +1,5 @@
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
-// const TAG_RE = /<(\w+)>$/.compile();
-
 class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     protected _htmlElement: Generic;
     private readonly _isSvg: boolean = false;
@@ -794,10 +792,22 @@ class Div extends BetterHTMLElement<HTMLDivElement> {
 
 }
 
-abstract class Form<E extends HTMLButtonElement | HTMLInputElement | HTMLOptionElement>
+abstract class Form<E extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement>
     extends BetterHTMLElement<E> {
-    /**Props in comming with HTMLButtonElement and HTMLInputElement:
-     Exclude<keyof HTMLInputElement & keyof HTMLButtonElement, keyof HTMLElement>*/
+    /**
+     Button < Input
+     Select - Input = add(), item(), length, namedItem(), options, remove(), selectedIndex, selectedOptions, ITERATOR
+     Form - Input = acceptCharset, action, elements, encoding, enctype, length, method, noValidate, reset(), submit(), target, ITERATOR, GETITEM
+
+     Input uniques:
+     accept align alt checked defaultChecked defaultValue dirName files indeterminate list max maxLength min minLength pattern placeholder readOnly select() selectionDirection selectionEnd selectionStart setRangeText() setSelectionRange() step stepDown() stepUp() useMap valueAsDate valueAsNumber
+
+     Form uniques:
+     acceptCharset action elements encoding enctype method noValidate reset() submit() target GETITEM
+
+     Select uniques:
+     add() item() namedItem() options remove() selectedIndex selectedOptions
+     */
     disable(): this {
         this.e.disabled = true;
         return this;
@@ -834,12 +844,9 @@ abstract class Form<E extends HTMLButtonElement | HTMLInputElement | HTMLOptionE
     }
 }
 
-class Button extends Form<HTMLButtonElement> {
 
+class Button extends Form<HTMLButtonElement> {
     constructor(buttonOpts) {
-        // if (noValue(arguments[0])) {
-        //     throw new NotEnoughArgs([1], arguments[0])
-        // }
         const {setid, cls, text, byid, query, htmlElement, children} = buttonOpts;
         if (htmlElement !== undefined) {
             super({htmlElement, children});
@@ -991,7 +998,14 @@ class Input extends Form<HTMLInputElement> {
 
 }
 
-class OptionBHE extends Form<HTMLOptionElement> {
+
+class Select extends Form<HTMLInputElement> {
+    // HTMLSelectElement props that aren't in HTMLInputElement:
+    // length, item(), options, selectedIndex, selectedOptions, add(), namedItem(), remove(), ITERATOR
+}
+
+
+/*class OptionBHE extends Form<HTMLOptionElement> {
     constructor(optionOpts) {
         const {setid, cls, byid, query, htmlElement, children, selected, value} = optionOpts;
         // if (noValue(arguments[0])) {
@@ -1015,7 +1029,7 @@ class OptionBHE extends Form<HTMLOptionElement> {
             this._htmlElement.value = value;
         }
     }
-}
+}*/
 
 class Img extends BetterHTMLElement<HTMLImageElement> {
 
@@ -1215,6 +1229,9 @@ function input(inputOpts?): Input {
     return new Input(inputOpts)
 }
 
+function select(selectOpts): Select {
+
+}
 
 /**Create an Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
 function img({cls, setid, src}: {
@@ -1293,6 +1310,7 @@ function wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
 function wrapWithBHE(htmlElement: HTMLSpanElement): Span;
 function wrapWithBHE(htmlElement: HTMLButtonElement): Button;
 function wrapWithBHE(htmlElement: HTMLDivElement): Div;
+function wrapWithBHE(htmlElement: HTMLSelectElement): Div;
 function wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
 function wrapWithBHE(element) {
     const tag = element.tagName.toLowerCase() as Element2Tag<typeof element>;
@@ -1311,6 +1329,8 @@ function wrapWithBHE(element) {
         return button({htmlElement: element});
     } else if (tag === 'span') {
         return span({htmlElement: element});
+    } else if (tag === 'select') {
+        return select({htmlElement: element});
     } else {
         return elem({htmlElement: element});
     }

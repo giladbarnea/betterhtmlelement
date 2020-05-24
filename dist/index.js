@@ -581,6 +581,23 @@ class Form extends BetterHTMLElement {
         }
     }
 }
+["disabled",
+    "form",
+    "formAction",
+    "formEnctype",
+    "formMethod",
+    "formNoValidate",
+    "formTarget",
+    "labels",
+    "name",
+    "type",
+    "validationMessage",
+    "validity",
+    "value",
+    "willValidate",
+    "checkValidity()",
+    "reportValidity()",
+    "setCustomValidity()",];
 class Button extends Form {
     constructor(buttonOpts) {
         const { setid, cls, text, byid, query, htmlElement, children } = buttonOpts;
@@ -702,28 +719,7 @@ class Input extends Form {
         }
     }
 }
-class OptionBHE extends Form {
-    constructor(optionOpts) {
-        const { setid, cls, byid, query, htmlElement, children, selected, value } = optionOpts;
-        if (htmlElement !== undefined) {
-            super({ htmlElement, children });
-        }
-        else if (byid !== undefined) {
-            super({ byid, children });
-        }
-        else if (query !== undefined) {
-            super({ query, children });
-        }
-        else {
-            super({ tag: "input", cls, setid });
-        }
-        if (selected !== undefined) {
-            this._htmlElement.selected = selected;
-        }
-        if (value !== undefined) {
-            this._htmlElement.value = value;
-        }
-    }
+class Select extends Form {
 }
 class Img extends BetterHTMLElement {
     constructor({ setid, cls, src, byid, query, htmlElement, children }) {
@@ -821,6 +817,8 @@ function input(inputOpts) {
     }
     return new Input(inputOpts);
 }
+function select(selectOpts) {
+}
 function img(imgOpts) {
     if (!bool(imgOpts)) {
         imgOpts = {};
@@ -861,6 +859,9 @@ function wrapWithBHE(element) {
     }
     else if (tag === 'span') {
         return span({ htmlElement: element });
+    }
+    else if (tag === 'select') {
+        return select({ htmlElement: element });
     }
     else {
         return elem({ htmlElement: element });

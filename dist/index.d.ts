@@ -100,7 +100,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 declare class Div extends BetterHTMLElement<HTMLDivElement> {
     constructor(divOpts: any);
 }
-declare abstract class Form<E extends HTMLButtonElement | HTMLInputElement | HTMLOptionElement> extends BetterHTMLElement<E> {
+declare abstract class Form<E extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement> extends BetterHTMLElement<E> {
     disable(): this;
     enable(): this;
     toggleEnabled(on: boolean): this;
@@ -142,8 +142,7 @@ declare class Input extends Form<HTMLInputElement> {
     placeholder(val: string): this;
     placeholder(): string;
 }
-declare class OptionBHE extends Form<HTMLOptionElement> {
-    constructor(optionOpts: any);
+declare class Select extends Form<HTMLInputElement> {
 }
 declare class Img extends BetterHTMLElement<HTMLImageElement> {
     constructor({ setid, cls, src, byid, query, htmlElement, children }: {
@@ -265,6 +264,7 @@ declare function input<E extends HTMLInputElement>({ htmlElement, children }: {
     children?: ChildrenObj;
 }): Input;
 declare function input(): Input;
+declare function select(selectOpts: any): Select;
 declare function img({ cls, setid, src }: {
     cls?: string;
     setid?: string;
@@ -327,4 +327,5 @@ declare function wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
 declare function wrapWithBHE(htmlElement: HTMLSpanElement): Span;
 declare function wrapWithBHE(htmlElement: HTMLButtonElement): Button;
 declare function wrapWithBHE(htmlElement: HTMLDivElement): Div;
+declare function wrapWithBHE(htmlElement: HTMLSelectElement): Div;
 declare function wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
