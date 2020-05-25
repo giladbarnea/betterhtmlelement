@@ -301,13 +301,19 @@ class BetterHTMLElement {
         }
         return this;
     }
-    child(selector) {
+    child(selector, bheCls) {
         const htmlElement = this.e.querySelector(selector);
         if (htmlElement === null) {
             console.warn(`${this.e}.child(${selector}): no child. returning undefined`);
             return undefined;
         }
-        const bhe = wrapWithBHE(htmlElement);
+        let bhe;
+        if (bheCls === undefined) {
+            bhe = wrapWithBHE(htmlElement);
+        }
+        else {
+            bhe = new bheCls({ htmlElement });
+        }
         return bhe;
     }
     children(selector) {
@@ -344,8 +350,14 @@ class BetterHTMLElement {
                         });
                     }
                     let [selector, obj] = entries[0];
-                    this._cache(key, this.child(selector));
-                    this[key].cacheChildren(obj);
+                    if (isFunction(obj)) {
+                        let bhe = this.child(selector, obj);
+                        this._cache(key, bhe);
+                    }
+                    else {
+                        this._cache(key, this.child(selector));
+                        this[key].cacheChildren(obj);
+                    }
                 }
             }
             else if (type === "string") {
@@ -820,6 +832,10 @@ function input(inputOpts) {
     return new Input(inputOpts);
 }
 function select(selectOpts) {
+    if (!bool(selectOpts)) {
+        selectOpts = {};
+    }
+    return new Select(selectOpts);
 }
 function img(imgOpts) {
     if (!bool(imgOpts)) {

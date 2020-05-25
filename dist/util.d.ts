@@ -8,7 +8,7 @@ declare function isEmptyArr(collection: any): boolean;
 declare function isEmptyObj(obj: any): boolean;
 declare function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType: any): bhe is T;
 declare function isType<T>(arg: T): arg is T;
-declare function isFunction(fn: AnyFunction): fn is AnyFunction;
+declare function isFunction<T>(fn: T): fn is T;
 declare function isObject(obj: any): boolean;
 declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
 declare function getLength(collection: any): number;

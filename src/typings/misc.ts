@@ -36,7 +36,7 @@ type EventName2Function<E extends EventName = EventName> = {
 type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventName2Function>>
 
 
-type MouseOverFunction = EventName2Function<"mouseover">;
+/*type MouseOverFunction = EventName2Function<"mouseover">;
 
 
 function expectsMouseEventFunction(fn: (event: MouseEvent) => void) {
@@ -56,7 +56,10 @@ function expectsMouseEventFunctionPairs(pairs: MapOfEventName2Function) {
 }
 
 const pairs: MapOfEventName2Function = {"mouseover": mouseEventFunction};
-expectsMouseEventFunctionPairs(pairs);
+expectsMouseEventFunctionPairs(pairs);*/
+
+
+
 // // HTMLTag2HTMLElement<"a"> → HTMLAnchorElement
 // type HTMLTag2HTMLElement<K extends keyof HTMLElementTagNameMap> = {
 //     [P in K]: HTMLElementTagNameMap[P]
@@ -155,13 +158,15 @@ type Element2Tag<T> =
 
 // type ChildrenObj = TMap<Tag2Element> | TRecMap<Tag2Element>
 // type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
-type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement>
+type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>
 type Enumerated<T> =
     T extends (infer U)[] ? [number, U][]
-        : T extends TMap<(infer U)> ? [keyof T, U][]
+        : T extends TRecMap<(infer U)> ? [keyof T, U][]
         : T extends boolean ? never : any;
+type Returns<T> = (s: string) => T;
 type TReturnBoolean = (s: string) => boolean;
 type AnyFunction = (...args: any[]) => any;
+
 
 type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
 type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;

@@ -203,7 +203,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     /**`.className = cls`*/
     class(cls: string): this;
     /**Return the first class that matches `cls` predicate.*/
-    class(cls: TReturnBoolean): string;
+    class(cls: Returns<boolean>): string;
     /**Return a string array of the element's classes (not a classList)*/
     class(): string[];
     class(cls?) {
@@ -231,12 +231,12 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    removeClass(cls: TReturnBoolean, ...clses: TReturnBoolean[]): this;
+    removeClass(cls: Returns<boolean>, ...clses: Returns<boolean>[]): this;
     removeClass(cls: string, clses?: string[]): this;
     removeClass(cls, ...clses) {
-        if (isFunction(cls)) {
+        if (isFunction<Returns<boolean>>(cls)) {
             this.e.classList.remove(this.class(cls));
-            for (let c of <TReturnBoolean[]>clses) {
+            for (let c of <Returns<boolean>[]>clses) {
                 this.e.classList.remove(this.class(c));
             }
         } else {
@@ -248,10 +248,10 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    replaceClass(oldToken: TReturnBoolean, newToken: string): this;
+    replaceClass(oldToken: Returns<boolean>, newToken: string): this;
     replaceClass(oldToken: string, newToken: string): this
     replaceClass(oldToken, newToken) {
-        if (isFunction(oldToken)) {
+        if (isFunction<Returns<boolean>>(oldToken)) {
             this.e.classList.replace(this.class(oldToken), newToken);
         } else {
             this.e.classList.replace(oldToken, newToken);
@@ -259,10 +259,10 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    toggleClass(cls: TReturnBoolean, force?: boolean): this
+    toggleClass(cls: Returns<boolean>, force?: boolean): this
     toggleClass(cls: string, force?: boolean): this
     toggleClass(cls, force) {
-        if (isFunction(cls)) {
+        if (isFunction<Returns<boolean>>(cls)) {
             this.e.classList.toggle(this.class(cls), force);
         } else {
             this.e.classList.toggle(cls, force);
@@ -273,7 +273,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     /**Returns `this.e.classList.contains(cls)` */
     hasClass(cls: string): boolean
     /**Returns whether `this` has a class that matches passed function */
-    hasClass(cls: TReturnBoolean): boolean
+    hasClass(cls: Returns<boolean>): boolean
     hasClass(cls) {
         if (isFunction(cls)) {
             return this.class(cls) !== undefined;
@@ -412,13 +412,19 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     child(selector: "div"): Div;
     child<T extends Tag>(selector: T): BetterHTMLElement<HTMLElementTagNameMap[T]>;
     child(selector: string): BetterHTMLElement;
-    child(selector) {
+    child<T extends typeof BetterHTMLElement>(selector: string, bheCls: T): T;
+    child(selector, bheCls?) {
         const htmlElement = this.e.querySelector(selector) as HTMLElement;
         if (htmlElement === null) {
             console.warn(`${this.e}.child(${selector}): no child. returning undefined`);
             return undefined;
         }
-        const bhe = wrapWithBHE(htmlElement);
+        let bhe;
+        if (bheCls === undefined) {
+            bhe = wrapWithBHE(htmlElement);
+        } else {
+            bhe = new bheCls({htmlElement});
+        }
         return bhe;
     }
 
@@ -489,8 +495,14 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
                         );
                     }
                     let [selector, obj] = entries[0];
-                    this._cache(key, this.child(selector));
-                    this[key].cacheChildren(obj)
+                    if (isFunction(obj)) {
+                        // bhe constructor
+                        let bhe = this.child(selector, obj);
+                        this._cache(key, bhe);
+                    } else {
+                        this._cache(key, this.child(selector));
+                        this[key].cacheChildren(obj);
+                    }
                 }
             } else if (type === "string") {
                 let match = /<(\w+)>$/.exec(value as string);
@@ -1275,7 +1287,10 @@ function input(inputOpts?): Input {
 }
 
 function select(selectOpts): Select {
-
+    if (!bool(selectOpts)) {
+        selectOpts = {}
+    }
+    return new Select(selectOpts)
 }
 
 /**Create an Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/

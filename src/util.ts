@@ -1,6 +1,3 @@
-
-
-
 function enumerate<T>(obj: T): Enumerated<T> {
     // undefined    []
     // {}           []
@@ -123,7 +120,7 @@ function isType<T>(arg: T): arg is T {
     return true
 }
 
-function isFunction(fn: AnyFunction): fn is AnyFunction {
+function isFunction<T>(fn: T): fn is T {
     return fn && {}.toString.call(fn) === '[object Function]'
 }
 
