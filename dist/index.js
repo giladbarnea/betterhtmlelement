@@ -722,14 +722,28 @@ class Select extends Form {
     constructor(selectOpts) {
         super(selectOpts);
     }
+    set selectedIndex(val) {
+        this.e.selectedIndex = val;
+    }
     get selectedIndex() {
         return this.e.selectedIndex;
+    }
+    set selected(val) {
+        if (val instanceof HTMLOptionElement) {
+            this.selectedIndex = this.options.findIndex(o => o === val);
+        }
+        else if (typeof val === 'number') {
+            this.selectedIndex = val;
+        }
+        else {
+            this.selectedIndex = this.options.findIndex(o => o.value === val);
+        }
     }
     get selected() {
         return this.item(this.selectedIndex);
     }
     get options() {
-        return this.e.options;
+        return [...this.e.options];
     }
     item(index) {
         return this.e.item(index);
