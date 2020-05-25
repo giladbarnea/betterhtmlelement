@@ -1029,21 +1029,37 @@ class Select extends Form<HTMLSelectElement> {
         super(selectOpts);
     }
 
+    set selectedIndex(val) {
+        this.e.selectedIndex = val
+    }
+
     get selectedIndex(): number {
         return this.e.selectedIndex
+    }
+
+    set selected(val) {
+        if (val instanceof HTMLOptionElement) {
+            this.selectedIndex = this.options.findIndex(o => o === val);
+        } else if (typeof val === 'number') {
+            this.selectedIndex = val
+        } else {
+            this.selectedIndex = this.options.findIndex(o => o.value === val);
+        }
+
     }
 
     get selected(): HTMLOptionElement {
         return this.item(this.selectedIndex)
     }
 
-    get options(): HTMLOptionsCollection {
-        return this.e.options
+    get options(): HTMLOptionElement[] {
+        return [...this.e.options as unknown as Iterable<HTMLOptionElement>]
     }
 
     item(index): HTMLOptionElement {
         return this.e.item(index) as HTMLOptionElement
     }
+
 
     /*[Symbol.iterator]() {
         let options = this.options;
