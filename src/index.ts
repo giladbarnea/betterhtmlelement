@@ -133,7 +133,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    // ***  Basic
+    // *** Basic
     /**Set the element's innerHTML*/
     html(html: string): this;
     /**Get the element's innerHTML*/
@@ -199,7 +199,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     }
 
 
-    // ***  Classes
+    // *** Classes
     /**`.className = cls`*/
     class(cls: string): this;
     /**Return the first class that matches `cls` predicate.*/
@@ -282,7 +282,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         }
     }
 
-    // ***  Nodes
+    // *** Nodes
     /**Insert at least one `node` just after `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     after(...nodes: Array<BetterHTMLElement | Node>): this {
         for (let node of nodes) {
