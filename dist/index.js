@@ -62,6 +62,36 @@ class BetterHTMLElement {
             this.id(setid);
         }
     }
+    static wrapWithBHE(element) {
+        const tag = element.tagName.toLowerCase();
+        if (tag === 'div') {
+            return div({ htmlElement: element });
+        }
+        else if (tag === 'a') {
+            return anchor({ htmlElement: element });
+        }
+        else if (tag === 'p') {
+            return paragraph({ htmlElement: element });
+        }
+        else if (tag === 'img') {
+            return img({ htmlElement: element });
+        }
+        else if (tag === 'input') {
+            return input({ htmlElement: element });
+        }
+        else if (tag === 'button') {
+            return button({ htmlElement: element });
+        }
+        else if (tag === 'span') {
+            return span({ htmlElement: element });
+        }
+        else if (tag === 'select') {
+            return select({ htmlElement: element });
+        }
+        else {
+            return elem({ htmlElement: element });
+        }
+    }
     get e() {
         return this._htmlElement;
     }
@@ -301,6 +331,9 @@ class BetterHTMLElement {
         }
         return this;
     }
+    get _cls() {
+        return BetterHTMLElement;
+    }
     child(selector, bheCls) {
         const htmlElement = this.e.querySelector(selector);
         if (htmlElement === null) {
@@ -309,7 +342,7 @@ class BetterHTMLElement {
         }
         let bhe;
         if (bheCls === undefined) {
-            bhe = wrapWithBHE(htmlElement);
+            bhe = this._cls.wrapWithBHE(htmlElement);
         }
         else {
             bhe = new bheCls({ htmlElement });
@@ -326,7 +359,7 @@ class BetterHTMLElement {
             childrenCollection = this.e.querySelectorAll(selector);
         }
         childrenVanilla = Array.from(childrenCollection);
-        return childrenVanilla.map(wrapWithBHE);
+        return childrenVanilla.map(this._cls.wrapWithBHE);
     }
     clone(deep) {
         console.warn(`${this}.clone() doesnt return a matching BHE subtype, but a regular BHE`);
@@ -367,7 +400,7 @@ class BetterHTMLElement {
                     const htmlElements = [...this.e.getElementsByTagName(tagName)];
                     let bhes = [];
                     for (let htmlElement of htmlElements) {
-                        bhes.push(wrapWithBHE(htmlElement));
+                        bhes.push(this._cls.wrapWithBHE(htmlElement));
                     }
                     this._cache(key, bhes);
                 }
@@ -392,7 +425,6 @@ class BetterHTMLElement {
         return this;
     }
     on(evTypeFnPairs, options) {
-        const foo = evTypeFnPairs["abort"];
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
                 evFn(evt);
@@ -868,35 +900,5 @@ function anchor(anchorOpts) {
         anchorOpts = {};
     }
     return new Anchor(anchorOpts);
-}
-function wrapWithBHE(element) {
-    const tag = element.tagName.toLowerCase();
-    if (tag === 'div') {
-        return div({ htmlElement: element });
-    }
-    else if (tag === 'a') {
-        return anchor({ htmlElement: element });
-    }
-    else if (tag === 'p') {
-        return paragraph({ htmlElement: element });
-    }
-    else if (tag === 'img') {
-        return img({ htmlElement: element });
-    }
-    else if (tag === 'input') {
-        return input({ htmlElement: element });
-    }
-    else if (tag === 'button') {
-        return button({ htmlElement: element });
-    }
-    else if (tag === 'span') {
-        return span({ htmlElement: element });
-    }
-    else if (tag === 'select') {
-        return select({ htmlElement: element });
-    }
-    else {
-        return elem({ htmlElement: element });
-    }
 }
 //# sourceMappingURL=index.js.map

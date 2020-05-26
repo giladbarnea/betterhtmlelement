@@ -21,6 +21,15 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         htmlElement: Generic;
         children?: ChildrenObj;
     });
+    static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
+    static wrapWithBHE(htmlElement: HTMLInputElement): Input;
+    static wrapWithBHE(htmlElement: HTMLImageElement): Img;
+    static wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
+    static wrapWithBHE(htmlElement: HTMLSpanElement): Span;
+    static wrapWithBHE(htmlElement: HTMLButtonElement): Button;
+    static wrapWithBHE(htmlElement: HTMLDivElement): Div;
+    static wrapWithBHE(htmlElement: HTMLSelectElement): Div;
+    static wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
     get e(): Generic;
     wrapSomethingElse<T extends HTMLElement>(newHtmlElement: BetterHTMLElement<T>): this;
     wrapSomethingElse(newHtmlElement: Node): this;
@@ -56,6 +65,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     private _cache;
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this;
     cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this;
+    get _cls(): typeof BetterHTMLElement;
     child(selector: "img"): Img;
     child(selector: "a"): Anchor;
     child(selector: "input"): Input;
@@ -328,12 +338,3 @@ declare function anchor<E extends HTMLImageElement>({ htmlElement, children }: {
     children?: ChildrenObj;
 }): Anchor;
 declare function anchor(): Anchor;
-declare function wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
-declare function wrapWithBHE(htmlElement: HTMLInputElement): Input;
-declare function wrapWithBHE(htmlElement: HTMLImageElement): Img;
-declare function wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
-declare function wrapWithBHE(htmlElement: HTMLSpanElement): Span;
-declare function wrapWithBHE(htmlElement: HTMLButtonElement): Button;
-declare function wrapWithBHE(htmlElement: HTMLDivElement): Div;
-declare function wrapWithBHE(htmlElement: HTMLSelectElement): Div;
-declare function wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;

@@ -87,6 +87,38 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     }
 
+    static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
+    static wrapWithBHE(htmlElement: HTMLInputElement): Input;
+    static wrapWithBHE(htmlElement: HTMLImageElement): Img;
+    static wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
+    static wrapWithBHE(htmlElement: HTMLSpanElement): Span;
+    static wrapWithBHE(htmlElement: HTMLButtonElement): Button;
+    static wrapWithBHE(htmlElement: HTMLDivElement): Div;
+    static wrapWithBHE(htmlElement: HTMLSelectElement): Div;
+    static wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
+    static wrapWithBHE(element) {
+        const tag = element.tagName.toLowerCase() as Element2Tag<typeof element>;
+        // const tag = element.tagName.toLowerCase() as Tag;
+        if (tag === 'div') {
+            return div({htmlElement: element});
+        } else if (tag === 'a') {
+            return anchor({htmlElement: element});
+        } else if (tag === 'p') {
+            return paragraph({htmlElement: element});
+        } else if (tag === 'img') {
+            return img({htmlElement: element});
+        } else if (tag === 'input') {
+            return input({htmlElement: element});
+        } else if (tag === 'button') {
+            return button({htmlElement: element});
+        } else if (tag === 'span') {
+            return span({htmlElement: element});
+        } else if (tag === 'select') {
+            return select({htmlElement: element});
+        } else {
+            return elem({htmlElement: element});
+        }
+    }
 
     /**Return the wrapped HTMLElement*/
     get e() {
@@ -402,6 +434,9 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
+    get _cls() {
+        return BetterHTMLElement
+    }
 
     child(selector: "img"): Img;
     child(selector: "a"): Anchor;
@@ -421,7 +456,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         }
         let bhe;
         if (bheCls === undefined) {
-            bhe = wrapWithBHE(htmlElement);
+            bhe = this._cls.wrapWithBHE(htmlElement);
         } else {
             bhe = new bheCls({htmlElement});
         }
@@ -446,7 +481,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
         childrenVanilla = Array.from(childrenCollection);
 
-        return childrenVanilla.map(wrapWithBHE);
+        return childrenVanilla.map(this._cls.wrapWithBHE);
     }
 
     clone(deep?: boolean): BetterHTMLElement {
@@ -514,7 +549,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
                     const htmlElements = [...this.e.getElementsByTagName(tagName)] as HTMLElementTagNameMap[typeof tagName][];
                     let bhes = [];
                     for (let htmlElement of htmlElements) {
-                        bhes.push(wrapWithBHE(htmlElement));
+                        bhes.push(this._cls.wrapWithBHE(htmlElement));
                     }
                     this._cache(key, bhes);
                 } else {
@@ -547,7 +582,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     // *** Events
 
     on(evTypeFnPairs: TMap<EventName2Function>, options?: AddEventListenerOptions): this {
-        const foo = evTypeFnPairs["abort"];
+        // const foo = evTypeFnPairs["abort"];
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
                 evFn(evt);
@@ -1379,36 +1414,5 @@ function anchor(anchorOpts?): Anchor {
 }
 
 
-function wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
-function wrapWithBHE(htmlElement: HTMLInputElement): Input;
-function wrapWithBHE(htmlElement: HTMLImageElement): Img;
-function wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
-function wrapWithBHE(htmlElement: HTMLSpanElement): Span;
-function wrapWithBHE(htmlElement: HTMLButtonElement): Button;
-function wrapWithBHE(htmlElement: HTMLDivElement): Div;
-function wrapWithBHE(htmlElement: HTMLSelectElement): Div;
-function wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
-function wrapWithBHE(element) {
-    const tag = element.tagName.toLowerCase() as Element2Tag<typeof element>;
-    // const tag = element.tagName.toLowerCase() as Tag;
-    if (tag === 'div') {
-        return div({htmlElement: element});
-    } else if (tag === 'a') {
-        return anchor({htmlElement: element});
-    } else if (tag === 'p') {
-        return paragraph({htmlElement: element});
-    } else if (tag === 'img') {
-        return img({htmlElement: element});
-    } else if (tag === 'input') {
-        return input({htmlElement: element});
-    } else if (tag === 'button') {
-        return button({htmlElement: element});
-    } else if (tag === 'span') {
-        return span({htmlElement: element});
-    } else if (tag === 'select') {
-        return select({htmlElement: element});
-    } else {
-        return elem({htmlElement: element});
-    }
-}
+
 
