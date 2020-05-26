@@ -73,7 +73,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     private _cache;
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this;
     cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this;
-    get _cls(): typeof BetterHTMLElement;
+    _cls(): typeof BetterHTMLElement;
     child(selector: "img"): Img;
     child(selector: "a"): Anchor;
     child(selector: "input"): Input;

@@ -375,7 +375,7 @@ class BetterHTMLElement {
         }
         return this;
     }
-    get _cls() {
+    _cls() {
         return BetterHTMLElement;
     }
     child(selector, bheCls) {
@@ -386,7 +386,7 @@ class BetterHTMLElement {
         }
         let bhe;
         if (bheCls === undefined) {
-            bhe = this._cls.wrapWithBHE(htmlElement);
+            bhe = this._cls().wrapWithBHE(htmlElement);
         }
         else {
             bhe = new bheCls({ htmlElement });
@@ -403,7 +403,7 @@ class BetterHTMLElement {
             childrenCollection = this.e.querySelectorAll(selector);
         }
         childrenVanilla = Array.from(childrenCollection);
-        return childrenVanilla.map(this._cls.wrapWithBHE);
+        return childrenVanilla.map(this._cls().wrapWithBHE);
     }
     clone(deep) {
         console.warn(`${this}.clone() doesnt return a matching BHE subtype, but a regular BHE`);
@@ -444,7 +444,7 @@ class BetterHTMLElement {
                     const htmlElements = [...this.e.getElementsByTagName(tagName)];
                     let bhes = [];
                     for (let htmlElement of htmlElements) {
-                        bhes.push(this._cls.wrapWithBHE(htmlElement));
+                        bhes.push(this._cls().wrapWithBHE(htmlElement));
                     }
                     this._cache(key, bhes);
                 }
