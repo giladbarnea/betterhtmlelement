@@ -115,6 +115,9 @@ class BetterHTMLElement {
             this.id(setid);
         }
     }
+    toString() {
+        return `${this.e.tagName} #${this.id()} .${this.e.classList}`;
+    }
     static wrapWithBHE(element) {
         const tag = element.tagName.toLowerCase();
         if (tag === 'div') {
@@ -398,7 +401,7 @@ class BetterHTMLElement {
     child(selector, bheCls) {
         const htmlElement = this.e.querySelector(selector);
         if (htmlElement === null) {
-            console.warn(`${this.e}.child(${selector}): no child. returning undefined`);
+            console.warn(`${this}.child(${selector}): no child. returning undefined`);
             return undefined;
         }
         let bhe;

@@ -29,6 +29,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         htmlElement: Generic;
         children?: ChildrenObj;
     });
+    toString(): string;
     static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
     static wrapWithBHE(htmlElement: HTMLInputElement): Input;
     static wrapWithBHE(htmlElement: HTMLImageElement): Img;

@@ -86,7 +86,9 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
 
     }
-
+    toString(){
+        return `${this.e.tagName} #${this.id()} .${this.e.classList}`
+    }
     static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
     static wrapWithBHE(htmlElement: HTMLInputElement): Input;
     static wrapWithBHE(htmlElement: HTMLImageElement): Img;
@@ -457,7 +459,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     child(selector, bheCls?) {
         const htmlElement = this.e.querySelector(selector) as HTMLElement;
         if (htmlElement === null) {
-            console.warn(`${this.e}.child(${selector}): no child. returning undefined`);
+            console.warn(`${this}.child(${selector}): no child. returning undefined`);
             return undefined;
         }
         let bhe;
