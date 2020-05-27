@@ -108,7 +108,13 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         } else if (tag === 'img') {
             return img({htmlElement: element});
         } else if (tag === 'input') {
-            return input({htmlElement: element});
+            if (["text", "time", "number"].includes(element.type)) {
+                return new TextInput({htmlElement: element});
+            } else if (element.type === "checkbox") {
+                return new CheckboxInput({htmlElement: element});
+            } else {
+                return input({htmlElement: element});
+            }
         } else if (tag === 'button') {
             return button({htmlElement: element});
         } else if (tag === 'span') {
@@ -845,83 +851,6 @@ class Div extends BetterHTMLElement<HTMLDivElement> {
 
 }
 
-abstract class Form<Generic extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement>
-    extends BetterHTMLElement<Generic> {
-    /**
-     Button < Input
-     Select - Input: add(), item(), length, namedItem(), options, remove(), selectedIndex, selectedOptions, ITERATOR
-     Select - Button: add() autocomplete item() length multiple namedItem() options remove() required selectedIndex selectedOptions size ITERATOR
-     Button - Select: formAction formEnctype formMethod formNoValidate formTarget
-
-     Input uniques:
-     accept checked defaultChecked defaultValue dirName files indeterminate list max maxLength min minLength pattern placeholder readOnly select() selectionDirection selectionEnd selectionStart setRangeText() setSelectionRange() src step stepDown() stepUp() useMap valueAsDate valueAsNumber
-
-     Select uniques:
-     add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
-
-     Shared among Button, Select and Input: (or Button and Select, same)
-     checkValidity() disabled form labels name reportValidity() setCustomValidity() type validationMessage validity value willValidate
-
-     Shared ammong Selecct and Input:
-     autocomplete checkValidity() disabled form labels multiple name reportValidity() required setCustomValidity() type validationMessage validity value willValidate
-
-     */
-    disable(): this {
-        this.e.disabled = true;
-        return this;
-    }
-
-    enable(): this {
-        this.e.disabled = false;
-        return this;
-    }
-
-    toggleEnabled(on: boolean): this {
-        if (on) {
-            return this.enable()
-        } else {
-            return this.disable()
-        }
-    }
-
-    get disabled(): boolean {
-        return this.e.disabled;
-    }
-
-    /**Returns `value`*/
-    value(): string;
-    /**`value(null)` or `value('')` → reset. */
-    value(val: any): this;
-    value(val?) {
-        if (val === undefined) {
-            return this.e.value;
-        } else {
-            this.e.value = val;
-            return this;
-        }
-    }
-}
-
-
-class Button extends Form<HTMLButtonElement> {
-    constructor(buttonOpts) {
-        const {setid, cls, text, byid, query, htmlElement, children} = buttonOpts;
-        if (htmlElement !== undefined) {
-            super({htmlElement, children});
-        } else if (byid !== undefined) {
-            super({byid, children});
-        } else if (query !== undefined) {
-            super({query, children});
-        } else {
-            super({tag: "button", setid, cls})
-        }
-        if (text !== undefined) {
-            this.text(text);
-        }
-    }
-
-}
-
 class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
 
     constructor(pOpts) {
@@ -977,167 +906,6 @@ class Span extends BetterHTMLElement<HTMLSpanElement> {
 
     }
 }
-
-class Input extends Form<HTMLInputElement> {
-    // constructor({cls, setid, type, placeholder}: {
-    //     cls?: string, setid?: string,
-    //     type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
-    //     placeholder?: string
-    // });
-    // constructor({byid, children}: { byid: string, children?: ChildrenObj });
-    // constructor({query, children}: { query: string, children?: ChildrenObj });
-    // constructor({htmlElement, children}: { htmlElement: HTMLInputElement; children?: ChildrenObj });
-    constructor(inputOpts) {
-        const {setid, cls, type, placeholder, byid, query, htmlElement, children} = inputOpts;
-        // if (noValue(arguments[0])) {
-        //     throw new NotEnoughArgs([1], arguments[0])
-        // }
-
-        if (htmlElement !== undefined) {
-            super({htmlElement, children});
-        } else if (byid !== undefined) {
-            super({byid, children});
-        } else if (query !== undefined) {
-            super({query, children});
-        } else {
-            super({tag: "input", cls, setid})
-        }
-
-        if (type !== undefined) {
-            this._htmlElement.type = type;
-        }
-        if (placeholder !== undefined) {
-            if (type) {
-                if (type === "number" && typeof placeholder !== "number") {
-                    console.warn(`placeholder type is ${typeof placeholder} but input type is number. ignoring`)
-                } else if (type !== "text") {
-                    console.warn(`placeholder type is ${typeof placeholder} but input type not number nor text. ignoring`)
-                } else {
-                    this.placeholder(placeholder);
-                }
-            }
-        }
-    }
-
-    check(): this {
-        this.e.checked = true;
-        return this;
-    }
-
-    uncheck(): this {
-        this.e.checked = false;
-        return this;
-    }
-
-    toggleChecked(on: boolean): this {
-        if (on) {
-            return this.check()
-        } else {
-            return this.uncheck()
-        }
-    }
-
-    get checked(): boolean {
-        return this.e.checked;
-    }
-
-
-    placeholder(val: string): this;
-    placeholder(): string;
-    placeholder(val?) {
-        if (val === undefined) {
-            return this.e.placeholder;
-        } else {
-            this.e.placeholder = val;
-            return this;
-        }
-
-    }
-
-}
-
-
-class Select extends Form<HTMLSelectElement> {
-    // Select uniques:
-    // add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
-    constructor(selectOpts) {
-        super(selectOpts);
-    }
-
-    set selectedIndex(val) {
-        this.e.selectedIndex = val
-    }
-
-    get selectedIndex(): number {
-        return this.e.selectedIndex
-    }
-
-    set selected(val) {
-        if (val instanceof HTMLOptionElement) {
-            this.selectedIndex = this.options.findIndex(o => o === val);
-        } else if (typeof val === 'number') {
-            this.selectedIndex = val
-        } else {
-            this.selectedIndex = this.options.findIndex(o => o.value === val);
-        }
-
-    }
-
-    get selected(): HTMLOptionElement {
-        return this.item(this.selectedIndex)
-    }
-
-    get options(): HTMLOptionElement[] {
-        return [...this.e.options as unknown as Iterable<HTMLOptionElement>]
-    }
-
-    item(index): HTMLOptionElement {
-        return this.e.item(index) as HTMLOptionElement
-    }
-
-
-    /*[Symbol.iterator]() {
-        let options = this.options;
-        let currentIndex = 0;
-        return {
-            next() {
-                currentIndex += 1;
-                return {
-                    value: undefined,
-                    done: true
-                };
-
-            }
-        }
-    }*/
-}
-
-
-/*class OptionBHE extends Form<HTMLOptionElement> {
-    constructor(optionOpts) {
-        const {setid, cls, byid, query, htmlElement, children, selected, value} = optionOpts;
-        // if (noValue(arguments[0])) {
-        //     throw new NotEnoughArgs([1], arguments[0])
-        // }
-
-        if (htmlElement !== undefined) {
-            super({htmlElement, children});
-        } else if (byid !== undefined) {
-            super({byid, children});
-        } else if (query !== undefined) {
-            super({query, children});
-        } else {
-            super({tag: "input", cls, setid})
-        }
-
-        if (selected !== undefined) {
-            this._htmlElement.selected = selected;
-        }
-        if (value !== undefined) {
-            this._htmlElement.value = value;
-        }
-    }
-}*/
 
 class Img extends BetterHTMLElement<HTMLImageElement> {
 
@@ -1219,6 +987,360 @@ class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
             return this.attr({target: val})
         }
     }
+}
+
+interface Flashable {
+    flashBad(): Promise<void>;
+
+    flashGood(): Promise<void>;
+}
+
+type FormishHTMLElement = HTMLButtonElement | HTMLInputElement | HTMLSelectElement;
+
+abstract class Form<Generic extends FormishHTMLElement>
+    extends BetterHTMLElement<Generic> implements Flashable {
+    /**
+     Button < Input
+     Select - Input: add(), item(), length, namedItem(), options, remove(), selectedIndex, selectedOptions, ITERATOR
+     Select - Button: add() autocomplete item() length multiple namedItem() options remove() required selectedIndex selectedOptions size ITERATOR
+     Button - Select: formAction formEnctype formMethod formNoValidate formTarget
+
+     Input uniques:
+     accept checked defaultChecked defaultValue dirName files indeterminate list max maxLength min minLength pattern placeholder readOnly select() selectionDirection selectionEnd selectionStart setRangeText() setSelectionRange() src step stepDown() stepUp() useMap valueAsDate valueAsNumber
+
+     Select uniques:
+     add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
+
+     Shared among Button, Select and Input: (or Button and Select, same)
+     checkValidity() disabled form labels name reportValidity() setCustomValidity() type validationMessage validity value willValidate
+
+     Shared ammong Selecct and Input:
+     autocomplete checkValidity() disabled form labels multiple name reportValidity() required setCustomValidity() type validationMessage validity value willValidate
+
+     */
+    disable(): this {
+        this.e.disabled = true;
+        return this;
+    }
+
+    enable(): this {
+        this.e.disabled = false;
+        return this;
+    }
+
+    toggleEnabled(on: boolean): this {
+        if (on) {
+            return this.enable()
+        } else {
+            return this.disable()
+        }
+    }
+
+    get disabled(): boolean {
+        return this.e.disabled;
+    }
+
+    /**Returns `value`*/
+    value(): string;
+    /**`value(null)` or `value('')` → reset. */
+    value(val: any): this;
+    value(val?) {
+        if (val === undefined) {
+            return this.e.value;
+        } else {
+            this.e.value = val;
+            return this;
+        }
+    }
+
+    async flashBad(): Promise<void> {
+        this.addClass('bad');
+        await wait(2000);
+        this.removeClass('bad');
+
+    }
+
+    async flashGood(): Promise<void> {
+        this.addClass('good');
+        await wait(2000);
+        this.removeClass('good');
+    }
+
+    // abstract _eventCondition(e): boolean
+
+    _preEvent() {
+        this.disable()
+    }
+
+    async _onEventSuccess(ret) {
+        if (ret instanceof Error && this.flashBad) {
+            await this.flashBad();
+        } else if (this.flashGood) {
+            this.flashGood()
+        }
+    }
+
+    async _onEventError(e) {
+        console.error(e);
+        if (this.flashBad) {
+            await this.flashBad()
+        }
+    }
+
+    _postEvent() {
+        this.enable();
+    }
+}
+
+
+class Button extends Form<HTMLButtonElement> {
+    constructor(buttonOpts) {
+        const {setid, cls, text, byid, query, htmlElement, children} = buttonOpts;
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "button", setid, cls})
+        }
+        if (text !== undefined) {
+            this.text(text);
+        }
+    }
+
+    click(_fn?: (_event: MouseEvent) => Promise<any>): this {
+
+        const fn = async (event) => {
+
+            try {
+                this._preEvent();
+                const ret = await _fn(event);
+                await this._onEventSuccess(ret);
+
+            } catch (e) {
+                await this._onEventError(e);
+
+            } finally {
+                this._postEvent();
+            }
+
+        };
+
+        return super.click(fn);
+    }
+
+
+}
+
+
+class Input<Generic extends FormishHTMLElement = HTMLInputElement> extends Form<Generic> {
+    // constructor({cls, setid, type, placeholder}: {
+    //     cls?: string, setid?: string,
+    //     type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
+    //     placeholder?: string
+    // });
+    // constructor({byid, children}: { byid: string, children?: ChildrenObj });
+    // constructor({query, children}: { query: string, children?: ChildrenObj });
+    // constructor({htmlElement, children}: { htmlElement: HTMLInputElement; children?: ChildrenObj });
+    constructor(inputOpts) {
+        const {setid, cls, type, byid, query, htmlElement, children} = inputOpts;
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
+
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "input", cls, setid})
+        }
+
+        if (type !== undefined) {
+            this._htmlElement.type = type;
+        }
+
+    }
+
+
+}
+
+class TextInput extends Input {
+    constructor(opts) {
+        opts.type = 'text';
+        super(opts);
+        const {placeholder, type} = opts;
+        if (placeholder !== undefined) {
+            if (type) {
+                if (type === "number" && typeof placeholder !== "number") {
+                    console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring`)
+                } else if (type === "text" && typeof placeholder !== "string") {
+                    console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring`)
+                } else {
+                    this.placeholder(placeholder);
+                }
+            }
+        }
+    }
+
+    placeholder(val: string): this;
+    placeholder(): string;
+    placeholder(val?) {
+        if (val === undefined) {
+            return this.e.placeholder;
+        } else {
+            this.e.placeholder = val;
+            return this;
+        }
+
+    }
+
+    keydown(_fn: (_event: KeyboardEvent) => Promise<any>): this {
+        const fn = async (event) => {
+            if (event.key !== 'Enter') {
+                return;
+            }
+            if (!bool(this.value())) {
+                if (this.flashBad) {
+                    await this.flashBad()
+                }
+                return;
+            }
+            try {
+                this._preEvent();
+
+                const ret = await _fn(event);
+                await this._onEventSuccess(ret);
+
+            } catch (e) {
+                await this._onEventError(e);
+
+            } finally {
+                this._postEvent();
+            }
+
+
+        };
+        return super.keydown(fn);
+    }
+}
+
+class Changable<Generic extends FormishHTMLElement> extends Input<Generic> {
+    change(_fn: (_event: Event) => Promise<any>): this {
+
+        const fn = async (event) => {
+
+            try {
+                this._preEvent();
+                const ret = await _fn(event);
+                await this._onEventSuccess(ret);
+
+            } catch (e) {
+                await this._onEventError(e);
+
+            } finally {
+                this._postEvent();
+            }
+
+
+        };
+        return super.change(fn);
+    }
+}
+
+class CheckboxInput extends Changable<HTMLInputElement> {
+    constructor(opts) {
+        opts.type = 'checkbox';
+        super(opts);
+    }
+
+    get checked(): boolean {
+        return this.e.checked;
+    }
+
+    check(): this {
+        this.e.checked = true;
+        return this;
+    }
+
+    uncheck(): this {
+        this.e.checked = false;
+        return this;
+    }
+
+    toggleChecked(on: boolean): this {
+        if (on) {
+            return this.check()
+        } else {
+            return this.uncheck()
+        }
+    }
+
+    async _onEventError(e): Promise<void> {
+        this.toggleChecked(!this.checked);
+        await super._onEventError(e);
+    }
+}
+
+
+class Select extends Changable<HTMLSelectElement> {
+
+    // Select uniques:
+    // add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
+    constructor(selectOpts) {
+        super(selectOpts);
+    }
+
+    set selectedIndex(val) {
+        this.e.selectedIndex = val
+    }
+
+    get selectedIndex(): number {
+        return this.e.selectedIndex
+    }
+
+    set selected(val) {
+        if (val instanceof HTMLOptionElement) {
+            this.selectedIndex = this.options.findIndex(o => o === val);
+        } else if (typeof val === 'number') {
+            this.selectedIndex = val
+        } else {
+            this.selectedIndex = this.options.findIndex(o => o.value === val);
+        }
+
+    }
+
+    get selected(): HTMLOptionElement {
+        return this.item(this.selectedIndex)
+    }
+
+    get options(): HTMLOptionElement[] {
+        return [...this.e.options as unknown as Iterable<HTMLOptionElement>]
+    }
+
+    item(index): HTMLOptionElement {
+        return this.e.item(index) as HTMLOptionElement
+    }
+
+
+    /*[Symbol.iterator]() {
+        let options = this.options;
+        let currentIndex = 0;
+        return {
+            next() {
+                currentIndex += 1;
+                return {
+                    value: undefined,
+                    done: true
+                };
+
+            }
+        }
+    }*/
 }
 
 

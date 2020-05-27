@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 function getArgNamesValues(argsWithValues) {
     return Object.entries(argsWithValues)
         .flatMap(([argname, argval]) => `${argname}: ${argval}`)
@@ -643,56 +652,6 @@ class Div extends BetterHTMLElement {
         }
     }
 }
-class Form extends BetterHTMLElement {
-    disable() {
-        this.e.disabled = true;
-        return this;
-    }
-    enable() {
-        this.e.disabled = false;
-        return this;
-    }
-    toggleEnabled(on) {
-        if (on) {
-            return this.enable();
-        }
-        else {
-            return this.disable();
-        }
-    }
-    get disabled() {
-        return this.e.disabled;
-    }
-    value(val) {
-        if (val === undefined) {
-            return this.e.value;
-        }
-        else {
-            this.e.value = val;
-            return this;
-        }
-    }
-}
-class Button extends Form {
-    constructor(buttonOpts) {
-        const { setid, cls, text, byid, query, htmlElement, children } = buttonOpts;
-        if (htmlElement !== undefined) {
-            super({ htmlElement, children });
-        }
-        else if (byid !== undefined) {
-            super({ byid, children });
-        }
-        else if (query !== undefined) {
-            super({ query, children });
-        }
-        else {
-            super({ tag: "button", setid, cls });
-        }
-        if (text !== undefined) {
-            this.text(text);
-        }
-    }
-}
 class Paragraph extends BetterHTMLElement {
     constructor(pOpts) {
         const { setid, cls, text, byid, query, htmlElement, children } = pOpts;
@@ -731,98 +690,6 @@ class Span extends BetterHTMLElement {
         if (text !== undefined) {
             this.text(text);
         }
-    }
-}
-class Input extends Form {
-    constructor(inputOpts) {
-        const { setid, cls, type, placeholder, byid, query, htmlElement, children } = inputOpts;
-        if (htmlElement !== undefined) {
-            super({ htmlElement, children });
-        }
-        else if (byid !== undefined) {
-            super({ byid, children });
-        }
-        else if (query !== undefined) {
-            super({ query, children });
-        }
-        else {
-            super({ tag: "input", cls, setid });
-        }
-        if (type !== undefined) {
-            this._htmlElement.type = type;
-        }
-        if (placeholder !== undefined) {
-            if (type) {
-                if (type === "number" && typeof placeholder !== "number") {
-                    console.warn(`placeholder type is ${typeof placeholder} but input type is number. ignoring`);
-                }
-                else if (type !== "text") {
-                    console.warn(`placeholder type is ${typeof placeholder} but input type not number nor text. ignoring`);
-                }
-                else {
-                    this.placeholder(placeholder);
-                }
-            }
-        }
-    }
-    check() {
-        this.e.checked = true;
-        return this;
-    }
-    uncheck() {
-        this.e.checked = false;
-        return this;
-    }
-    toggleChecked(on) {
-        if (on) {
-            return this.check();
-        }
-        else {
-            return this.uncheck();
-        }
-    }
-    get checked() {
-        return this.e.checked;
-    }
-    placeholder(val) {
-        if (val === undefined) {
-            return this.e.placeholder;
-        }
-        else {
-            this.e.placeholder = val;
-            return this;
-        }
-    }
-}
-class Select extends Form {
-    constructor(selectOpts) {
-        super(selectOpts);
-    }
-    set selectedIndex(val) {
-        this.e.selectedIndex = val;
-    }
-    get selectedIndex() {
-        return this.e.selectedIndex;
-    }
-    set selected(val) {
-        if (val instanceof HTMLOptionElement) {
-            this.selectedIndex = this.options.findIndex(o => o === val);
-        }
-        else if (typeof val === 'number') {
-            this.selectedIndex = val;
-        }
-        else {
-            this.selectedIndex = this.options.findIndex(o => o.value === val);
-        }
-    }
-    get selected() {
-        return this.item(this.selectedIndex);
-    }
-    get options() {
-        return [...this.e.options];
-    }
-    item(index) {
-        return this.e.item(index);
     }
 }
 class Img extends BetterHTMLElement {
@@ -892,6 +759,248 @@ class Anchor extends BetterHTMLElement {
         else {
             return this.attr({ target: val });
         }
+    }
+}
+class Form extends BetterHTMLElement {
+    disable() {
+        this.e.disabled = true;
+        return this;
+    }
+    enable() {
+        this.e.disabled = false;
+        return this;
+    }
+    toggleEnabled(on) {
+        if (on) {
+            return this.enable();
+        }
+        else {
+            return this.disable();
+        }
+    }
+    get disabled() {
+        return this.e.disabled;
+    }
+    value(val) {
+        if (val === undefined) {
+            return this.e.value;
+        }
+        else {
+            this.e.value = val;
+            return this;
+        }
+    }
+    flashBad() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.addClass('bad');
+            yield wait(2000);
+            this.removeClass('bad');
+        });
+    }
+    flashGood() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.addClass('good');
+            yield wait(2000);
+            this.removeClass('good');
+        });
+    }
+}
+class Button extends Form {
+    constructor(buttonOpts) {
+        const { setid, cls, text, byid, query, htmlElement, children } = buttonOpts;
+        if (htmlElement !== undefined) {
+            super({ htmlElement, children });
+        }
+        else if (byid !== undefined) {
+            super({ byid, children });
+        }
+        else if (query !== undefined) {
+            super({ query, children });
+        }
+        else {
+            super({ tag: "button", setid, cls });
+        }
+        if (text !== undefined) {
+            this.text(text);
+        }
+    }
+    click(_fn) {
+        const fn = (event) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                this.disable();
+                const ret = yield _fn(event);
+                if (ret instanceof Error && this.flashBad) {
+                    yield this.flashBad();
+                }
+                else if (this.flashGood) {
+                    this.flashGood();
+                }
+            }
+            catch (e) {
+                console.error(e);
+                if (this.flashBad) {
+                    yield this.flashBad();
+                }
+            }
+            finally {
+                this.enable();
+            }
+        });
+        return super.click(fn);
+    }
+}
+class Input extends Form {
+    constructor(inputOpts) {
+        const { setid, cls, type, placeholder, byid, query, htmlElement, children } = inputOpts;
+        if (htmlElement !== undefined) {
+            super({ htmlElement, children });
+        }
+        else if (byid !== undefined) {
+            super({ byid, children });
+        }
+        else if (query !== undefined) {
+            super({ query, children });
+        }
+        else {
+            super({ tag: "input", cls, setid });
+        }
+        if (type !== undefined) {
+            this._htmlElement.type = type;
+        }
+        if (placeholder !== undefined) {
+            if (type) {
+                if (type === "number" && typeof placeholder !== "number") {
+                    console.warn(`placeholder type is ${typeof placeholder} but input type is number. ignoring`);
+                }
+                else if (type !== "text") {
+                    console.warn(`placeholder type is ${typeof placeholder} but input type not number nor text. ignoring`);
+                }
+                else {
+                    this.placeholder(placeholder);
+                }
+            }
+        }
+    }
+    placeholder(val) {
+        if (val === undefined) {
+            return this.e.placeholder;
+        }
+        else {
+            this.e.placeholder = val;
+            return this;
+        }
+    }
+    keydown(_fn) {
+        const fn = (event) => __awaiter(this, void 0, void 0, function* () {
+            if (event.key !== 'Enter') {
+                return;
+            }
+            if (!bool(this.value())) {
+                if (this.flashBad) {
+                    yield this.flashBad();
+                }
+                return;
+            }
+            try {
+                this.disable();
+                const ret = yield _fn(event);
+                if (ret instanceof Error && this.flashBad) {
+                    yield this.flashBad();
+                }
+                else if (this.flashGood) {
+                    this.flashGood();
+                }
+            }
+            catch (e) {
+                console.error(e);
+                if (this.flashBad) {
+                    yield this.flashBad();
+                }
+            }
+            finally {
+                this.enable();
+            }
+        });
+        return super.keydown(fn);
+    }
+}
+class Changable extends Input {
+    change(_fn) {
+        const fn = (event) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                this.disable();
+                const ret = yield _fn(event);
+                if (ret instanceof Error && this.flashBad) {
+                    yield this.flashBad();
+                }
+                else if (this.flashGood) {
+                    this.flashGood();
+                }
+            }
+            catch (e) {
+                console.error(e);
+                this.toggleChecked(!this.checked);
+                if (this.flashBad) {
+                    yield this.flashBad();
+                }
+            }
+            finally {
+                this.enable();
+            }
+        });
+        return super.change(fn);
+    }
+}
+class Checkbox extends Changable {
+    get checked() {
+        return this.e.checked;
+    }
+    check() {
+        this.e.checked = true;
+        return this;
+    }
+    uncheck() {
+        this.e.checked = false;
+        return this;
+    }
+    toggleChecked(on) {
+        if (on) {
+            return this.check();
+        }
+        else {
+            return this.uncheck();
+        }
+    }
+}
+class Select extends Form {
+    constructor(selectOpts) {
+        super(selectOpts);
+    }
+    set selectedIndex(val) {
+        this.e.selectedIndex = val;
+    }
+    get selectedIndex() {
+        return this.e.selectedIndex;
+    }
+    set selected(val) {
+        if (val instanceof HTMLOptionElement) {
+            this.selectedIndex = this.options.findIndex(o => o === val);
+        }
+        else if (typeof val === 'number') {
+            this.selectedIndex = val;
+        }
+        else {
+            this.selectedIndex = this.options.findIndex(o => o.value === val);
+        }
+    }
+    get selected() {
+        return this.item(this.selectedIndex);
+    }
+    get options() {
+        return [...this.e.options];
+    }
+    item(index) {
+        return this.e.item(index);
     }
 }
 function elem(elemOptions) {

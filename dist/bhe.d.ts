@@ -119,17 +119,6 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 declare class Div extends BetterHTMLElement<HTMLDivElement> {
     constructor(divOpts: any);
 }
-declare abstract class Form<Generic extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement> extends BetterHTMLElement<Generic> {
-    disable(): this;
-    enable(): this;
-    toggleEnabled(on: boolean): this;
-    get disabled(): boolean;
-    value(): string;
-    value(val: any): this;
-}
-declare class Button extends Form<HTMLButtonElement> {
-    constructor(buttonOpts: any);
-}
 declare class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
     constructor(pOpts: any);
 }
@@ -151,24 +140,6 @@ declare class Span extends BetterHTMLElement<HTMLSpanElement> {
         htmlElement: HTMLSpanElement;
         children?: ChildrenObj;
     });
-}
-declare class Input extends Form<HTMLInputElement> {
-    constructor(inputOpts: any);
-    check(): this;
-    uncheck(): this;
-    toggleChecked(on: boolean): this;
-    get checked(): boolean;
-    placeholder(val: string): this;
-    placeholder(): string;
-}
-declare class Select extends Form<HTMLSelectElement> {
-    constructor(selectOpts: any);
-    set selectedIndex(val: number);
-    get selectedIndex(): number;
-    set selected(val: HTMLOptionElement);
-    get selected(): HTMLOptionElement;
-    get options(): HTMLOptionElement[];
-    item(index: any): HTMLOptionElement;
 }
 declare class Img extends BetterHTMLElement<HTMLImageElement> {
     constructor({ setid, cls, src, byid, query, htmlElement, children }: {
@@ -199,6 +170,48 @@ declare class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
     href(val: string): this;
     target(): string;
     target(val: string): this;
+}
+interface Flashable {
+    flashBad(): Promise<void>;
+    flashGood(): Promise<void>;
+}
+declare abstract class Form<Generic extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement> extends BetterHTMLElement<Generic> implements Flashable {
+    disable(): this;
+    enable(): this;
+    toggleEnabled(on: boolean): this;
+    get disabled(): boolean;
+    value(): string;
+    value(val: any): this;
+    flashBad(): Promise<void>;
+    flashGood(): Promise<void>;
+}
+declare class Button extends Form<HTMLButtonElement> {
+    constructor(buttonOpts: any);
+    click(_fn?: (_event: MouseEvent) => Promise<any>): this;
+}
+declare class Input extends Form<HTMLInputElement> {
+    constructor(inputOpts: any);
+    placeholder(val: string): this;
+    placeholder(): string;
+    keydown(_fn: (_event: KeyboardEvent) => Promise<any>): this;
+}
+declare class Changable extends Input {
+    change(_fn: (_event: Event) => Promise<any>): this;
+}
+declare class Checkbox extends Changable {
+    get checked(): boolean;
+    check(): this;
+    uncheck(): this;
+    toggleChecked(on: boolean): this;
+}
+declare class Select extends Form<HTMLSelectElement> {
+    constructor(selectOpts: any);
+    set selectedIndex(val: number);
+    get selectedIndex(): number;
+    set selected(val: HTMLOptionElement);
+    get selected(): HTMLOptionElement;
+    get options(): HTMLOptionElement[];
+    item(index: any): HTMLOptionElement;
 }
 declare function elem<T extends Tag>({ tag, cls, setid }: {
     tag: T;
