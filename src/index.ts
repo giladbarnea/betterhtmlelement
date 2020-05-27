@@ -1135,7 +1135,7 @@ class Button extends Form<HTMLButtonElement> {
 }
 
 
-class Input<Generic extends FormishHTMLElement = HTMLInputElement> extends Form<Generic> {
+class Input<Generic extends FormishHTMLElement = HTMLInputElement, InputType = undefined> extends Form<Generic> {
     // constructor({cls, setid, type, placeholder}: {
     //     cls?: string, setid?: string,
     //     type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
@@ -1144,6 +1144,8 @@ class Input<Generic extends FormishHTMLElement = HTMLInputElement> extends Form<
     // constructor({byid, children}: { byid: string, children?: ChildrenObj });
     // constructor({query, children}: { query: string, children?: ChildrenObj });
     // constructor({htmlElement, children}: { htmlElement: HTMLInputElement; children?: ChildrenObj });
+    type: InputType;
+
     constructor(inputOpts) {
         const {setid, cls, type, byid, query, htmlElement, children} = inputOpts;
         // if (noValue(arguments[0])) {
@@ -1229,7 +1231,7 @@ class TextInput extends Input {
     }
 }
 
-class Changable<Generic extends FormishHTMLElement> extends Input<Generic> {
+class Changable<Generic extends FormishHTMLElement, InputType = undefined> extends Input<Generic, InputType> {
     change(_fn: (_event: Event) => Promise<any>): this {
 
         const fn = async (event) => {
@@ -1252,7 +1254,7 @@ class Changable<Generic extends FormishHTMLElement> extends Input<Generic> {
     }
 }
 
-class CheckboxInput extends Changable<HTMLInputElement> {
+class CheckboxInput extends Changable<HTMLInputElement, "checkbox"> {
     constructor(opts) {
         opts.type = 'checkbox';
         super(opts);

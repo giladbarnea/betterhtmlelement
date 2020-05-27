@@ -194,7 +194,8 @@ declare class Button extends Form<HTMLButtonElement> {
     constructor(buttonOpts: any);
     click(_fn?: (_event: MouseEvent) => Promise<any>): this;
 }
-declare class Input<Generic extends FormishHTMLElement = HTMLInputElement> extends Form<Generic> {
+declare class Input<Generic extends FormishHTMLElement = HTMLInputElement, InputType = undefined> extends Form<Generic> {
+    type: InputType;
     constructor(inputOpts: any);
 }
 declare class TextInput extends Input {
@@ -203,10 +204,10 @@ declare class TextInput extends Input {
     placeholder(): string;
     keydown(_fn: (_event: KeyboardEvent) => Promise<any>): this;
 }
-declare class Changable<Generic extends FormishHTMLElement> extends Input<Generic> {
+declare class Changable<Generic extends FormishHTMLElement, InputType = undefined> extends Input<Generic, InputType> {
     change(_fn: (_event: Event) => Promise<any>): this;
 }
-declare class CheckboxInput extends Changable<HTMLInputElement> {
+declare class CheckboxInput extends Changable<HTMLInputElement, "checkbox"> {
     constructor(opts: any);
     get checked(): boolean;
     check(): this;
