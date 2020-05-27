@@ -845,8 +845,8 @@ class Div extends BetterHTMLElement<HTMLDivElement> {
 
 }
 
-abstract class Form<E extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement>
-    extends BetterHTMLElement<E> {
+abstract class Form<Generic extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement>
+    extends BetterHTMLElement<Generic> {
     /**
      Button < Input
      Select - Input: add(), item(), length, namedItem(), options, remove(), selectedIndex, selectedOptions, ITERATOR
