@@ -186,6 +186,7 @@ declare abstract class Form<Generic extends FormishHTMLElement> extends BetterHT
     value(val: any): this;
     flashBad(): Promise<void>;
     flashGood(): Promise<void>;
+    clear(): this;
     _preEvent(): void;
     _onEventSuccess(ret: any): Promise<void>;
     _onEventError(e: any): Promise<void>;
@@ -214,6 +215,7 @@ declare class CheckboxInput extends Changable<HTMLInputElement, "checkbox"> {
     check(): this;
     uncheck(): this;
     toggleChecked(on: boolean): this;
+    clear(): this;
     _onEventError(e: any): Promise<void>;
 }
 declare class Select extends Changable<HTMLSelectElement> {
@@ -224,6 +226,7 @@ declare class Select extends Changable<HTMLSelectElement> {
     get selected(): HTMLOptionElement;
     get options(): HTMLOptionElement[];
     item(index: any): HTMLOptionElement;
+    clear(): this;
 }
 declare function elem<T extends Tag>({ tag, cls, setid }: {
     tag: T;

@@ -815,6 +815,9 @@ class Form extends BetterHTMLElement {
             this.removeClass('good');
         });
     }
+    clear() {
+        return this.value(null);
+    }
     _preEvent() {
         this.disable();
     }
@@ -992,6 +995,9 @@ class CheckboxInput extends Changable {
             return this.uncheck();
         }
     }
+    clear() {
+        return this.uncheck();
+    }
     _onEventError(e) {
         const _super = Object.create(null, {
             _onEventError: { get: () => super._onEventError }
@@ -1031,6 +1037,10 @@ class Select extends Changable {
     }
     item(index) {
         return this.e.item(index);
+    }
+    clear() {
+        this.selectedIndex = -1;
+        return this;
     }
 }
 function elem(elemOptions) {

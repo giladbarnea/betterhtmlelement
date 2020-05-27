@@ -1071,6 +1071,9 @@ abstract class Form<Generic extends FormishHTMLElement>
     }
 
     // abstract _eventCondition(e): boolean
+    clear() {
+        return this.value(null)
+    }
 
     _preEvent() {
         this.disable()
@@ -1137,7 +1140,6 @@ class Button extends Form<HTMLButtonElement> {
 
 
 }
-
 
 class Input<Generic extends FormishHTMLElement = HTMLInputElement, InputType = undefined> extends Form<Generic> {
     // constructor({cls, setid, type, placeholder}: {
@@ -1286,6 +1288,11 @@ class CheckboxInput extends Changable<HTMLInputElement, "checkbox"> {
         }
     }
 
+
+    clear() {
+        return this.uncheck();
+    }
+
     async _onEventError(e): Promise<void> {
         this.toggleChecked(!this.checked);
         await super._onEventError(e);
@@ -1332,6 +1339,11 @@ class Select extends Changable<HTMLSelectElement> {
         return this.e.item(index) as HTMLOptionElement
     }
 
+
+    clear() {
+        this.selectedIndex = -1;
+        return this;
+    }
 
     /*[Symbol.iterator]() {
         let options = this.options;
