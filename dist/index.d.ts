@@ -65,7 +65,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     private _cache;
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this;
     cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this;
-    get _cls(): typeof BetterHTMLElement;
+    _cls(): typeof BetterHTMLElement;
     child(selector: "img"): Img;
     child(selector: "a"): Anchor;
     child(selector: "input"): Input;
@@ -111,7 +111,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 declare class Div extends BetterHTMLElement<HTMLDivElement> {
     constructor(divOpts: any);
 }
-declare abstract class Form<E extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement> extends BetterHTMLElement<E> {
+declare abstract class Form<Generic extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement> extends BetterHTMLElement<Generic> {
     disable(): this;
     enable(): this;
     toggleEnabled(on: boolean): this;

@@ -434,7 +434,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    get _cls() {
+    _cls() {
         return BetterHTMLElement
     }
 
@@ -456,7 +456,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         }
         let bhe;
         if (bheCls === undefined) {
-            bhe = this._cls.wrapWithBHE(htmlElement);
+            bhe = this._cls().wrapWithBHE(htmlElement);
         } else {
             bhe = new bheCls({htmlElement});
         }
@@ -481,7 +481,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
         childrenVanilla = Array.from(childrenCollection);
 
-        return childrenVanilla.map(this._cls.wrapWithBHE);
+        return childrenVanilla.map(this._cls().wrapWithBHE);
     }
 
     clone(deep?: boolean): BetterHTMLElement {
@@ -549,7 +549,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
                     const htmlElements = [...this.e.getElementsByTagName(tagName)] as HTMLElementTagNameMap[typeof tagName][];
                     let bhes = [];
                     for (let htmlElement of htmlElements) {
-                        bhes.push(this._cls.wrapWithBHE(htmlElement));
+                        bhes.push(this._cls().wrapWithBHE(htmlElement));
                     }
                     this._cache(key, bhes);
                 } else {
@@ -845,8 +845,8 @@ class Div extends BetterHTMLElement<HTMLDivElement> {
 
 }
 
-abstract class Form<E extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement>
-    extends BetterHTMLElement<E> {
+abstract class Form<Generic extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement>
+    extends BetterHTMLElement<Generic> {
     /**
      Button < Input
      Select - Input: add(), item(), length, namedItem(), options, remove(), selectedIndex, selectedOptions, ITERATOR
