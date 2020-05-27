@@ -130,7 +130,15 @@ class BetterHTMLElement {
             return img({ htmlElement: element });
         }
         else if (tag === 'input') {
-            return input({ htmlElement: element });
+            if (["text", "time", "number"].includes(element.type)) {
+                return new TextInput({ htmlElement: element });
+            }
+            else if (element.type === "checkbox") {
+                return new CheckboxInput({ htmlElement: element });
+            }
+            else {
+                return input({ htmlElement: element });
+            }
         }
         else if (tag === 'button') {
             return button({ htmlElement: element });
@@ -804,6 +812,30 @@ class Form extends BetterHTMLElement {
             this.removeClass('good');
         });
     }
+    _preEvent() {
+        this.disable();
+    }
+    _onEventSuccess(ret) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (ret instanceof Error && this.flashBad) {
+                yield this.flashBad();
+            }
+            else if (this.flashGood) {
+                this.flashGood();
+            }
+        });
+    }
+    _onEventError(e) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.error(e);
+            if (this.flashBad) {
+                yield this.flashBad();
+            }
+        });
+    }
+    _postEvent() {
+        this.enable();
+    }
 }
 class Button extends Form {
     constructor(buttonOpts) {
@@ -827,23 +859,15 @@ class Button extends Form {
     click(_fn) {
         const fn = (event) => __awaiter(this, void 0, void 0, function* () {
             try {
-                this.disable();
+                this._preEvent();
                 const ret = yield _fn(event);
-                if (ret instanceof Error && this.flashBad) {
-                    yield this.flashBad();
-                }
-                else if (this.flashGood) {
-                    this.flashGood();
-                }
+                yield this._onEventSuccess(ret);
             }
             catch (e) {
-                console.error(e);
-                if (this.flashBad) {
-                    yield this.flashBad();
-                }
+                yield this._onEventError(e);
             }
             finally {
-                this.enable();
+                this._postEvent();
             }
         });
         return super.click(fn);
@@ -851,7 +875,7 @@ class Button extends Form {
 }
 class Input extends Form {
     constructor(inputOpts) {
-        const { setid, cls, type, placeholder, byid, query, htmlElement, children } = inputOpts;
+        const { setid, cls, type, byid, query, htmlElement, children } = inputOpts;
         if (htmlElement !== undefined) {
             super({ htmlElement, children });
         }
@@ -867,13 +891,20 @@ class Input extends Form {
         if (type !== undefined) {
             this._htmlElement.type = type;
         }
+    }
+}
+class TextInput extends Input {
+    constructor(opts) {
+        opts.type = 'text';
+        super(opts);
+        const { placeholder, type } = opts;
         if (placeholder !== undefined) {
             if (type) {
                 if (type === "number" && typeof placeholder !== "number") {
-                    console.warn(`placeholder type is ${typeof placeholder} but input type is number. ignoring`);
+                    console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring`);
                 }
-                else if (type !== "text") {
-                    console.warn(`placeholder type is ${typeof placeholder} but input type not number nor text. ignoring`);
+                else if (type === "text" && typeof placeholder !== "string") {
+                    console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring`);
                 }
                 else {
                     this.placeholder(placeholder);
@@ -902,23 +933,15 @@ class Input extends Form {
                 return;
             }
             try {
-                this.disable();
+                this._preEvent();
                 const ret = yield _fn(event);
-                if (ret instanceof Error && this.flashBad) {
-                    yield this.flashBad();
-                }
-                else if (this.flashGood) {
-                    this.flashGood();
-                }
+                yield this._onEventSuccess(ret);
             }
             catch (e) {
-                console.error(e);
-                if (this.flashBad) {
-                    yield this.flashBad();
-                }
+                yield this._onEventError(e);
             }
             finally {
-                this.enable();
+                this._postEvent();
             }
         });
         return super.keydown(fn);
@@ -928,30 +951,25 @@ class Changable extends Input {
     change(_fn) {
         const fn = (event) => __awaiter(this, void 0, void 0, function* () {
             try {
-                this.disable();
+                this._preEvent();
                 const ret = yield _fn(event);
-                if (ret instanceof Error && this.flashBad) {
-                    yield this.flashBad();
-                }
-                else if (this.flashGood) {
-                    this.flashGood();
-                }
+                yield this._onEventSuccess(ret);
             }
             catch (e) {
-                console.error(e);
-                this.toggleChecked(!this.checked);
-                if (this.flashBad) {
-                    yield this.flashBad();
-                }
+                yield this._onEventError(e);
             }
             finally {
-                this.enable();
+                this._postEvent();
             }
         });
         return super.change(fn);
     }
 }
-class Checkbox extends Changable {
+class CheckboxInput extends Changable {
+    constructor(opts) {
+        opts.type = 'checkbox';
+        super(opts);
+    }
     get checked() {
         return this.e.checked;
     }
@@ -971,8 +989,17 @@ class Checkbox extends Changable {
             return this.uncheck();
         }
     }
+    _onEventError(e) {
+        const _super = Object.create(null, {
+            _onEventError: { get: () => super._onEventError }
+        });
+        return __awaiter(this, void 0, void 0, function* () {
+            this.toggleChecked(!this.checked);
+            yield _super._onEventError.call(this, e);
+        });
+    }
 }
-class Select extends Form {
+class Select extends Changable {
     constructor(selectOpts) {
         super(selectOpts);
     }

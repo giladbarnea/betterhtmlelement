@@ -175,7 +175,8 @@ interface Flashable {
     flashBad(): Promise<void>;
     flashGood(): Promise<void>;
 }
-declare abstract class Form<Generic extends HTMLButtonElement | HTMLInputElement | HTMLSelectElement> extends BetterHTMLElement<Generic> implements Flashable {
+declare type FormishHTMLElement = HTMLButtonElement | HTMLInputElement | HTMLSelectElement;
+declare abstract class Form<Generic extends FormishHTMLElement> extends BetterHTMLElement<Generic> implements Flashable {
     disable(): this;
     enable(): this;
     toggleEnabled(on: boolean): this;
@@ -184,27 +185,36 @@ declare abstract class Form<Generic extends HTMLButtonElement | HTMLInputElement
     value(val: any): this;
     flashBad(): Promise<void>;
     flashGood(): Promise<void>;
+    _preEvent(): void;
+    _onEventSuccess(ret: any): Promise<void>;
+    _onEventError(e: any): Promise<void>;
+    _postEvent(): void;
 }
 declare class Button extends Form<HTMLButtonElement> {
     constructor(buttonOpts: any);
     click(_fn?: (_event: MouseEvent) => Promise<any>): this;
 }
-declare class Input extends Form<HTMLInputElement> {
+declare class Input<Generic extends FormishHTMLElement = HTMLInputElement> extends Form<Generic> {
     constructor(inputOpts: any);
+}
+declare class TextInput extends Input {
+    constructor(opts: any);
     placeholder(val: string): this;
     placeholder(): string;
     keydown(_fn: (_event: KeyboardEvent) => Promise<any>): this;
 }
-declare class Changable extends Input {
+declare class Changable<Generic extends FormishHTMLElement> extends Input<Generic> {
     change(_fn: (_event: Event) => Promise<any>): this;
 }
-declare class Checkbox extends Changable {
+declare class CheckboxInput extends Changable<HTMLInputElement> {
+    constructor(opts: any);
     get checked(): boolean;
     check(): this;
     uncheck(): this;
     toggleChecked(on: boolean): this;
+    _onEventError(e: any): Promise<void>;
 }
-declare class Select extends Form<HTMLSelectElement> {
+declare class Select extends Changable<HTMLSelectElement> {
     constructor(selectOpts: any);
     set selectedIndex(val: number);
     get selectedIndex(): number;
