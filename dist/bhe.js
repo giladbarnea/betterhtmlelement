@@ -133,7 +133,7 @@ class BetterHTMLElement {
             return img({ htmlElement: element });
         }
         else if (tag === 'input') {
-            if (["text", "time", "number"].includes(element.type)) {
+            if (element.type === "text") {
                 return new TextInput({ htmlElement: element });
             }
             else if (element.type === "checkbox") {

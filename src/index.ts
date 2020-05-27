@@ -86,9 +86,11 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
 
     }
-    toString(){
+
+    toString() {
         return `${this.e.tagName} #${this.id()} .${this.e.classList}`
     }
+
     static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
     static wrapWithBHE(htmlElement: HTMLInputElement): Input;
     static wrapWithBHE(htmlElement: HTMLImageElement): Img;
@@ -110,7 +112,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         } else if (tag === 'img') {
             return img({htmlElement: element});
         } else if (tag === 'input') {
-            if (["text", "time", "number"].includes(element.type)) {
+            if (element.type === "text") {
                 return new TextInput({htmlElement: element});
             } else if (element.type === "checkbox") {
                 return new CheckboxInput({htmlElement: element});
