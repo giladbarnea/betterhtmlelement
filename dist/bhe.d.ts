@@ -177,6 +177,7 @@ interface Flashable {
     flashGood(): Promise<void>;
 }
 declare type FormishHTMLElement = HTMLButtonElement | HTMLInputElement | HTMLSelectElement;
+declare type InputType = "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local";
 declare abstract class Form<Generic extends FormishHTMLElement> extends BetterHTMLElement<Generic> implements Flashable {
     disable(): this;
     enable(): this;
@@ -196,20 +197,20 @@ declare class Button extends Form<HTMLButtonElement> {
     constructor(buttonOpts: any);
     click(_fn?: (_event: MouseEvent) => Promise<any>): this;
 }
-declare class Input<Generic extends FormishHTMLElement = HTMLInputElement, InputType = undefined> extends Form<Generic> {
-    type: InputType;
+declare class Input<TInputType extends InputType, Generic extends FormishHTMLElement = HTMLInputElement> extends Form<Generic> {
+    type: TInputType;
     constructor(inputOpts: any);
 }
-declare class TextInput extends Input {
+declare class TextInput extends Input<"text"> {
     constructor(opts: any);
     placeholder(val: string): this;
     placeholder(): string;
     keydown(_fn: (_event: KeyboardEvent) => Promise<any>): this;
 }
-declare class Changable<Generic extends FormishHTMLElement, InputType = undefined> extends Input<Generic, InputType> {
+declare class Changable<TInputType extends InputType, Generic extends FormishHTMLElement> extends Input<TInputType, Generic> {
     change(_fn: (_event: Event) => Promise<any>): this;
 }
-declare class CheckboxInput extends Changable<HTMLInputElement, "checkbox"> {
+declare class CheckboxInput extends Changable<"checkbox", HTMLInputElement> {
     constructor(opts: any);
     get checked(): boolean;
     check(): this;
@@ -218,7 +219,7 @@ declare class CheckboxInput extends Changable<HTMLInputElement, "checkbox"> {
     clear(): this;
     _onEventError(e: any): Promise<void>;
 }
-declare class Select extends Changable<HTMLSelectElement> {
+declare class Select extends Changable<undefined, HTMLSelectElement> {
     constructor(selectOpts: any);
     set selectedIndex(val: number);
     get selectedIndex(): number;
@@ -299,12 +300,12 @@ declare function button<E extends HTMLButtonElement>({ htmlElement, children }: 
     children?: ChildrenObj;
 }): Button;
 declare function button(): Button;
-declare function input({ cls, setid, type, placeholder }: {
+declare function input<TInputType extends InputType, Generic extends FormishHTMLElement = HTMLInputElement>({ cls, setid, type, placeholder }: {
     cls?: string;
     setid?: string;
-    type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local";
+    type?: TInputType;
     placeholder?: string;
-}): Input;
+}): Input<TInputType, Generic>;
 declare function input({ byid, children }: {
     byid: string;
     children?: ChildrenObj;
