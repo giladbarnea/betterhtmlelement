@@ -7,7 +7,7 @@
 // function enumerate<T>(obj: T): T extends string[]
 //     ? [number, string][]
 //     : [keyof T, T[keyof T]][] {
-import {AnyFunction, Enumerated, TMap} from "./typings/misc";
+import {AnyFunction, Enumerated, TMap} from "./typings";
 
 
 export function enumerate<T>(obj: T): Enumerated<T> {

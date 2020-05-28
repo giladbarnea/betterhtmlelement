@@ -1,7 +1,7 @@
 import {anyValue, noValue, isFunction, enumerate, wait, isObject, bool} from "./util";
-import {ChildrenObj, Element2Tag, EventName, EventName2Function, MapOfEventName2Function, NotTag, QuerySelector, Returns, Tag, TagOrString, TMap} from "./typings/misc";
+import {ChildrenObj, Element2Tag, EventName, EventName2Function, MapOfEventName2Function, NotTag, QuerySelector, Returns, Tag, TagOrString, TMap} from "./typings";
 import {MutuallyExclusiveArgs, NotEnoughArgs} from "./exceptions";
-import {CssOptions} from "./typings/css";
+import {CssOptions} from "./typings";
 
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
