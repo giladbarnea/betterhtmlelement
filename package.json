@@ -1,27 +1,27 @@
 {
-	"name": "betterhtmlelement",
-	"version": "1.1.1",
-	"description": "A Fast, intuitive, chainable wrapper for HTMLElement",
-	"main": "dist/bhe.js",
-	"typings": "dist/bhe.d.ts",
-	"keywords": [
-		"htmlelement",
-		"html",
-		"element",
-		"jquery",
-		"wrapper",
-		"performance",
-		"chain",
-		"fast"
-	],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/giladbarnea/betterhtmlelement"
-	},
-	"jsdelivr": "dist/bhe.js",
-	"author": "Gilad Barnea",
-	"license": "ISC",
-	"devDependencies": {
-		"typescript": "^3.8.3"
-	}
+    "name": "betterhtmlelement",
+    "version": "1.1.2",
+    "description": "A Fast, intuitive, chainable wrapper for HTMLElement",
+    "main": "dist/bhe.js",
+    "typings": "dist/bhe.d.ts",
+    "keywords": [
+        "htmlelement",
+        "html",
+        "element",
+        "jquery",
+        "wrapper",
+        "performance",
+        "chain",
+        "fast"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/giladbarnea/betterhtmlelement"
+    },
+    "jsdelivr": "dist/bhe.js",
+    "author": "Gilad Barnea",
+    "license": "ISC",
+    "devDependencies": {
+        "typescript": "^3.8.3"
+    }
 }
