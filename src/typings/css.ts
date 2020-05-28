@@ -1,5 +1,5 @@
 // TODO: https://www.npmjs.com/package/csstype
-type OmittedCssProps = "animationDirection"
+export type OmittedCssProps = "animationDirection"
     | "animationFillMode"
     | "animationIterationCount"
     | "animationPlayState"
@@ -12,9 +12,9 @@ type OmittedCssProps = "animationDirection"
     | "paddingTop"
     | "preload"
     | "width"
-type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
+export type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 
-interface CssOptions extends PartialCssStyleDeclaration {
+export interface CssOptions extends PartialCssStyleDeclaration {
     animationDirection?: AnimationDirection;
     animationFillMode?: AnimationFillMode;
     animationIterationCount?: number;
@@ -31,14 +31,14 @@ interface CssOptions extends PartialCssStyleDeclaration {
 }
 
 
-type CubicBezierFunction = [number, number, number, number];
-type Jumpterm = 'jump-start' | 'jump-end' | 'jump-none' | 'jump-both' | 'start' | 'end';
+export type CubicBezierFunction = [number, number, number, number];
+export type Jumpterm = 'jump-start' | 'jump-end' | 'jump-none' | 'jump-both' | 'start' | 'end';
 
 /**Displays an animation iteration along n stops along the transition, displaying each stop for equal lengths of time.
  * For example, if n is 5,  there are 5 steps.
  * Whether the animation holds temporarily at 0%, 20%, 40%, 60% and 80%, on the 20%, 40%, 60%, 80% and 100%, or makes 5 stops between the 0% and 100% along the animation, or makes 5 stops including the 0% and 100% marks (on the 0%, 25%, 50%, 75%, and 100%) depends on which of the following jump terms is used*/
-type StepsFunction = [number, Jumpterm];
-type AnimationTimingFunction =
+export type StepsFunction = [number, Jumpterm];
+export type AnimationTimingFunction =
     'linear'
     | 'ease'
     | 'ease-in'
@@ -48,10 +48,10 @@ type AnimationTimingFunction =
     | 'step-end'
     | StepsFunction
     | CubicBezierFunction
-type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
-type AnimationFillMode = 'none' | 'forwards' | 'backwards' | 'both';
+export type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
+export type AnimationFillMode = 'none' | 'forwards' | 'backwards' | 'both';
 
-interface TransformOptions {
+export interface TransformOptions {
     matrix?: [number, number, number, number, number, number],
     matrix3d?: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number],
     perspective?: string, // px
@@ -72,11 +72,11 @@ interface TransformOptions {
     translateX?: string,
     translateY?: string,
     translateZ?: string,
-    
-    
+
+
 }
 
-interface AnimateOptions {
+export interface AnimateOptions {
     delay?: string;
     direction?: AnimationDirection;
     duration: string;

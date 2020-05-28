@@ -1,131 +1,161 @@
+import {anyValue, noValue, isFunction, enumerate, wait, isObject, bool} from "./util";
+import {ChildrenObj, Element2Tag, EventName, EventName2Function, MapOfEventName2Function, NotTag, QuerySelector, Returns, Tag, TagOrString, TMap} from "./typings/misc";
+import {MutuallyExclusiveArgs, NotEnoughArgs} from "./exceptions";
+import {CssOptions} from "./typings/css";
+
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
-
-// TODO: make BetterHTMLElement<T>, for use in eg child[ren] function
-// extends HTMLElement: https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/upgrade#Examples
-class BetterHTMLElement {
-    protected _htmlElement: HTMLElement;
+export class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
+    protected _htmlElement: Generic;
     private readonly _isSvg: boolean = false;
-    private readonly _listeners: TEventFunctionMap<TEvent> = {};
-    private _cachedChildren: TMap<BetterHTMLElement> = {};
-    
-    /*[Symbol.toPrimitive](hint) {
-     console.log('from toPrimitive, hint: ', hint, '\nthis: ', this);
-     return this._htmlElement;
-     }
-     
-     valueOf() {
-     console.log('from valueOf, this: ', this);
-     return this;
-     }
-     
-     toString() {
-     console.log('from toString, this: ', this);
-     return this;
-     }
-     */
-    
-    // TODO: query should also be a predicate function
-    /**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
-    constructor({ tag, text, cls }: { tag: QuerySelector, text?: string, cls?: string });
-    /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({ id, text, cls, children }: { id: string, text?: string, cls?: string, children?: ChildrenObj });
-    /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({ query, text, cls, children }: { query: QuerySelector, text?: string, cls?: string, children?: ChildrenObj });
-    /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-    constructor({ htmlElement, text, cls, children }: { htmlElement: HTMLElement, text?: string, cls?: string, children?: ChildrenObj });
+    private readonly _listeners: MapOfEventName2Function = {};
+    private _cachedChildren: TMap<BetterHTMLElement | BetterHTMLElement[]> = {};
+
+    /**Create an element of `tag`. Optionally, set its `text`, `cls` or `id`. */
+    constructor({tag, cls, setid}: { tag: Element2Tag<Generic>, cls?: string, setid?: string });
+    /**Wrap an existing element by `byid`. Optionally cache existing `children`*/
+    constructor({byid, children}: { byid: string, children?: ChildrenObj });
+    /**Wrap an existing element by `query`. Optionally cache existing `children`*/
+    constructor({query, children}: { query: QuerySelector, children?: ChildrenObj });
+    /**Wrap an existing HTMLElement. Optionally cache existing `children`*/
+    constructor({htmlElement, children}: { htmlElement: Generic; children?: ChildrenObj });
     constructor(elemOptions) {
-        const { tag, id, htmlElement, text, query, children, cls } = elemOptions;
-        
-        if ( [ tag, id, htmlElement, query ].filter(x => x !== undefined).length > 1 ) {
-            throw new BadArgumentsAmountError(1, {
+        const {
+            tag, cls, setid, // create
+            htmlElement, byid, query, children // wrap existing
+        } = elemOptions;
+
+        // *** Argument Errors
+        // ** wrapping args: only one
+        if ([byid, htmlElement, query].filter(x => Boolean(x)).length > 1) {
+            throw new MutuallyExclusiveArgs({
+                byid, query, htmlElement
+            }, `Choose only one way to get an existing element; by its id, query, or actual element`)
+        }
+        // ** creating new elem args: both creators and wrappers
+        // * if creating new with `tag`, no meaning to either children, byid, htmlElement, or query
+        if (tag !== undefined && anyValue([children, byid, htmlElement, query])) {
+            throw new MutuallyExclusiveArgs({
                 tag,
-                id,
+                byid,
                 htmlElement,
                 query
-            })
-            
+            }, `Either create a new elem via "tag", or get an existing one via either "byid", "htmlElement", or "query" (and maybe cache its "children")`)
         }
-        if ( tag !== undefined && children !== undefined )
-            throw new BadArgumentsAmountError(1, {
-                tag,
-                children
-            }, '"children" and "tag" options are mutually exclusive, because tag implies creating a new element and children implies getting an existing one.');
-        
-        if ( tag !== undefined ) {
-            if ( [ 'svg', 'path' ].includes(tag.toLowerCase()) ) {
+        if (anyValue([tag, cls, setid]) && anyValue([children, byid, htmlElement, query])) {
+            throw new MutuallyExclusiveArgs({
+                group1: {cls, setid},
+                group2: {children, byid, htmlElement, query}
+            }, `Can't have args from both groups`)
+        }
+        if (noValue([tag, cls, setid]) && noValue([children, byid, htmlElement, query])) {
+            throw new NotEnoughArgs([1], {
+                group1: {cls, setid},
+                group2: {children, byid, htmlElement, query}
+            }, `Expecting at least one arg from a given group`)
+        }
+
+        // ** tag (CREATE element)
+        if (tag !== undefined) {
+            if (['svg', 'path'].includes(tag.toLowerCase())) {
                 this._isSvg = true;
                 this._htmlElement = document.createElementNS(SVG_NS_URI, tag);
-                // this._htmlElement.setAttribute('xmlns', "http://www.w3.org/2000/svg");
             } else {
-                this._htmlElement = document.createElement(tag);
+                this._htmlElement = document.createElement(tag) as Generic;
             }
-        } else if ( id !== undefined ) {
-            this._htmlElement = document.getElementById(id);
-            if ( !bool(this._htmlElement) )
-                console.warn(`Elem constructor: tried to get element by id: "${id}", but no such element exists.`)
-        } else if ( query !== undefined ) {
-            this._htmlElement = document.querySelector(query);
-            if ( !bool(this._htmlElement) )
-                console.warn(`Elem constructor: tried to get element by query: "${query}", but no element found.`)
-        } else if ( htmlElement !== undefined ) {
-            this._htmlElement = htmlElement;
-            if ( !bool(this._htmlElement) )
-                console.warn(`Elem constructor: passed explicit htmlElement arg, but arg was falsey: ${htmlElement}`, htmlElement)
+            // ** wrap EXISTING element
+            // * byid
+        } else if (byid !== undefined) {
+            this._htmlElement = document.getElementById(byid) as Generic;
         } else {
-            throw new BadArgumentsAmountError(1, {
-                tag,
-                id,
-                htmlElement,
-                query
-            })
+            // * query
+            if (query !== undefined) {
+                this._htmlElement = document.querySelector(query) as Generic;
+            } else {
+                // * htmlElement
+                if (htmlElement !== undefined) {
+                    this._htmlElement = htmlElement;
+                }
+            }
         }
-        
-        if ( text !== undefined )
-            this.text(text);
-        if ( cls !== undefined )
+
+        if (cls !== undefined) {
             this.class(cls);
-        
-        if ( children !== undefined )
+        }
+        if (children !== undefined) {
             this.cacheChildren(children);
-        
-        // Object.assign(this, proxy);
-        /*const that = this;
-         return new Proxy(this, {
-         get(target: BetterHTMLElement, p: string | number | symbol, receiver: any): any {
-         // console.log('logging');
-         // console.log('target: ', target,
-         //     '\nthat: ', that,
-         //     '\ntypeof(that): ', typeof (that),
-         //     '\np: ', p,
-         //     '\nreceiver: ', receiver,
-         //     '\nthis: ', this);
-         return that[p];
-         }
-         })
-         */
+        }
+        if (setid !== undefined) {
+            this.id(setid);
+        }
+
+
     }
-    
+
     /**Return the wrapped HTMLElement*/
     get e() {
         return this._htmlElement;
     }
-    
+
+    static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
+    static wrapWithBHE<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = FormishHTMLElement>(htmlElement: Generic): Input<TInputType, Generic>;
+    static wrapWithBHE(htmlElement: HTMLImageElement): Img;
+    static wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
+    static wrapWithBHE(htmlElement: HTMLSpanElement): Span;
+    static wrapWithBHE(htmlElement: HTMLButtonElement): Button;
+    static wrapWithBHE(htmlElement: HTMLDivElement): Div;
+    static wrapWithBHE(htmlElement: HTMLSelectElement): Div;
+    static wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
+    static wrapWithBHE(element) {
+        const tag = element.tagName.toLowerCase() as Element2Tag<typeof element>;
+        // const tag = element.tagName.toLowerCase() as Tag;
+        if (tag === 'div') {
+            return div({htmlElement: element});
+        } else if (tag === 'a') {
+            return anchor({htmlElement: element});
+        } else if (tag === 'p') {
+            return paragraph({htmlElement: element});
+        } else if (tag === 'img') {
+            return img({htmlElement: element});
+        } else if (tag === 'input') {
+            if (element.type === "text") {
+                return new TextInput({htmlElement: element});
+            } else if (element.type === "checkbox") {
+                return new CheckboxInput({htmlElement: element});
+            } else {
+                return input({htmlElement: element});
+            }
+        } else if (tag === 'button') {
+            return button({htmlElement: element});
+        } else if (tag === 'span') {
+            return span({htmlElement: element});
+        } else if (tag === 'select') {
+            return select({htmlElement: element});
+        } else {
+            return elem({htmlElement: element});
+        }
+    }
+
+    toString() {
+        return `${this.e.tagName} #${this.id()} .${this.e.classList}`
+    }
+
     /**Sets `this._htmlElement` to `newHtmlElement._htmlElement`.
      * Resets `this._cachedChildren` and caches `newHtmlElement._cachedChildren`.
      * Adds event listeners from `newHtmlElement._listeners`, while keeping `this._listeners`.*/
-    wrapSomethingElse(newHtmlElement: BetterHTMLElement): this
+    wrapSomethingElse<T extends HTMLElement>(newHtmlElement: BetterHTMLElement<T>): this
     /**Sets `this._htmlElement` to `newHtmlElement`.
      * Keeps `this._listeners`.
      * NOTE: this reinitializes `this._cachedChildren` and all event listeners belonging to `newHtmlElement` are lost. Pass a `BetterHTMLElement` to keep them.*/
     wrapSomethingElse(newHtmlElement: Node): this
     wrapSomethingElse(newHtmlElement) {
         this._cachedChildren = {};
-        if ( newHtmlElement instanceof BetterHTMLElement ) {
+        if (newHtmlElement instanceof BetterHTMLElement) {
             this._htmlElement.replaceWith(newHtmlElement.e);
             this._htmlElement = newHtmlElement.e;
-            for ( let [ _key, _cachedChild ] of enumerate(newHtmlElement._cachedChildren) ) {
-                this._cache(_key as string, _cachedChild)
+            for (let [_key, _cachedChild] of enumerate(newHtmlElement._cachedChildren)) {
+                // @ts-ignore
+                this._cache(_key, _cachedChild)
             }
             if (
                 Object.keys(this._cachedChildren).length
@@ -135,470 +165,442 @@ class BetterHTMLElement {
                 !== Object.values(newHtmlElement._cachedChildren).filter(v => v !== undefined).length
             ) {
                 console.warn(`wrapSomethingElse this._cachedChildren length !== newHtmlElement._cachedChildren.length`, {
-                        this : this,
+                        this: this,
                         newHtmlElement
                     }
                 )
             }
-            this.on({ ...this._listeners, ...newHtmlElement._listeners, });
+            this.on({...this._listeners, ...newHtmlElement._listeners,});
         } else {
             // No way to get newHtmlElement event listeners besides hacking Element.prototype
             this.on(this._listeners);
             this._htmlElement.replaceWith(newHtmlElement);
             this._htmlElement = newHtmlElement;
         }
-        
+
         return this;
     }
-    
-    // ***  Basic
+
+    // *** Basic
     /**Set the element's innerHTML*/
     html(html: string): this;
     /**Get the element's innerHTML*/
     html(): string;
     html(html?) {
-        if ( html === undefined ) {
+        if (html === undefined) {
             return this.e.innerHTML;
         } else {
             this.e.innerHTML = html;
             return this;
         }
     }
-    
+
     /**Set the element's innerText*/
     text(txt: string | number): this;
     /**Get the element's innerText*/
     text(): string;
     text(txt?) {
-        if ( txt === undefined ) {
+        if (txt === undefined) {
             return this.e.innerText;
         } else {
             this.e.innerText = txt;
             return this;
         }
-        
+
     }
-    
+
     /**Set the id of the element*/
     id(id: string): this;
     /**Get the id of the element*/
     id(): string;
     id(id?) {
-        if ( id === undefined ) {
+        if (id === undefined) {
             return this.e.id;
         } else {
             this.e.id = id;
             return this;
         }
     }
-    
+
     /**For each `{<styleAttr>: <styleVal>}` pair, set the `style[styleAttr]` to `styleVal`.*/
     css(css: Partial<CssOptions>): this
     /**Get `style[css]`*/
     css(css: string): string
     css(css) {
-        if ( typeof css === 'string' ) {
+        if (typeof css === 'string') {
             return this.e.style[css];
         } else {
-            for ( let [ styleAttr, styleVal ] of enumerate(css) )
-                this.e.style[<string> styleAttr] = styleVal;
+            for (let [styleAttr, styleVal] of enumerate(css)) {
+                this.e.style[<string>styleAttr] = styleVal;
+            }
             return this;
         }
     }
-    
+
     /**Remove the value of the passed style properties*/
     uncss(...removeProps: (keyof CssOptions)[]): this {
         let css = {};
-        for ( let prop of removeProps )
+        for (let prop of removeProps) {
             css[prop] = '';
+        }
         return this.css(css);
     }
-    
-    /**@deprecated*/
-    is(element: BetterHTMLElement) {
-        // https://api.jquery.com/is/
-        throw new Error("NOT IMPLEMENTED");
-    }
-    
-    /*
-     animate(opts: AnimateOptions) {
-     // see: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations/Tips
-     throw new Error('Not implemented');
-     }
-     */
-    
-    // ***  Classes
-    /**Return the first class that matches `cls` predicate.*/
-    class(cls: FunctionReturns<boolean>): string;
+
+
+    // *** Classes
     /**`.className = cls`*/
     class(cls: string): this;
+    /**Return the first class that matches `cls` predicate.*/
+    class(cls: Returns<boolean>): string;
     /**Return a string array of the element's classes (not a classList)*/
     class(): string[];
     class(cls?) {
-        if ( cls === undefined ) {
+        if (cls === undefined) {
             return Array.from(this.e.classList);
-        } else if ( isFunction(cls) ) {
+        } else if (isFunction(cls)) {
             return Array.from(this.e.classList).find(cls);
         } else {
-            if ( this._isSvg ) {
+            if (this._isSvg) {
                 // @ts-ignore
-                // noinspection JSConstantReassignment
-                this.e.classList = [ cls ];
+                this.e.classList = [cls];
             } else {
                 this.e.className = cls;
             }
             return this;
         }
     }
-    
+
     addClass(cls: string, ...clses: string[]): this {
         this.e.classList.add(cls);
-        for ( let c of clses )
+        for (let c of clses) {
             this.e.classList.add(c);
-        return this;
-    }
-    
-    removeClass(cls: FunctionReturns<boolean>): this;
-    removeClass(cls: string, ...clses: string[]): this;
-    removeClass(cls, ...clses) {
-        if ( isFunction<boolean>(cls) ) {
-            this.e.classList.remove(this.class(cls));
-            if ( bool(clses) )
-                console.warn('removeClass, cls is FunctionReturns<boolean>, got ...clses but shouldnt have')
-            
-        } else {
-            this.e.classList.remove(cls);
-            for ( let c of clses )
-                this.e.classList.remove(c);
         }
         return this;
     }
-    
-    replaceClass(oldToken: FunctionReturns<boolean>, newToken: string): this;
+
+    removeClass(cls: Returns<boolean>, ...clses: Returns<boolean>[]): this;
+    removeClass(cls: string, clses?: string[]): this;
+    removeClass(cls, ...clses) {
+        if (isFunction<Returns<boolean>>(cls)) {
+            this.e.classList.remove(this.class(cls));
+            for (let c of <Returns<boolean>[]>clses) {
+                this.e.classList.remove(this.class(c));
+            }
+        } else {
+            this.e.classList.remove(cls);
+            for (let c of clses) {
+                this.e.classList.remove(c);
+            }
+        }
+        return this;
+    }
+
+    replaceClass(oldToken: Returns<boolean>, newToken: string): this;
     replaceClass(oldToken: string, newToken: string): this
     replaceClass(oldToken, newToken) {
-        if ( isFunction<boolean>(oldToken) ) {
+        if (isFunction<Returns<boolean>>(oldToken)) {
             this.e.classList.replace(this.class(oldToken), newToken);
         } else {
             this.e.classList.replace(oldToken, newToken);
         }
         return this;
     }
-    
-    toggleClass(cls: FunctionReturns<boolean>, force?: boolean): this
+
+    toggleClass(cls: Returns<boolean>, force?: boolean): this
     toggleClass(cls: string, force?: boolean): this
     toggleClass(cls, force) {
-        if ( isFunction<boolean>(cls) )
+        if (isFunction<Returns<boolean>>(cls)) {
             this.e.classList.toggle(this.class(cls), force);
-        else
+        } else {
             this.e.classList.toggle(cls, force);
+        }
         return this;
     }
-    
+
     /**Returns `this.e.classList.contains(cls)` */
     hasClass(cls: string): boolean
     /**Returns whether `this` has a class that matches passed function */
-    hasClass(cls: FunctionReturns<boolean>): boolean
+    hasClass(cls: Returns<boolean>): boolean
     hasClass(cls) {
-        if ( isFunction<boolean>(cls) ) {
+        if (isFunction(cls)) {
             return this.class(cls) !== undefined;
         } else {
             return this.e.classList.contains(cls);
         }
     }
-    
-    // ***  Nodes
+
+    // *** Nodes
     /**Insert at least one `node` just after `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     after(...nodes: Array<BetterHTMLElement | Node>): this {
-        for ( let node of nodes ) {
-            if ( node instanceof BetterHTMLElement )
+        for (let node of nodes) {
+            if (node instanceof BetterHTMLElement) {
                 this.e.after(node.e);
-            else
+            } else {
                 this.e.after(node);
+            }
         }
         return this;
-        
     }
-    
+
     /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
     insertAfter(node: BetterHTMLElement | HTMLElement): this {
-        if ( node instanceof BetterHTMLElement )
+        if (node instanceof BetterHTMLElement) {
             node.e.after(this.e);
-        else
+        } else {
             node.after(this.e);
+        }
         return this;
     }
-    
+
     /**Insert at least one `node` after the last child of `this`.
      * Any `node` can be either a `BetterHTMLElement`, a vanilla `Node`,
      * a `{someKey: BetterHTMLElement}` pairs object, or a `[someKey, BetterHTMLElement]` tuple.*/
-    append(...nodes: Array<BetterHTMLElement | Node | TMap<BetterHTMLElement> | [ string, BetterHTMLElement ]>): this {
-        for ( let node of nodes ) {
-            if ( node instanceof BetterHTMLElement )
+    append(...nodes: Array<BetterHTMLElement | Node | TMap<BetterHTMLElement> | [string, BetterHTMLElement]>): this {
+        for (let node of nodes) {
+            if (node instanceof BetterHTMLElement) {
                 this.e.append(node.e);
-            else if ( node instanceof Node )
-                this.e.append(node);
-            else if ( Array.isArray(node) )
-                this.cacheAppend([ node ]);
-            else
-                this.cacheAppend(node)
+            } else {
+                if (node instanceof Node) {
+                    this.e.append(node);
+                } else {
+                    if (Array.isArray(node)) {
+                        this.cacheAppend([node]);
+                    } else {
+                        this.cacheAppend(node)
+                    }
+                }
+            }
         }
         return this;
-        
+
     }
-    
+
     /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
     appendTo(node: BetterHTMLElement | HTMLElement): this {
-        if ( node instanceof BetterHTMLElement )
+        if (node instanceof BetterHTMLElement) {
             node.e.append(this.e);
-        else
+        } else {
             node.append(this.e);
-        
+        }
+
         return this;
     }
-    
+
     /**Insert at least one `node` just before `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     before(...nodes: Array<BetterHTMLElement | Node>): this {
-        for ( let node of nodes ) {
-            if ( node instanceof BetterHTMLElement )
+        for (let node of nodes) {
+            if (node instanceof BetterHTMLElement) {
                 this.e.before(node.e);
-            else
+            } else {
                 this.e.before(node);
+            }
         }
         return this;
-        
     }
-    
+
     /**Insert `this` just before a `BetterHTMLElement` or a vanilla `Node`s.*/
     insertBefore(node: BetterHTMLElement | HTMLElement): this {
-        if ( node instanceof BetterHTMLElement )
+        if (node instanceof BetterHTMLElement) {
             node.e.before(this.e);
-        else
+        } else {
             node.before(this.e);
+        }
         return this;
     }
-    
+
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
     replaceChild(newChild, oldChild) {
         this.e.replaceChild(newChild, oldChild);
         return this;
     }
-    
-    private _cache(key: string, child: BetterHTMLElement) {
-        this[key] = child;
-        this._cachedChildren[key] = child;
-    }
-    
+
+    // private _cache(key: string, child: BetterHTMLElement): void
+
     /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this
+
     /**For each `[key, child]` tuple, `append(child)` and store it in `this[key]`. */
-    cacheAppend(keyChildPairs: [ string, BetterHTMLElement ][]): this
+    cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this
+
     cacheAppend(keyChildPairs) {
         const _cacheAppend = (_key: string, _child: BetterHTMLElement) => {
             this.append(_child);
             this._cache(_key, _child);
         };
-        if ( Array.isArray(keyChildPairs) ) {
-            for ( let [ key, child ] of keyChildPairs )
+        if (Array.isArray(keyChildPairs)) {
+            for (let [key, child] of keyChildPairs) {
                 _cacheAppend(key, child);
+            }
         } else {
-            for ( let [ key, child ] of enumerate(keyChildPairs) )
+            for (let [key, child] of enumerate(keyChildPairs)) {
+                // @ts-ignore
                 _cacheAppend(key, child);
+            }
         }
         return this;
     }
-    
-    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child<K extends HTMLTag>(selector: K): BetterHTMLElement;
-    /**Get a child with `querySelector` and return a `BetterHTMLElement` of it*/
-    child(selector: string): BetterHTMLElement;
-    child(selector) {
-        return new BetterHTMLElement({ htmlElement : this.e.querySelector(selector) });
+
+    _cls() {
+        return BetterHTMLElement
     }
-    
-    
+
+    child(selector: "img"): Img;
+
+    child(selector: "a"): Anchor;
+
+    child<TInputType extends InputType = InputType>(selector: "input"): Input<TInputType, HTMLInputElement>;
+    child(selector: "select"): Input<undefined, HTMLSelectElement>;
+
+    child(selector: "p"): Paragraph;
+
+    child(selector: "span"): Span;
+
+    child(selector: "button"): Button;
+
+    child(selector: "div"): Div;
+
+    child<T extends Tag>(selector: T): BetterHTMLElement<HTMLElementTagNameMap[T]>;
+
+    child(selector: string): BetterHTMLElement;
+
+    child<T extends typeof BetterHTMLElement>(selector: string, bheCls: T): T;
+
+    child(selector, bheCls?) {
+        const htmlElement = this.e.querySelector(selector) as HTMLElement;
+        if (htmlElement === null) {
+            console.warn(`${this}.child(${selector}): no child. returning undefined`);
+            return undefined;
+        }
+        let bhe;
+        if (bheCls === undefined) {
+            bhe = this._cls().wrapWithBHE(htmlElement);
+        } else {
+            bhe = new bheCls({htmlElement});
+        }
+        return bhe;
+    }
+
     /**Return a `BetterHTMLElement` list of all children */
     children(): BetterHTMLElement[];
+
     /**Return a `BetterHTMLElement` list of all children selected by `selector` */
-    children<K extends HTMLTag>(selector: K): BetterHTMLElement[];
+    children<K extends Tag>(selector: K): BetterHTMLElement[];
+
     /**Return a `BetterHTMLElement` list of all children selected by `selector` */
-    children(selector: string | HTMLTag): BetterHTMLElement[];
+    children(selector: QuerySelector): BetterHTMLElement[];
+
     children(selector?) {
         let childrenVanilla;
         let childrenCollection;
-        if ( selector === undefined ) {
+        if (selector === undefined) {
             childrenCollection = this.e.children;
         } else {
             childrenCollection = this.e.querySelectorAll(selector);
         }
-        childrenVanilla = <HTMLElement[]> Array.from(childrenCollection);
-        const toElem = (c: HTMLElement) => new BetterHTMLElement({ htmlElement : c });
-        return childrenVanilla.map(toElem);
+
+        childrenVanilla = Array.from(childrenCollection);
+
+        return childrenVanilla.map(this._cls().wrapWithBHE);
     }
-    
+
     clone(deep?: boolean): BetterHTMLElement {
-        // @ts-ignore
-        return new BetterHTMLElement({ htmlElement : this.e.cloneNode(deep) });
+        console.warn(`${this}.clone() doesnt return a matching BHE subtype, but a regular BHE`);
+        // TODO: return new this()?
+        return new BetterHTMLElement({htmlElement: this.e.cloneNode(deep) as HTMLElement});
     }
-    
-    /**For each `[key, selector]` pair, where `selector` is either an `HTMLTag` or a `string`, get `this.child(selector)`, and store it in `this[key]`.
+
+    /**
+     * Stores child BHE's in `this` so they can be accessed e.g. `navbar.home.class('selected')`.
      * @example
-     * // Using `cacheChildren` directly
-     * const navbar = elem({ id: 'navbar' });
-     * navbar.cacheChildren({ home: '.navbar-item-home', about: '.navbar-item-about' });
-     * navbar.home.toggleClass("selected");
-     * navbar.about.css(...);
-     * @example
-     * // Using `cacheChildren` indirectly through `children` constructor option
-     * const navbar = elem({ id: 'navbar', children: { home: '.navbar-item-home', about: '.navbar-item-about' }});
-     * navbar.home.toggleClass("selected");
-     * navbar.about.css(...);
-     * @see this.child*/
-    cacheChildren(queryMap: TMap<QuerySelector>): this
-    /**For each `[key, selector]` pair, where `selector` is a recursive `{subselector: keySelectorObj}` object,
-     * extract `this.child(subselector)`, store it in `this[key]`, then call `this[key].cacheChildren` passing the recursive object.
-     * @example
-     * // Using `cacheChildren` directly
-     * const navbar = elem({ id: 'navbar' });
+     * navbar.cacheChildren({ 'home': 'button.home' })
+     * // or
+     * maindiv.cacheChildren({ 'welcome': paragraph({ 'query': 'p.welcome' }) })
+     * // `childrenObj` can be recursive and mixed, e.g.
      * navbar.cacheChildren({
      *      home: {
-     *          '.navbar-item-home': {
-     *              news: '.navbar-subitem-news,
-     *              support: '.navbar-subitem-support'
+     *          'li.navbar-item-home': {
+     *              thumbnail: 'img.home-thumbnail',
+     *              expand: button({ byid: 'home_expand' })
      *          }
      *      }
      *  });
-     * navbar.home.toggleClass("selected");
-     * navbar.home.news.css(...);
-     * navbar.home.support.pointerdown(...);
-     * @example
-     * // Using `cacheChildren` indirectly through `children` constructor option
-     * const navbar = elem({query: '#navbar', children: {
-     *      home: {
-     *          '.navbar-item-home': {
-     *              news: '.navbar-subitem-news,
-     *              support: '.navbar-subitem-support'
-     *          }
-     *      }
-     *  }});
-     * navbar.home.toggleClass("selected");
-     * navbar.home.news.css(...);
-     * navbar.home.support.pointerdown(...);
+     * navbar.home.class("selected");
+     * navbar.home.thumbnail.css(...);
+     * navbar.home.expand.click( e => {...} )
      * @see this.child*/
-    cacheChildren(recursiveQueryMap: TRecMap<QuerySelector>): this
-    cacheChildren(bheMap: TMap<BetterHTMLElement>): this
-    /**For each `[key, selector]` pair, where `selector` is a `BetterHTMLElement`, store it in `this[key]`.
-     * @example
-     * // Using `cacheChildren` directly
-     * const home = elem({ query: '.navbar-item-home' });
-     * const navbar = elem({ id: 'navbar' });
-     * navbar.cacheChildren({ home });
-     * navbar.home.toggleClass("selected");
-     * @example
-     * // Using `cacheChildren` indirectly through `children` constructor option
-     * const home = elem({ query: '.navbar-item-home' });
-     * const navbar = elem({id: 'navbar', children: { home }});
-     * navbar.home.toggleClass("selected");
-     * @see this.child*/
-    
-    cacheChildren(recursiveBHEMap: TRecMap<BetterHTMLElement>): this
-    /**key: string. value: either "selector string" OR {"selector string": <recurse down>}*/
-    cacheChildren(map) {
-        for ( let [ key, value ] of enumerate(map) ) {
+    cacheChildren(childrenObj: ChildrenObj): this {
+        for (let [key, value] of enumerate(childrenObj)) {
             let type = typeof value;
-            if ( isObject(value) ) {
-                if ( value instanceof BetterHTMLElement ) {
+            if (isObject(value)) {
+                if (value instanceof BetterHTMLElement) {
+                    // { "myimg": img(...) }
                     this._cache(key, value)
                 } else {
+                    // { "mydiv": { "myimg": img(...), "myinput": input(...) } }
                     let entries = Object.entries(value);
-                    if ( entries[1] !== undefined ) {
+                    if (entries[1] !== undefined) {
                         console.warn(
                             `cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
                                 key,
-                                "multiple selectors" : entries.map(e => e[0]),
+                                "multiple selectors": entries.map(e => e[0]),
                                 value,
-                                this : this
+                                this: this
                             }
                         );
                     }
-                    // only first because 1:1 for key:selector.
-                    // (ie can't do {right: {.right: {...}, .right2: {...}})
-                    let [ selector, obj ] = entries[0];
-                    this._cache(key, this.child(selector));
-                    this[key].cacheChildren(obj)
+                    let [selector, obj] = entries[0];
+                    if (isFunction(obj)) {
+                        // bhe constructor
+                        let bhe = this.child(selector, obj);
+                        this._cache(key, bhe);
+                    } else {
+                        this._cache(key, this.child(selector));
+                        this[key].cacheChildren(obj);
+                    }
                 }
-            } else if ( type === "string" ) {
-                this._cache(key, this.child(value));
+            } else if (type === "string") {
+                let match = /<(\w+)>$/.exec(value as string);
+
+                if (match) {
+                    // { "options": "<option>" }
+                    let tagName = match[1] as Tag;
+                    // @ts-ignore
+                    const htmlElements = [...this.e.getElementsByTagName(tagName)] as HTMLElementTagNameMap[typeof tagName][];
+                    let bhes = [];
+                    for (let htmlElement of htmlElements) {
+                        bhes.push(this._cls().wrapWithBHE(htmlElement));
+                    }
+                    this._cache(key, bhes);
+                } else {
+                    // { "myinput": "input[type=checkbox]" }
+                    this._cache(key, this.child(value as TagOrString));
+                }
             } else {
-                console.warn(`cacheChildren, bad value type: "${type}". key: "${key}", value: "${value}". map:`, map,);
+                console.warn(`cacheChildren, bad value type: "${type}". key: "${key}", value: "${value}". childrenObj:`, childrenObj,);
             }
         }
         return this;
-        
+
     }
-    
+
     /**Remove all children from DOM*/
     empty(): this {
-        // TODO: is this faster than innerHTML = ""?
-        while ( this.e.firstChild )
+        while (this.e.firstChild) {
             this.e.removeChild(this.e.firstChild);
+        }
         return this;
     }
-    
+
     /**Remove element from DOM*/
     remove(): this {
         this.e.remove();
         return this;
     }
-    
-    // TODO: recursively yield children
-    //  (unlike .children(), this doesn't return only the first level)
-    /**@deprecated*/
-    find() {
-        // https://api.jquery.com/find/
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    first() {
-        // https://api.jquery.com/first/
-        // this.e.firstChild
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    last() {
-        // https://api.jquery.com/last/
-        // this.e.lastChild
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    next() {
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    not() {
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    parent() {
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    parents() {
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    
-    // ***  Events
-    
-    on(evTypeFnPairs: TEventFunctionMap<TEvent>, options?: AddEventListenerOptions): this {
-        for ( let [ evType, evFn ] of enumerate(evTypeFnPairs) ) {
+
+    on(evTypeFnPairs: TMap<EventName2Function>, options?: AddEventListenerOptions): this {
+        // const foo = evTypeFnPairs["abort"];
+        for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
                 evFn(evt);
             };
@@ -607,558 +609,980 @@ class BetterHTMLElement {
         }
         return this;
     }
-    
-    one(evType: TEvent, listener: FunctionRecievesEvent<TEvent>, options?: AddEventListenerOptions): this {
-        const evTypeFnPairs = {};
-        evTypeFnPairs[evType] = listener;
-        options = options === undefined ? { once : true } : { ...options, once : true };
-        return this.on(evTypeFnPairs, options);
-    }
-    
-    /**Remove `event` from wrapped element's event listeners, but keep the removed listener in cache.
-     * This is useful for later unblocking*/
-    blockListener(event: TEvent) {
-        let listener = this._listeners[event];
-        if ( listener === undefined ) {
-            // @ts-ignore
-            return console.warn(`blockListener(event): this._listeners[event] is undefined. event:`, event);
-        }
-        this.e.removeEventListener(event, listener);
-        return this;
-    }
-    
-    unblockListener(event: TEvent) {
-        let listener = this._listeners[event];
-        if ( listener === undefined ) {
-            // @ts-ignore
-            return console.warn(`unblockListener(event): this._listeners[event] is undefined. event:`, event);
-        }
-        this.e.addEventListener(event, listener);
-        return this;
-    }
-    
+
+
+    // *** Events
+
     /*
-     Chronology:
-     mousedown   touchstart	pointerdown
-     mouseenter		        pointerenter
-     mouseleave		        pointerleave
-     mousemove	touchmove	pointermove
-     mouseout		        pointerout
-     mouseover		        pointerover
-     mouseup	    touchend    pointerup
-     */
+    Chronology:
+	mousedown   touchstart	pointerdown
+	mouseenter		        pointerenter
+	mouseleave		        pointerleave
+	mousemove	touchmove	pointermove
+	mouseout		        pointerout
+	mouseover		        pointerover
+	mouseup	    touchend    pointerup
+	*/
     /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this {
         this.e.addEventListener('touchstart', function _f(ev: TouchEvent) {
             ev.preventDefault(); // otherwise "touchmove" is triggered
             fn(ev);
-            if ( options && options.once ) // TODO: maybe native options.once is enough
+            if (options && options.once) // TODO: maybe native options.once is enough
+            {
                 this.removeEventListener('touchstart', _f);
+            }
         }, options);
         // TODO: this._listeners, or use this.on(
         return this;
     }
-    
-    pointerenter(fn: (event: PointerEvent) => any, options?: AddEventListenerOptions): this {
-        return this.on({ pointerenter : fn }, options);
-    }
-    
+
     /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
     pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this {
-        
+
         let action;
-        // TODO: check if PointerEvent exists instead of try/catch
         try {
-            // noinspection TypeScriptUnresolvedVariable
-            action = window.PointerEvent ? 'pointerdown' : 'mousedown'; // < iOS 9 no pointerdown support
-        } catch ( e ) {
+            // TODO: check if PointerEvent exists instead of try/catch
+            // @ts-ignore
+            action = window.PointerEvent ? 'pointerdown' : 'mousedown'; // safari doesn't support pointerdown
+        } catch (e) {
             action = 'mousedown'
         }
         const _f = function _f(ev: PointerEvent | MouseEvent): void {
             ev.preventDefault();
             fn(ev);
-            if ( options && options.once ) // TODO: maybe native options.once is enough
+            if (options && options.once) // TODO: maybe native options.once is enough
+            {
                 this.removeEventListener(action, _f);
+            }
         };
         this.e.addEventListener(action, _f, options);
         this._listeners.pointerdown = _f;
         return this;
     }
-    
+
     /**Simulate a click of the element. Useful for `<a>` elements.*/
     click(): this;
+
     /**Add a `click` event listener. You should probably use `pointerdown()` if on desktop, or `touchstart()` if on mobile.*/
     click(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+
     click(fn?, options?) {
-        if ( fn === undefined ) {
+        if (fn === undefined) {
             this.e.click();
             return this;
         } else {
-            return this.on({ click : fn }, options);
+            return this.on({click: fn}, options);
         }
     }
-    
+
     /**Blur (unfocus) the element.*/
     blur(): this;
+
     /**Add a `blur` event listener*/
     blur(fn: (event: FocusEvent) => any, options?: AddEventListenerOptions): this;
+
     blur(fn?, options?) {
-        if ( fn === undefined ) {
+        if (fn === undefined) {
             this.e.blur();
             return this;
         } else {
-            return this.on({ blur : fn }, options)
+            return this.on({blur: fn}, options)
         }
     }
-    
+
     /**Focus the element.*/
     focus(): this;
+
     /**Add a `focus` event listener*/
     focus(fn: (event: FocusEvent) => any, options?: AddEventListenerOptions): this;
+
     focus(fn?, options?) {
-        if ( fn === undefined ) {
+        if (fn === undefined) {
             this.e.focus();
             return this;
         } else {
-            return this.on({ focus : fn }, options)
+            return this.on({focus: fn}, options)
         }
     }
-    
-    
+
     /**Add a `change` event listener*/
     change(fn: (event: Event) => any, options?: AddEventListenerOptions): this {
-        return this.on({ change : fn }, options);
+        return this.on({change: fn}, options);
     }
-    
+
     /**Add a `contextmenu` event listener*/
     contextmenu(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this {
-        return this.on({ contextmenu : fn }, options);
+        return this.on({contextmenu: fn}, options);
     }
-    
+
     /**Simulate a double click of the element.*/
     dblclick(): this;
+
     /**Add a `dblclick` event listener*/
     dblclick(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+
     dblclick(fn?, options?) {
-        if ( fn === undefined ) {
+        if (fn === undefined) {
             const dblclick = new MouseEvent('dblclick', {
-                'view' : window,
-                'bubbles' : true,
-                'cancelable' : true
+                'view': window,
+                'bubbles': true,
+                'cancelable': true
             });
             this.e.dispatchEvent(dblclick);
             return this;
         } else {
-            return this.on({ dblclick : fn }, options)
+            return this.on({dblclick: fn}, options)
         }
     }
-    
+
     /**Simulate a mouseenter event to the element.*/
     mouseenter(): this;
+
     /**Add a `mouseenter` event listener*/
     mouseenter(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+
     mouseenter(fn?, options?) {
         // mouseover: also child elements
         // mouseenter: only bound element
-        
-        if ( fn === undefined ) {
+
+        if (fn === undefined) {
             const mouseenter = new MouseEvent('mouseenter', {
-                'view' : window,
-                'bubbles' : true,
-                'cancelable' : true
+                'view': window,
+                'bubbles': true,
+                'cancelable': true
             });
             this.e.dispatchEvent(mouseenter);
             return this;
         } else {
-            return this.on({ mouseenter : fn }, options)
+            return this.on({mouseenter: fn}, options)
         }
     }
-    
-    /**Simulate a keydown event to the element.*/
-    // @ts-ignore
-    keydown(): this;
+
     /**Add a `keydown` event listener*/
-    keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this;
-    keydown(fn?, options?) {
-        if ( fn === undefined ) throw new Error("NOT IMPLEMENTED");
-        else
-            return this.on({ keydown : fn }, options)
+    keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this {
+        return this.on({keydown: fn}, options)
     }
-    
-    /**@deprecated*/
-    keyup() {
-        // https://api.jquery.com/keyup/
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    keypress() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    hover() {
-        // https://api.jquery.com/hover/
-        // binds to both mouseenter and mouseleave
-        // https://stackoverflow.com/questions/17589420/when-to-choose-mouseover-and-hover-function
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    mousedown() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    mouseleave() {
-        // https://api.jquery.com/keypress/
-        //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
-        // This means that mouseleave is fired when the pointer has exited the element and all of its descendants,
-        // whereas mouseout is fired when the pointer leaves the element or leaves one of the element's descendants
-        // (even if the pointer is still within the element).
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**@deprecated*/
-    mousemove() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    /**Simulate a mouseout event to the element.*/
-    // @ts-ignore
-    mouseout(): this;
+
     /**Add a `mouseout` event listener*/
-    mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    mouseout(fn?, options?) {
+    mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this {
         //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
         // This means that mouseleave is fired when the pointer has exited the element and all of its descendants,
         // whereas mouseout is fired when the pointer leaves the element or leaves one of the element's descendants
         // (even if the pointer is still within the element).
-        if ( fn === undefined ) throw new Error("NOT IMPLEMENTED");
-        else
-            return this.on({ mouseout : fn }, options)
+        return this.on({mouseout: fn}, options)
     }
-    
-    /**Simulate a mouseover event to the element.*/
-    mouseover(): this;
+
     /**Add a `mouseover` event listener*/
-    mouseover(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
-    mouseover(fn?, options?) {
+    mouseover(fn: (event: MouseEvent) => void, options?: AddEventListenerOptions): this {
         // mouseover: also child elements
         // mouseenter: only bound element
-        if ( fn === undefined ) throw new Error("NOT IMPLEMENTED");
-        else
-            return this.on({ mouseover : fn }, options)
+        // return this.on({mouseover: fn}, options)
+        return this.on({mouseover: fn})
     }
-    
-    /**@deprecated*/
-    mouseup() {
-        // https://api.jquery.com/keypress/
-        throw new Error("NOT IMPLEMENTED")
-    }
-    
-    transform(options: TransformOptions) {
-        let transform: string = '';
-        for ( let [ k, v ] of enumerate(options) ) {
-            transform += `${k}(${v}) `
-        }
-        return new Promise(resolve => {
-            this.on({
-                transitionend : resolve
-            }, { once : true });
-            this.css({ transform })
-        })
-    }
-    
+
     /** Remove the event listener of `event`, if exists.*/
-    off(event: TEvent): this {
+    off(event: EventName): this {
+        // TODO: Should remove listener from this._listeners?
         this.e.removeEventListener(event, this._listeners[event]);
         return this;
     }
-    
+
+    /** Remove all event listeners in `_listeners`*/
     allOff(): this {
-        for ( let event in this._listeners ) {
-            this.off(<TEvent> event);
+
+        for (let i = 0; i < Object.keys(this._listeners).length; i++) {
+            let event = this._listeners[i];
+            this.off(event);
         }
+
         return this;
     }
-    
-    // ***  Attributes
-    
+
     /** For each `[attr, val]` pair, apply `setAttribute`*/
-    attr(attrValPairs: TMap<string>): this
+    attr(attrValPairs: TMap<string | boolean>): this
+
+    // *** Attributes
+
     /** apply `getAttribute`*/
     attr(attributeName: string): string
+
     attr(attrValPairs) {
-        if ( typeof attrValPairs === 'string' ) {
+        if (typeof attrValPairs === 'string') {
             return this.e.getAttribute(attrValPairs);
         } else {
-            for ( let [ attr, val ] of enumerate(attrValPairs) )
+            for (let [attr, val] of enumerate(attrValPairs)) {
                 this.e.setAttribute(attr, val);
+            }
             return this;
         }
     }
-    
+
     /** `removeAttribute` */
     removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this {
         let _removeAttribute;
-        if ( this._isSvg )
+        if (this._isSvg) {
             _removeAttribute = (qualifiedName) => this.e.removeAttributeNS(SVG_NS_URI, qualifiedName);
-        else
+        } else {
             _removeAttribute = (qualifiedName) => this.e.removeAttribute(qualifiedName);
-        
+        }
+
         _removeAttribute(qualifiedName);
-        for ( let qn of qualifiedNames )
+        for (let qn of qualifiedNames) {
             _removeAttribute(qn);
+        }
         return this;
     }
-    
+
     /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/
     data(key: string, parse: boolean = true): string | TMap<string> {
         // TODO: jquery doesn't affect data-* attrs in DOM. https://api.jquery.com/data/
         const data = this.e.getAttribute(`data-${key}`);
-        if ( parse === true )
+        if (parse === true) {
             return JSON.parse(data);
-        else
-            return data
-    }
-    
-    // **  Fade
-    async fade(dur: number, to: 0 | 1): Promise<this> {
-        const styles = window.getComputedStyle(this.e);
-        const transProp = styles.transitionProperty.split(', ');
-        const indexOfOpacity = transProp.indexOf('opacity');
-        // css opacity:0 => transDur[indexOfOpacity]: 0s
-        // css opacity:500ms => transDur[indexOfOpacity]: 0.5s
-        // css NO opacity => transDur[indexOfOpacity]: undefined
-        if ( indexOfOpacity !== -1 ) {
-            const transDur = styles.transitionDuration.split(', ');
-            const opacityTransDur = transDur[indexOfOpacity];
-            const trans = styles.transition.split(', ');
-            // transition: opacity was defined in css.
-            // set transition to dur, set opacity to 0, leave the animation to native transition, wait dur and return this
-            console.warn(`fade(${dur}, ${to}), opacityTransDur !== undefined. nullifying transition. SHOULD NOT WORK`);
-            console.log(`trans:\t${trans}\ntransProp:\t${transProp}\nindexOfOpacity:\t${indexOfOpacity}\nopacityTransDur:\t${opacityTransDur}`);
-            // trans.splice(indexOfOpacity, 1, `opacity ${dur / 1000}s`);
-            trans.splice(indexOfOpacity, 1, `opacity 0s`);
-            console.log(`after, trans: ${trans}`);
-            this.e.style.transition = trans.join(', ');
-            this.css({ opacity : to });
-            await wait(dur);
-            return this;
-        }
-        // transition: opacity was NOT defined in css.
-        if ( dur == 0 ) {
-            return this.css({ opacity : to });
-        }
-        const isFadeOut = to === 0;
-        let opacity = parseFloat(this.e.style.opacity);
-        
-        if ( opacity === undefined || isNaN(opacity) ) {
-            console.warn(`fade(${dur}, ${to}) htmlElement has NO opacity at all. recursing`, {
-                opacity,
-                this : this
-            });
-            return this.css({ opacity : Math.abs(1 - to) }).fade(dur, to)
         } else {
-            
-            if ( isFadeOut ? opacity <= 0 : opacity > 1 ) {
-                console.warn(`fade(${dur}, ${to}) opacity was beyond target opacity. returning this as is.`, {
-                    opacity,
-                    this : this
-                });
-                return this;
-            }
+            return data
         }
-        
-        let steps = 30;
-        let opStep = 1 / steps;
-        let everyms = dur / steps;
-        if ( everyms < 1 ) {
-            everyms = 1;
-            steps = dur;
-            opStep = 1 / steps;
+    }
+
+    // private _cache(key: string, child: BetterHTMLElement[]): void
+    private _cache(key, child: BetterHTMLElement | BetterHTMLElement[]): void {
+        const oldchild = this._cachedChildren[key];
+        if (oldchild !== undefined) {
+            console.warn(`Overwriting this._cachedChildren[${key}]!`, 'old value:',
+                oldchild, 'new value:', child, `they're different: ${oldchild == child}`
+            );
         }
-        console.log(`fade(${dur}, ${to}) had opacity, no transition. (good) opacity: ${opacity}`, {
-            steps,
-            opStep,
-            everyms
-        });
-        const reachedTo = isFadeOut ? (op) => op - opStep > 0 : (op) => op + opStep < 1;
-        const interval = setInterval(() => {
-            if ( reachedTo(opacity) ) {
-                if ( isFadeOut === true )
-                    opacity -= opStep;
-                else
-                    opacity += opStep;
-                this.css({ opacity });
-            } else {
-                opacity = to;
-                this.css({ opacity });
-                clearInterval(interval);
-            }
-        }, everyms);
-        await wait(dur);
-        return this;
+        this[key] = child;
+        this._cachedChildren[key] = child;
     }
-    
-    async fadeOut(dur: number): Promise<this> {
-        return await this.fade(dur, 0);
-    }
-    
-    
-    async fadeIn(dur: number): Promise<this> {
-        return await this.fade(dur, 1);
-    }
-    
-    
+
+
 }
 
-class Div extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLDivElement;
-    readonly e: HTMLDivElement;
-    
-    /**Create a Div element. Optionally set its id, text or cls.*/
-    constructor({ id, text, cls }: SubElemConstructor = {}) {
-        super({ tag : 'div', text, cls });
-        if ( id !== undefined )
-            this.id(id);
+export class Div extends BetterHTMLElement<HTMLDivElement> {
+
+    constructor(divOpts) {
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
+        const {setid, cls, text, byid, query, htmlElement, children} = divOpts;
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "div", setid, cls})
+        }
+        if (text !== undefined) {
+            this.text(text);
+        }
     }
+
 }
 
-class Paragraph extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLParagraphElement;
-    readonly e: HTMLParagraphElement;
-    
-    /**Create a Paragraph element. Optionally set its id, text or cls.*/
-    constructor({ id, text, cls }: SubElemConstructor = {}) {
-        super({ tag : 'p', text, cls });
-        if ( id !== undefined )
-            this.id(id);
+export class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
+
+    constructor(pOpts) {
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
+        const {setid, cls, text, byid, query, htmlElement, children} = pOpts;
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "p", setid, cls})
+        }
+        if (text !== undefined) {
+            this.text(text);
+        }
     }
 }
 
-class Span extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLSpanElement;
-    readonly e: HTMLSpanElement;
-    
-    /**Create a Span element. Optionally set its id, text or cls.*/
-    constructor({ id, text, cls }: SubElemConstructor = {}) {
-        super({ tag : 'span', text, cls });
-        if ( id !== undefined )
-            this.id(id);
-        
+export class Span extends BetterHTMLElement<HTMLSpanElement> {
+
+    /**Create a new Span element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+    constructor({cls, setid, text}: { cls?: string, setid?: string, text?: string })
+    constructor({byid, children}: { byid: string, children?: ChildrenObj })
+    constructor({query, children}: {
+        query: string,
+        children?: ChildrenObj
+    })
+    constructor({htmlElement, children}: {
+        htmlElement: HTMLSpanElement;
+        children?: ChildrenObj
+    })
+    constructor(spanOpts) {
+        const {setid, cls, text, byid, query, htmlElement, children} = spanOpts;
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "span", setid, cls})
+        }
+        if (text !== undefined) {
+            this.text(text);
+        }
+
     }
 }
 
-class Img extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLImageElement;
-    
-    /**Create an Img element. Optionally set its id, src or cls.*/
-    constructor({ id, src, cls }: ImgConstructor) {
-        super({ tag : 'img', cls });
-        if ( id !== undefined )
-            this.id(id);
-        if ( src !== undefined )
-            this._htmlElement.src = src;
-        
+export class Img extends BetterHTMLElement<HTMLImageElement> {
+
+    /**Create a new Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
+    constructor({setid, cls, src, byid, query, htmlElement, children}) {
+
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "img", setid, cls})
+        }
+        if (src !== undefined) {
+            this.src(src);
+        }
+
     }
-    
+
     src(src: string): this;
     src(): string;
     src(src?) {
-        if ( src === undefined ) {
+        if (src === undefined) {
             return this._htmlElement.src
         } else {
             this._htmlElement.src = src;
             return this;
         }
     }
-    
-    readonly e: HTMLImageElement;
+
+
 }
 
-class Anchor extends BetterHTMLElement {
-    protected readonly _htmlElement: HTMLAnchorElement;
-    readonly e: HTMLAnchorElement;
-    
-    /**Create an Anchor element. Optionally set its id, text, href or cls.*/
-    constructor({ id, text, cls, href }: AnchorConstructor = {}) {
-        super({ tag : 'a', text, cls });
-        if ( id !== undefined )
-            this.id(id);
-        if ( href !== undefined )
-            this.href(href)
-        
+export class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
+
+
+    /**Create a new Input element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
+    constructor({setid, cls, text, href, target, byid, query, htmlElement, children}) {
+
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "a", setid, cls})
+        }
+        if (text !== undefined) {
+            this.text(text);
+        }
+        if (href !== undefined) {
+            this.href(href);
+        }
+        if (target !== undefined) {
+            this.target(target);
+        }
+
     }
-    
+
     href(): string
     href(val: string): this
     href(val?) {
-        if ( val === undefined )
+        if (val === undefined) {
             return this.attr('href');
-        else
-            return this.attr({ href : val })
+        } else {
+            return this.attr({href: val})
+        }
     }
-    
+
     target(): string
     target(val: string): this
     target(val?) {
-        if ( val === undefined )
+        if (val === undefined) {
             return this.attr('target');
-        else
-            return this.attr({ target : val })
+        } else {
+            return this.attr({target: val})
+        }
+    }
+}
+
+interface Flashable {
+    flashBad(): Promise<void>;
+
+    flashGood(): Promise<void>;
+}
+
+export type FormishHTMLElement = HTMLButtonElement | HTMLInputElement | HTMLSelectElement;
+export type InputType = "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local"
+
+export abstract class Form<Generic extends FormishHTMLElement>
+    extends BetterHTMLElement<Generic> implements Flashable {
+
+
+    get disabled(): boolean {
+        return this.e.disabled;
+    }
+
+    /**
+     Button < Input
+     Select - Input: add(), item(), length, namedItem(), options, remove(), selectedIndex, selectedOptions, ITERATOR
+     Select - Button: add() autocomplete item() length multiple namedItem() options remove() required selectedIndex selectedOptions size ITERATOR
+     Button - Select: formAction formEnctype formMethod formNoValidate formTarget
+
+     Input uniques:
+     accept checked defaultChecked defaultValue dirName files indeterminate list max maxLength min minLength pattern placeholder readOnly select() selectionDirection selectionEnd selectionStart setRangeText() setSelectionRange() src step stepDown() stepUp() useMap valueAsDate valueAsNumber
+
+     Select uniques:
+     add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
+
+     Shared among Button, Select and Input: (or Button and Select, same)
+     checkValidity() disabled form labels name reportValidity() setCustomValidity() type validationMessage validity value willValidate
+
+     Shared ammong Selecct and Input:
+     autocomplete checkValidity() disabled form labels multiple name reportValidity() required setCustomValidity() type validationMessage validity value willValidate
+
+     */
+    disable(): this {
+        this.e.disabled = true;
+        return this;
+    }
+
+    enable(): this {
+        this.e.disabled = false;
+        return this;
+    }
+
+    toggleEnabled(on: boolean): this {
+        if (on) {
+            return this.enable()
+        } else {
+            return this.disable()
+        }
+    }
+
+    /**Returns `value`*/
+    value(): string;
+    /**`value(null)` or `value('')` → reset. */
+    value(val: any): this;
+    value(val?) {
+        if (val === undefined) {
+            return this.e.value;
+        } else {
+            this.e.value = val;
+            return this;
+        }
+    }
+
+    async flashBad(): Promise<void> {
+        this.addClass('bad');
+        await wait(2000);
+        this.removeClass('bad');
+
+    }
+
+    async flashGood(): Promise<void> {
+        this.addClass('good');
+        await wait(2000);
+        this.removeClass('good');
+    }
+
+    // abstract _eventCondition(e): boolean
+    clear() {
+        return this.value(null)
+    }
+
+    _preEvent() {
+        this.disable()
+    }
+
+    async _onEventSuccess(ret) {
+        if (ret instanceof Error && this.flashBad) {
+            await this.flashBad();
+        } else if (this.flashGood) {
+            this.flashGood()
+        }
+    }
+
+    async _onEventError(e) {
+        console.error(e);
+        if (this.flashBad) {
+            await this.flashBad()
+        }
+    }
+
+    _postEvent() {
+        this.enable();
     }
 }
 
 
-customElements.define('better-html-element', BetterHTMLElement);
-customElements.define('better-div', Div, { extends : 'div' });
-customElements.define('better-p', Paragraph, { extends : 'p' });
-customElements.define('better-span', Span, { extends : 'span' });
-customElements.define('better-img', Img, { extends : 'img' });
-customElements.define('better-a', Anchor, { extends : 'a' });
+export class Button extends Form<HTMLButtonElement> {
+    constructor(buttonOpts) {
+        const {setid, cls, text, byid, query, htmlElement, children} = buttonOpts;
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "button", setid, cls})
+        }
+        if (text !== undefined) {
+            this.text(text);
+        }
+    }
+
+    click(_fn?: (_event: MouseEvent) => Promise<any>): this {
+
+        const fn = async (event) => {
+
+            try {
+                this._preEvent();
+                const ret = await _fn(event);
+                await this._onEventSuccess(ret);
+
+            } catch (e) {
+                await this._onEventError(e);
+
+            } finally {
+                this._postEvent();
+            }
+
+        };
+
+        return super.click(fn);
+    }
 
 
-/**Create an element of `tag`. Optionally, set its `text` and / or `cls`*/
-function elem({ tag, text, cls }: { tag: QuerySelector, text?: string, cls?: string }): BetterHTMLElement;
+}
+
+export class Input<TInputType extends InputType, Generic extends FormishHTMLElement = HTMLInputElement> extends Form<Generic> {
+    // constructor({cls, setid, type, placeholder}: {
+    //     cls?: string, setid?: string,
+    //     type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
+    //     placeholder?: string
+    // });
+    // constructor({byid, children}: { byid: string, children?: ChildrenObj });
+    // constructor({query, children}: { query: string, children?: ChildrenObj });
+    // constructor({htmlElement, children}: { htmlElement: HTMLInputElement; children?: ChildrenObj });
+    type: TInputType;
+
+    constructor(inputOpts) {
+        const {setid, cls, type, byid, query, htmlElement, children} = inputOpts;
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
+
+        if (htmlElement !== undefined) {
+            super({htmlElement, children});
+        } else if (byid !== undefined) {
+            super({byid, children});
+        } else if (query !== undefined) {
+            super({query, children});
+        } else {
+            super({tag: "input", cls, setid})
+        }
+
+        if (type !== undefined) {
+            this._htmlElement.type = type;
+        }
+
+    }
+
+
+}
+
+export class TextInput extends Input<"text"> {
+    constructor(opts) {
+        opts.type = 'text';
+        super(opts);
+        const {placeholder, type} = opts;
+        if (placeholder !== undefined) {
+            if (type) {
+                if (type === "number" && typeof placeholder !== "number") {
+                    console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring`)
+                } else if (type === "text" && typeof placeholder !== "string") {
+                    console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring`)
+                } else {
+                    this.placeholder(placeholder);
+                }
+            }
+        }
+    }
+
+    placeholder(val: string): this;
+    placeholder(): string;
+    placeholder(val?) {
+        if (val === undefined) {
+            return this.e.placeholder;
+        } else {
+            this.e.placeholder = val;
+            return this;
+        }
+
+    }
+
+    keydown(_fn: (_event: KeyboardEvent) => Promise<any>): this {
+        const fn = async (event) => {
+            if (event.key !== 'Enter') {
+                return;
+            }
+            if (!bool(this.value())) {
+                if (this.flashBad) {
+                    await this.flashBad()
+                }
+                return;
+            }
+            try {
+                this._preEvent();
+
+                const ret = await _fn(event);
+                await this._onEventSuccess(ret);
+
+            } catch (e) {
+                await this._onEventError(e);
+
+            } finally {
+                this._postEvent();
+            }
+
+
+        };
+        return super.keydown(fn);
+    }
+}
+
+export class Changable<TInputType extends InputType, Generic extends FormishHTMLElement> extends Input<TInputType, Generic> {
+    change(_fn: (_event: Event) => Promise<any>): this {
+
+        const fn = async (event) => {
+
+            try {
+                this._preEvent();
+                const ret = await _fn(event);
+                await this._onEventSuccess(ret);
+
+            } catch (e) {
+                await this._onEventError(e);
+
+            } finally {
+                this._postEvent();
+            }
+
+
+        };
+        return super.change(fn);
+    }
+}
+
+export class CheckboxInput extends Changable<"checkbox", HTMLInputElement> {
+    constructor(opts) {
+        opts.type = 'checkbox';
+        super(opts);
+    }
+
+    get checked(): boolean {
+        return this.e.checked;
+    }
+
+    check(): this {
+        this.e.checked = true;
+        return this;
+    }
+
+    uncheck(): this {
+        this.e.checked = false;
+        return this;
+    }
+
+    toggleChecked(on: boolean): this {
+        if (on) {
+            return this.check()
+        } else {
+            return this.uncheck()
+        }
+    }
+
+
+    clear() {
+        return this.uncheck();
+    }
+
+    async _onEventError(e): Promise<void> {
+        this.toggleChecked(!this.checked);
+        await super._onEventError(e);
+    }
+}
+
+
+export class Select extends Changable<undefined, HTMLSelectElement> {
+
+    // Select uniques:
+    // add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
+    constructor(selectOpts) {
+        super(selectOpts);
+    }
+
+    get selectedIndex(): number {
+        return this.e.selectedIndex
+    }
+
+    set selectedIndex(val) {
+        this.e.selectedIndex = val
+    }
+
+    get selected(): HTMLOptionElement {
+        return this.item(this.selectedIndex)
+    }
+
+    set selected(val) {
+        if (val instanceof HTMLOptionElement) {
+            this.selectedIndex = this.options.findIndex(o => o === val);
+        } else if (typeof val === 'number') {
+            this.selectedIndex = val
+        } else {
+            this.selectedIndex = this.options.findIndex(o => o.value === val);
+        }
+
+    }
+
+    get options(): HTMLOptionElement[] {
+        return [...this.e.options as unknown as Iterable<HTMLOptionElement>]
+    }
+
+    item(index): HTMLOptionElement {
+        return this.e.item(index) as HTMLOptionElement
+    }
+
+
+    clear() {
+        this.selectedIndex = -1;
+        return this;
+    }
+
+    /*[Symbol.iterator]() {
+        let options = this.options;
+        let currentIndex = 0;
+        return {
+            next() {
+                currentIndex += 1;
+                return {
+                    value: undefined,
+                    done: true
+                };
+
+            }
+        }
+    }*/
+}
+
+
+/*customElements.define('better-html-element', BetterHTMLElement);
+customElements.define('better-div', Div, {extends: 'div'});
+customElements.define('better-input', Input, {extends: 'input'});
+customElements.define('better-p', Paragraph, {extends: 'p'});
+customElements.define('better-span', Span, {extends: 'span'});
+customElements.define('better-img', Img, {extends: 'img'});
+customElements.define('better-a', Anchor, {extends: 'a'});*/
+
+// customElements.define('better-svg', Svg, {extends: 'svg'});
+
+/**Create an element of `create`. Optionally, set its `text` and / or `cls`*/
+export function elem<T extends Tag>({tag, cls, setid}: { tag: T, cls?: string, setid?: string }):
+    T extends Tag ? BetterHTMLElement<HTMLElementTagNameMap[T]> : never;
 /**Get an existing element by `id`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({ id, text, cls, children }: { id: string, text?: string, cls?: string, children?: ChildrenObj }): BetterHTMLElement;
+export function elem({byid, children}: { byid: string, children?: ChildrenObj }):
+    BetterHTMLElement;
 /**Get an existing element by `query`. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({ query, text, cls, children }: { query: QuerySelector, text?: string, cls?: string, children?: ChildrenObj }): BetterHTMLElement;
+export function elem<Q extends QuerySelector>({query, children}: { query: Q, children?: ChildrenObj }):
+    Q extends Tag ? BetterHTMLElement<HTMLElementTagNameMap[Q]> : BetterHTMLElement;
 /**Wrap an existing HTMLElement. Optionally, set its `text`, `cls` or cache `children`*/
-function elem({ htmlElement, text, cls, children }: { htmlElement: HTMLElement, text?: string, cls?: string, children?: ChildrenObj }): BetterHTMLElement;
-function elem(elemOptions): BetterHTMLElement {
+export function elem<E extends HTMLElement>({htmlElement, children}: { htmlElement: E; children?: ChildrenObj }):
+    BetterHTMLElement<E>;
+
+export function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
 
-/**Create an Span element. Optionally set its id, text or cls.*/
-function span({ id, text, cls }: SubElemConstructor = {}): Span {
-    return new Span({ id, text, cls });
+
+export function span({cls, setid, text}: { cls?: string, setid?: string, text?: string }): Span;
+export function span({byid, children}: { byid: string, children?: ChildrenObj }): Span;
+export function span<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"span">> ? never : Q,
+    children?: ChildrenObj
+}): Span;
+export function span<E extends HTMLSpanElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Span;
+export function span(): Span
+export function span(spanOpts?): Span {
+    if (!bool(spanOpts)) {
+        spanOpts = {}
+    }
+    return new Span(spanOpts)
 }
 
-/**Create an Div element. Optionally set its id, text or cls.*/
-function div({ id, text, cls }: SubElemConstructor = {}): Div {
-    return new Div({ id, text, cls });
+/**Create a Div element, or wrap an existing one by passing htmlElement. Optionally set its id, text or cls.*/
+export function div({cls, setid, text}: {
+    cls?: string, setid?: string, text?: string
+}): Div;
+export function div({byid, children}: {
+    byid: string, children?: ChildrenObj
+}): Div;
+export function div<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"div">> ? never : Q,
+    children?: ChildrenObj
+}): Div;
+export function div<E extends HTMLDivElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Div;
+export function div(): Div
+export function div(divOpts?): Div {
+    if (!bool(divOpts)) {
+        divOpts = {}
+    }
+    return new Div(divOpts)
 }
 
-/**Create an Img element. Optionally set its id, src or cls.*/
-function img({ id, src, cls }: ImgConstructor = {}): Img {
-    return new Img({ id, src, cls });
+
+export function button({cls, setid, text}: {
+    cls?: string, setid?: string, text?: string
+}): Button;
+export function button({byid, children}: {
+    byid: string, children?: ChildrenObj
+}): Button;
+export function button<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"button">> ? never : Q,
+    children?: ChildrenObj
+}): Button;
+export function button<E extends HTMLButtonElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Button;
+export function button(): Button
+export function button(buttonOpts?): Button {
+    if (!bool(buttonOpts)) {
+        buttonOpts = {}
+    }
+    return new Button(buttonOpts)
 }
 
-/**Create a Paragraph element. Optionally set its id, text or cls.*/
-function paragraph({ id, text, cls }: SubElemConstructor = {}): Paragraph {
-    return new Paragraph({ id, text, cls });
+
+export function input<TInputType extends InputType, Generic extends FormishHTMLElement = HTMLInputElement>({cls, setid, type, placeholder}: {
+    cls?: string, setid?: string,
+    type?: TInputType,
+    placeholder?: string
+}): Input<TInputType, Generic>;
+export function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({byid, children}: { byid: string, children?: ChildrenObj }): Input<TInputType, Generic>;
+export function input<Q extends QuerySelector, TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"input">> ? never : Q,
+    children?: ChildrenObj
+}): Input<TInputType, Generic>;
+export function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({htmlElement, children}: {
+    htmlElement: Generic;
+    children?: ChildrenObj
+}): Input<TInputType, Generic>;
+export function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>(): Input<TInputType, Generic>
+export function input(inputOpts?) {
+    if (!bool(inputOpts)) {
+        inputOpts = {}
+    }
+    return new Input(inputOpts)
 }
 
-/**Create an Anchor element. Optionally set its id, text, href or cls.*/
-function anchor({ id, text, cls, href }: AnchorConstructor = {}): Anchor {
-    return new Anchor({ id, text, cls, href });
+export function select(selectOpts): Select {
+    if (!bool(selectOpts)) {
+        selectOpts = {}
+    }
+    return new Select(selectOpts)
+}
+
+/**Create an Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
+export function img({cls, setid, src}: {
+    cls?: string, setid?: string,
+    src?: string
+}): Img;
+export function img({byid, children}: {
+    byid: string, children?: ChildrenObj
+}): Img;
+export function img<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"img">> ? never : Q,
+    children?: ChildrenObj
+}): Img;
+export function img<E extends HTMLImageElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Img;
+export function img(): Img
+export function img(imgOpts?): Img {
+    if (!bool(imgOpts)) {
+        imgOpts = {}
+    }
+    return new Img(imgOpts)
 }
 
 
-export { elem, span, div, img, paragraph, anchor }
+export function paragraph({cls, setid, text}: { cls?: string, setid?: string, text?: string }): Paragraph;
+export function paragraph({byid, children}: { byid: string, children?: ChildrenObj }): Paragraph;
+export function paragraph<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"p">> ? never : Q,
+    children?: ChildrenObj
+}): Paragraph;
+export function paragraph<E extends HTMLParagraphElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Paragraph;
+export function paragraph(): Paragraph
+export function paragraph(pOpts?): Paragraph {
+    if (!bool(pOpts)) {
+        pOpts = {}
+    }
+    return new Paragraph(pOpts)
+}
+
+/**Create a new Anchor element, or wrap an existing one by passing htmlElement. Optionally set its id, text, href or cls.*/
+export function anchor({cls, setid, href, target}: {
+    cls?: string,
+    setid?: string,
+    href?: string
+    target?: string
+}): Anchor;
+export function anchor({byid, children}: {
+    byid: string, children?: ChildrenObj
+}): Anchor;
+export function anchor<Q extends QuerySelector>({query, children}: {
+    query: Q extends QuerySelector<NotTag<"a">> ? never : Q,
+    children?: ChildrenObj
+}): Anchor;
+export function anchor<E extends HTMLImageElement>({htmlElement, children}: {
+    htmlElement: E;
+    children?: ChildrenObj
+}): Anchor;
+export function anchor(): Anchor
+export function anchor(anchorOpts?): Anchor {
+    if (!bool(anchorOpts)) {
+        anchorOpts = {}
+    }
+    return new Anchor(anchorOpts)
+}
+
+
+
