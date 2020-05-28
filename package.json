@@ -1,9 +1,9 @@
 {
     "name": "betterhtmlelement",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "A Fast, intuitive, chainable wrapper for HTMLElement",
-    "module": "dist/all.js",
-    "typings": "dist/all.d.ts",
+    "module": "dist/bhe.js",
+    "typings": "dist/bhe.d.ts",
     "keywords": [
         "htmlelement",
         "html",
@@ -23,7 +23,7 @@
         "test": "jest",
         "test:watch": "jest --watch"
     },
-    "jsdelivr": "dist/all.js",
+    "jsdelivr": "dist/bhe.js",
     "author": "Gilad Barnea",
     "license": "ISC",
     "devDependencies": {
@@ -31,7 +31,7 @@
         "@types/node": "latest",
         "jest": "^25.5.4",
         "ts-jest": "^25.4.0",
-        "typescript": "3.8.3"
+        "typescript": "^3.8.3"
     },
     "dependencies": {}
 }
