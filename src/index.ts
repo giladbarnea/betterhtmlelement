@@ -262,6 +262,7 @@ export class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         } else {
             if (this._isSvg) {
                 // @ts-ignore
+                // noinspection JSConstantReassignment
                 this.e.classList = [cls];
             } else {
                 this.e.className = cls;
