@@ -376,21 +376,31 @@ declare function anchor<E extends HTMLAnchorElement>({ htmlElement, children }: 
     children?: ChildrenObj;
 }): Anchor;
 declare function anchor(): Anchor;
-declare function enumerate<T>(obj: T): Enumerated<T>;
-declare function wait(ms: number): Promise<any>;
-declare function bool(val: any): boolean;
-declare function isArray<T>(obj: any): obj is Array<T>;
-declare function isEmptyArr(collection: any): boolean;
-declare function isEmptyObj(obj: any): boolean;
-declare function isFunction<T>(fn: T): fn is T;
-declare function isFunction(fn: AnyFunction): fn is AnyFunction;
-declare function anyValue(obj: any): boolean;
-declare function noValue(obj: any): boolean;
-declare function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType: any): bhe is T;
-declare function isType<T>(arg: T): arg is T;
-declare function isObject(obj: any): boolean;
-declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
-declare function getLength(collection: any): number;
+interface TMap<T> {
+    [s: string]: T;
+    [s: number]: T;
+}
+interface TRecMap<T> {
+    [s: string]: T | TRecMap<T>;
+    [s: number]: T | TRecMap<T>;
+}
+declare type EventName = keyof HTMLElementEventMap;
+declare type EventName2Function<E extends EventName = EventName> = {
+    [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+}[E];
+declare type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventName2Function>>;
+declare type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
+declare type NotTag<T extends Tag> = Exclude<Tag, T>;
+declare type TagOrString = Tag | string;
+declare type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
+declare type Element2Tag<T> = T extends HTMLInputElement ? "input" : T extends HTMLAnchorElement ? "a" : T extends HTMLImageElement ? "img" : Tag;
+declare type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>;
+declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TRecMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
+declare type Returns<T> = (s: string) => T;
+declare type TReturnBoolean = (s: string) => boolean;
+declare type AnyFunction = (...args: any[]) => any;
+declare type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
+declare type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
 declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
 declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 interface CssOptions extends PartialCssStyleDeclaration {
@@ -446,70 +456,18 @@ interface AnimateOptions {
     playState?: AnimationPlayState;
     timingFunction?: AnimationTimingFunction;
 }
-interface NewBHEConstructor<H extends HTMLElement> {
-    tag: Element2Tag<H>;
-    cls?: string;
-    setid?: string;
-}
-interface ByIdBHEConstructor {
-    byid: string;
-    children?: ChildrenObj;
-}
-interface QueryBHEConstructor<Q extends QuerySelector> {
-    query: Q;
-    children?: ChildrenObj;
-}
-interface ByHtmlElementBHEConstructor<E extends HTMLElement> {
-    htmlElement: E;
-    children?: ChildrenObj;
-}
-declare type InputConstructor<T> = T extends QuerySelector ? {
-    query: T;
-    children?: ChildrenObj;
-} : T extends Tag ? {
-    tag: T;
-    cls?: string;
-    setid?: string;
-    type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local";
-    placeholder?: string;
-} | {
-    htmlElement: T;
-    children?: ChildrenObj;
-} : {
-    byid: string;
-    children?: ChildrenObj;
-};
-interface TMap<T> {
-    [s: string]: T;
-    [s: number]: T;
-}
-interface TRecMap<T> {
-    [s: string]: T | TRecMap<T>;
-    [s: number]: T | TRecMap<T>;
-}
-declare type EventName = keyof HTMLElementEventMap;
-declare type EventName2Function<E extends EventName = EventName> = {
-    [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
-}[E];
-declare type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventName2Function>>;
-declare type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
-declare type NotTag<T extends Tag> = Exclude<Tag, T>;
-declare type TagOrString = Tag | string;
-declare type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
-interface Tag2BHE {
-    "img": Img;
-    "a": Anchor;
-    "input": Input;
-    "div": Div;
-    "p": Paragraph;
-    "button": Button;
-    "span": Span;
-}
-declare type Element2Tag<T> = T extends HTMLInputElement ? "input" : T extends HTMLAnchorElement ? "a" : T extends HTMLImageElement ? "img" : Tag;
-declare type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>;
-declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TRecMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
-declare type Returns<T> = (s: string) => T;
-declare type TReturnBoolean = (s: string) => boolean;
-declare type AnyFunction = (...args: any[]) => any;
-declare type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
-declare type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
+declare function enumerate<T>(obj: T): Enumerated<T>;
+declare function wait(ms: number): Promise<any>;
+declare function bool(val: any): boolean;
+declare function isArray<T>(obj: any): obj is Array<T>;
+declare function isEmptyArr(collection: any): boolean;
+declare function isEmptyObj(obj: any): boolean;
+declare function isFunction<T>(fn: T): fn is T;
+declare function isFunction(fn: AnyFunction): fn is AnyFunction;
+declare function anyValue(obj: any): boolean;
+declare function noValue(obj: any): boolean;
+declare function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType: any): bhe is T;
+declare function isType<T>(arg: T): arg is T;
+declare function isObject(obj: any): boolean;
+declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
+declare function getLength(collection: any): number;
