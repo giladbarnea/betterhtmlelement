@@ -98,14 +98,23 @@ export class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     }
 
     static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
+
     static wrapWithBHE<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = FormishHTMLElement>(htmlElement: Generic): Input<TInputType, Generic>;
+
     static wrapWithBHE(htmlElement: HTMLImageElement): Img;
+
     static wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
+
     static wrapWithBHE(htmlElement: HTMLSpanElement): Span;
+
     static wrapWithBHE(htmlElement: HTMLButtonElement): Button;
+
     static wrapWithBHE(htmlElement: HTMLDivElement): Div;
+
     static wrapWithBHE(htmlElement: HTMLSelectElement): Div;
+
     static wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
+
     static wrapWithBHE(element) {
         const tag = element.tagName.toLowerCase() as Element2Tag<typeof element>;
         // const tag = element.tagName.toLowerCase() as Tag;
@@ -416,7 +425,6 @@ export class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    // private _cache(key: string, child: BetterHTMLElement): void
 
     /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this
@@ -599,6 +607,8 @@ export class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
+
+    // *** Events
     on(evTypeFnPairs: TMap<EventName2Function>, options?: AddEventListenerOptions): this {
         // const foo = evTypeFnPairs["abort"];
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
@@ -610,9 +620,6 @@ export class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         }
         return this;
     }
-
-
-    // *** Events
 
     /*
     Chronology:
@@ -846,7 +853,6 @@ export class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         }
     }
 
-    // private _cache(key: string, child: BetterHTMLElement[]): void
     private _cache(key, child: BetterHTMLElement | BetterHTMLElement[]): void {
         const oldchild = this._cachedChildren[key];
         if (oldchild !== undefined) {
