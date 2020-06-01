@@ -443,7 +443,6 @@ export class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
             }
         } else {
             for (let [key, child] of enumerate(keyChildPairs)) {
-                // @ts-ignore
                 _cacheAppend(key, child);
             }
         }
