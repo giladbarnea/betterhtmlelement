@@ -1579,7 +1579,7 @@ export function anchor<Q extends QuerySelector>({query, children}: {
     query: Q extends QuerySelector<NotTag<"a">> ? never : Q,
     children?: ChildrenObj
 }): Anchor;
-export function anchor<E extends HTMLImageElement>({htmlElement, children}: {
+export function anchor<E extends HTMLAnchorElement>({htmlElement, children}: {
     htmlElement: E;
     children?: ChildrenObj
 }): Anchor;
