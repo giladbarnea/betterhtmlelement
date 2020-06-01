@@ -1123,8 +1123,11 @@ function enumerate(obj) {
     }
     return array;
 }
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 function bool(val) {
-    if (val === null) {
+    if (!val) {
         return false;
     }
     const typeofval = typeof val;
@@ -1136,10 +1139,27 @@ function bool(val) {
             return !!val;
         }
     }
-    return Object.keys(val).length !== 0;
+    let toStringed = {}.toString.call(val);
+    if (toStringed === '[object Object]' || toStringed === '[object Array]') {
+        return Object.keys(val).length !== 0;
+    }
+    return !!val.valueOf();
 }
-function wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+function isArray(obj) {
+    if (!obj) {
+        return false;
+    }
+    return typeof obj !== 'string' && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+}
+function isEmptyArr(collection) {
+    return isArray(collection) && getLength(collection) === 0;
+}
+function isEmptyObj(obj) {
+    return isObject(obj) && !isArray(obj) && Object.keys(obj).length === 0;
+}
+function isFunction(fn) {
+    let toStringed = {}.toString.call(fn);
+    return !!fn && toStringed === '[object Function]';
 }
 function anyValue(obj) {
     let array;
@@ -1167,23 +1187,11 @@ function noValue(obj) {
     }
     return array.filter(x => Boolean(x)).length === 0;
 }
-function isArray(obj) {
-    return typeof obj !== "string" && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
-}
-function isEmptyArr(collection) {
-    return isArray(collection) && getLength(collection) === 0;
-}
-function isEmptyObj(obj) {
-    return isObject(obj) && Object.keys(obj).length === 0;
-}
 function isBHE(bhe, bheSubType) {
     return (bhe instanceof bheSubType);
 }
 function isType(arg) {
     return true;
-}
-function isFunction(fn) {
-    return fn && {}.toString.call(fn) === '[object Function]';
 }
 function isObject(obj) {
     return typeof obj === 'object' && !!obj;
