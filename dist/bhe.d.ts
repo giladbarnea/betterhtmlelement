@@ -29,9 +29,9 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         htmlElement: Generic;
         children?: ChildrenObj;
     });
-    toString(): string;
+    get e(): Generic;
     static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
-    static wrapWithBHE(htmlElement: HTMLInputElement): Input;
+    static wrapWithBHE<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = FormishHTMLElement>(htmlElement: Generic): Input<TInputType, Generic>;
     static wrapWithBHE(htmlElement: HTMLImageElement): Img;
     static wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
     static wrapWithBHE(htmlElement: HTMLSpanElement): Span;
@@ -39,7 +39,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     static wrapWithBHE(htmlElement: HTMLDivElement): Div;
     static wrapWithBHE(htmlElement: HTMLSelectElement): Div;
     static wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
-    get e(): Generic;
+    toString(): string;
     wrapSomethingElse<T extends HTMLElement>(newHtmlElement: BetterHTMLElement<T>): this;
     wrapSomethingElse(newHtmlElement: Node): this;
     html(html: string): this;
@@ -71,13 +71,13 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     insertBefore(node: BetterHTMLElement | HTMLElement): this;
     replaceChild(newChild: Node, oldChild: Node): this;
     replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
-    private _cache;
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this;
     cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this;
     _cls(): typeof BetterHTMLElement;
     child(selector: "img"): Img;
     child(selector: "a"): Anchor;
-    child(selector: "input"): Input;
+    child<TInputType extends InputType = InputType>(selector: "input"): Input<TInputType, HTMLInputElement>;
+    child(selector: "select"): Input<undefined, HTMLSelectElement>;
     child(selector: "p"): Paragraph;
     child(selector: "span"): Span;
     child(selector: "button"): Button;
@@ -116,6 +116,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     attr(attributeName: string): string;
     removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this;
     data(key: string, parse?: boolean): string | TMap<string>;
+    private _cache;
 }
 declare class Div extends BetterHTMLElement<HTMLDivElement> {
     constructor(divOpts: any);
@@ -179,10 +180,10 @@ interface Flashable {
 declare type FormishHTMLElement = HTMLButtonElement | HTMLInputElement | HTMLSelectElement;
 declare type InputType = "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local";
 declare abstract class Form<Generic extends FormishHTMLElement> extends BetterHTMLElement<Generic> implements Flashable {
+    get disabled(): boolean;
     disable(): this;
     enable(): this;
     toggleEnabled(on: boolean): this;
-    get disabled(): boolean;
     value(): string;
     value(val: any): this;
     flashBad(): Promise<void>;
@@ -221,10 +222,10 @@ declare class CheckboxInput extends Changable<"checkbox", HTMLInputElement> {
 }
 declare class Select extends Changable<undefined, HTMLSelectElement> {
     constructor(selectOpts: any);
-    set selectedIndex(val: number);
     get selectedIndex(): number;
-    set selected(val: HTMLOptionElement);
+    set selectedIndex(val: number);
     get selected(): HTMLOptionElement;
+    set selected(val: HTMLOptionElement);
     get options(): HTMLOptionElement[];
     item(index: any): HTMLOptionElement;
     clear(): this;
@@ -306,19 +307,19 @@ declare function input<TInputType extends InputType, Generic extends FormishHTML
     type?: TInputType;
     placeholder?: string;
 }): Input<TInputType, Generic>;
-declare function input({ byid, children }: {
+declare function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({ byid, children }: {
     byid: string;
     children?: ChildrenObj;
-}): Input;
-declare function input<Q extends QuerySelector>({ query, children }: {
+}): Input<TInputType, Generic>;
+declare function input<Q extends QuerySelector, TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({ query, children }: {
     query: Q extends QuerySelector<NotTag<"input">> ? never : Q;
     children?: ChildrenObj;
-}): Input;
-declare function input<E extends HTMLInputElement>({ htmlElement, children }: {
-    htmlElement: E;
+}): Input<TInputType, Generic>;
+declare function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({ htmlElement, children }: {
+    htmlElement: Generic;
     children?: ChildrenObj;
-}): Input;
-declare function input(): Input;
+}): Input<TInputType, Generic>;
+declare function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>(): Input<TInputType, Generic>;
 declare function select(selectOpts: any): Select;
 declare function img({ cls, setid, src }: {
     cls?: string;
@@ -370,7 +371,7 @@ declare function anchor<Q extends QuerySelector>({ query, children }: {
     query: Q extends QuerySelector<NotTag<"a">> ? never : Q;
     children?: ChildrenObj;
 }): Anchor;
-declare function anchor<E extends HTMLImageElement>({ htmlElement, children }: {
+declare function anchor<E extends HTMLAnchorElement>({ htmlElement, children }: {
     htmlElement: E;
     children?: ChildrenObj;
 }): Anchor;

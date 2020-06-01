@@ -115,8 +115,8 @@ class BetterHTMLElement {
             this.id(setid);
         }
     }
-    toString() {
-        return `${this.e.tagName} #${this.id()} .${this.e.classList}`;
+    get e() {
+        return this._htmlElement;
     }
     static wrapWithBHE(element) {
         const tag = element.tagName.toLowerCase();
@@ -156,8 +156,8 @@ class BetterHTMLElement {
             return elem({ htmlElement: element });
         }
     }
-    get e() {
-        return this._htmlElement;
+    toString() {
+        return `${this.e.tagName} #${this.id()} .${this.e.classList}`;
     }
     wrapSomethingElse(newHtmlElement) {
         this._cachedChildren = {};
@@ -369,14 +369,6 @@ class BetterHTMLElement {
     replaceChild(newChild, oldChild) {
         this.e.replaceChild(newChild, oldChild);
         return this;
-    }
-    _cache(key, child) {
-        const oldchild = this._cachedChildren[key];
-        if (oldchild !== undefined) {
-            console.warn(`Overwriting this._cachedChildren[${key}]!`, 'old value:', oldchild, 'new value:', child, `they're different: ${oldchild == child}`);
-        }
-        this[key] = child;
-        this._cachedChildren[key] = child;
     }
     cacheAppend(keyChildPairs) {
         const _cacheAppend = (_key, _child) => {
@@ -642,6 +634,14 @@ class BetterHTMLElement {
             return data;
         }
     }
+    _cache(key, child) {
+        const oldchild = this._cachedChildren[key];
+        if (oldchild !== undefined) {
+            console.warn(`Overwriting this._cachedChildren[${key}]!`, 'old value:', oldchild, 'new value:', child, `they're different: ${oldchild == child}`);
+        }
+        this[key] = child;
+        this._cachedChildren[key] = child;
+    }
 }
 class Div extends BetterHTMLElement {
     constructor(divOpts) {
@@ -773,6 +773,9 @@ class Anchor extends BetterHTMLElement {
     }
 }
 class Form extends BetterHTMLElement {
+    get disabled() {
+        return this.e.disabled;
+    }
     disable() {
         this.e.disabled = true;
         return this;
@@ -788,9 +791,6 @@ class Form extends BetterHTMLElement {
         else {
             return this.disable();
         }
-    }
-    get disabled() {
-        return this.e.disabled;
     }
     value(val) {
         if (val === undefined) {
@@ -1012,11 +1012,14 @@ class Select extends Changable {
     constructor(selectOpts) {
         super(selectOpts);
     }
+    get selectedIndex() {
+        return this.e.selectedIndex;
+    }
     set selectedIndex(val) {
         this.e.selectedIndex = val;
     }
-    get selectedIndex() {
-        return this.e.selectedIndex;
+    get selected() {
+        return this.item(this.selectedIndex);
     }
     set selected(val) {
         if (val instanceof HTMLOptionElement) {
@@ -1028,9 +1031,6 @@ class Select extends Changable {
         else {
             this.selectedIndex = this.options.findIndex(o => o.value === val);
         }
-    }
-    get selected() {
-        return this.item(this.selectedIndex);
     }
     get options() {
         return [...this.e.options];

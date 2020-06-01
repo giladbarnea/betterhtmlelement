@@ -87,12 +87,13 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     }
 
-    toString() {
-        return `${this.e.tagName} #${this.id()} .${this.e.classList}`
+    /**Return the wrapped HTMLElement*/
+    get e() {
+        return this._htmlElement;
     }
 
     static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
-    static wrapWithBHE(htmlElement: HTMLInputElement): Input;
+    static wrapWithBHE<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = FormishHTMLElement>(htmlElement: Generic): Input<TInputType, Generic>;
     static wrapWithBHE(htmlElement: HTMLImageElement): Img;
     static wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
     static wrapWithBHE(htmlElement: HTMLSpanElement): Span;
@@ -130,9 +131,8 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         }
     }
 
-    /**Return the wrapped HTMLElement*/
-    get e() {
-        return this._htmlElement;
+    toString() {
+        return `${this.e.tagName} #${this.id()} .${this.e.classList}`
     }
 
     /**Sets `this._htmlElement` to `newHtmlElement._htmlElement`.
@@ -410,23 +410,13 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    // private _cache(key: string, child: BetterHTMLElement): void
-    // private _cache(key: string, child: BetterHTMLElement[]): void
-    private _cache(key, child: BetterHTMLElement | BetterHTMLElement[]): void {
-        const oldchild = this._cachedChildren[key];
-        if (oldchild !== undefined) {
-            console.warn(`Overwriting this._cachedChildren[${key}]!`, 'old value:',
-                oldchild, 'new value:', child, `they're different: ${oldchild == child}`
-            );
-        }
-        this[key] = child;
-        this._cachedChildren[key] = child;
-    }
 
     /**For each `[key, child]` pair, `append(child)` and store it in `this[key]`. */
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this
+
     /**For each `[key, child]` tuple, `append(child)` and store it in `this[key]`. */
     cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this
+
     cacheAppend(keyChildPairs) {
         const _cacheAppend = (_key: string, _child: BetterHTMLElement) => {
             this.append(_child);
@@ -450,7 +440,8 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     child(selector: "img"): Img;
     child(selector: "a"): Anchor;
-    child(selector: "input"): Input;
+    child<TInputType extends InputType = InputType>(selector: "input"): Input<TInputType, HTMLInputElement>;
+    child(selector: "select"): Input<undefined, HTMLSelectElement>;
     child(selector: "p"): Paragraph;
     child(selector: "span"): Span;
     child(selector: "button"): Button;
@@ -473,13 +464,15 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return bhe;
     }
 
-
     /**Return a `BetterHTMLElement` list of all children */
     children(): BetterHTMLElement[];
+
     /**Return a `BetterHTMLElement` list of all children selected by `selector` */
     children<K extends Tag>(selector: K): BetterHTMLElement[];
+
     /**Return a `BetterHTMLElement` list of all children selected by `selector` */
     children(selector: QuerySelector): BetterHTMLElement[];
+
     children(selector?) {
         let childrenVanilla;
         let childrenCollection;
@@ -590,7 +583,6 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
 
     // *** Events
-
     on(evTypeFnPairs: TMap<EventName2Function>, options?: AddEventListenerOptions): this {
         // const foo = evTypeFnPairs["abort"];
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
@@ -602,7 +594,6 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         }
         return this;
     }
-
 
     /*
     Chronology:
@@ -654,8 +645,10 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     /**Simulate a click of the element. Useful for `<a>` elements.*/
     click(): this;
+
     /**Add a `click` event listener. You should probably use `pointerdown()` if on desktop, or `touchstart()` if on mobile.*/
     click(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+
     click(fn?, options?) {
         if (fn === undefined) {
             this.e.click();
@@ -667,8 +660,10 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     /**Blur (unfocus) the element.*/
     blur(): this;
+
     /**Add a `blur` event listener*/
     blur(fn: (event: FocusEvent) => any, options?: AddEventListenerOptions): this;
+
     blur(fn?, options?) {
         if (fn === undefined) {
             this.e.blur();
@@ -680,8 +675,10 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     /**Focus the element.*/
     focus(): this;
+
     /**Add a `focus` event listener*/
     focus(fn: (event: FocusEvent) => any, options?: AddEventListenerOptions): this;
+
     focus(fn?, options?) {
         if (fn === undefined) {
             this.e.focus();
@@ -690,7 +687,6 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
             return this.on({focus: fn}, options)
         }
     }
-
 
     /**Add a `change` event listener*/
     change(fn: (event: Event) => any, options?: AddEventListenerOptions): this {
@@ -704,8 +700,10 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     /**Simulate a double click of the element.*/
     dblclick(): this;
+
     /**Add a `dblclick` event listener*/
     dblclick(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+
     dblclick(fn?, options?) {
         if (fn === undefined) {
             const dblclick = new MouseEvent('dblclick', {
@@ -722,8 +720,10 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     /**Simulate a mouseenter event to the element.*/
     mouseenter(): this;
+
     /**Add a `mouseenter` event listener*/
     mouseenter(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
+
     mouseenter(fn?, options?) {
         // mouseover: also child elements
         // mouseenter: only bound element
@@ -741,12 +741,10 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         }
     }
 
-
     /**Add a `keydown` event listener*/
     keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this {
         return this.on({keydown: fn}, options)
     }
-
 
     /**Add a `mouseout` event listener*/
     mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this {
@@ -757,7 +755,6 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this.on({mouseout: fn}, options)
     }
 
-
     /**Add a `mouseover` event listener*/
     mouseover(fn: (event: MouseEvent) => void, options?: AddEventListenerOptions): this {
         // mouseover: also child elements
@@ -765,7 +762,6 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         // return this.on({mouseover: fn}, options)
         return this.on({mouseover: fn})
     }
-
 
     /** Remove the event listener of `event`, if exists.*/
     off(event: EventName): this {
@@ -785,12 +781,14 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    // *** Attributes
-
     /** For each `[attr, val]` pair, apply `setAttribute`*/
     attr(attrValPairs: TMap<string | boolean>): this
+
+    // *** Attributes
+
     /** apply `getAttribute`*/
     attr(attributeName: string): string
+
     attr(attrValPairs) {
         if (typeof attrValPairs === 'string') {
             return this.e.getAttribute(attrValPairs);
@@ -827,6 +825,17 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         } else {
             return data
         }
+    }
+
+    private _cache(key, child: BetterHTMLElement | BetterHTMLElement[]): void {
+        const oldchild = this._cachedChildren[key];
+        if (oldchild !== undefined) {
+            console.warn(`Overwriting this._cachedChildren[${key}]!`, 'old value:',
+                oldchild, 'new value:', child, `they're different: ${oldchild == child}`
+            );
+        }
+        this[key] = child;
+        this._cachedChildren[key] = child;
     }
 
 
@@ -1004,6 +1013,10 @@ type InputType = "checkbox" | "number" | "radio" | "text" | "time" | "datetime-l
 
 abstract class Form<Generic extends FormishHTMLElement>
     extends BetterHTMLElement<Generic> implements Flashable {
+    get disabled(): boolean {
+        return this.e.disabled;
+    }
+
     /**
      Button < Input
      Select - Input: add(), item(), length, namedItem(), options, remove(), selectedIndex, selectedOptions, ITERATOR
@@ -1039,10 +1052,6 @@ abstract class Form<Generic extends FormishHTMLElement>
         } else {
             return this.disable()
         }
-    }
-
-    get disabled(): boolean {
-        return this.e.disabled;
     }
 
     /**Returns `value`*/
@@ -1309,12 +1318,16 @@ class Select extends Changable<undefined, HTMLSelectElement> {
         super(selectOpts);
     }
 
+    get selectedIndex(): number {
+        return this.e.selectedIndex
+    }
+
     set selectedIndex(val) {
         this.e.selectedIndex = val
     }
 
-    get selectedIndex(): number {
-        return this.e.selectedIndex
+    get selected(): HTMLOptionElement {
+        return this.item(this.selectedIndex)
     }
 
     set selected(val) {
@@ -1326,10 +1339,6 @@ class Select extends Changable<undefined, HTMLSelectElement> {
             this.selectedIndex = this.options.findIndex(o => o.value === val);
         }
 
-    }
-
-    get selected(): HTMLOptionElement {
-        return this.item(this.selectedIndex)
     }
 
     get options(): HTMLOptionElement[] {
@@ -1461,17 +1470,17 @@ function input<TInputType extends InputType, Generic extends FormishHTMLElement 
     type?: TInputType,
     placeholder?: string
 }): Input<TInputType, Generic>;
-function input({byid, children}: { byid: string, children?: ChildrenObj }): Input;
-function input<Q extends QuerySelector>({query, children}: {
+function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({byid, children}: { byid: string, children?: ChildrenObj }): Input<TInputType, Generic>;
+function input<Q extends QuerySelector, TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({query, children}: {
     query: Q extends QuerySelector<NotTag<"input">> ? never : Q,
     children?: ChildrenObj
-}): Input;
-function input<E extends HTMLInputElement>({htmlElement, children}: {
-    htmlElement: E;
+}): Input<TInputType, Generic>;
+function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({htmlElement, children}: {
+    htmlElement: Generic;
     children?: ChildrenObj
-}): Input;
-function input(): Input
-function input(inputOpts?): Input {
+}): Input<TInputType, Generic>;
+function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>(): Input<TInputType, Generic>
+function input(inputOpts?) {
     if (!bool(inputOpts)) {
         inputOpts = {}
     }
@@ -1542,7 +1551,7 @@ function anchor<Q extends QuerySelector>({query, children}: {
     query: Q extends QuerySelector<NotTag<"a">> ? never : Q,
     children?: ChildrenObj
 }): Anchor;
-function anchor<E extends HTMLImageElement>({htmlElement, children}: {
+function anchor<E extends HTMLAnchorElement>({htmlElement, children}: {
     htmlElement: E;
     children?: ChildrenObj
 }): Anchor;
