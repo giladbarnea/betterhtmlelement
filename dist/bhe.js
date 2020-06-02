@@ -988,7 +988,7 @@ class CheckboxInput extends Changable {
         return this;
     }
     toggleChecked(on) {
-        if (on) {
+        if (bool(on)) {
             return this.check();
         }
         else {

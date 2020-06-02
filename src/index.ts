@@ -1291,7 +1291,7 @@ class CheckboxInput extends Changable<"checkbox", HTMLInputElement> {
     }
 
     toggleChecked(on: boolean): this {
-        if (on) {
+        if (bool(on)) {
             return this.check()
         } else {
             return this.uncheck()
