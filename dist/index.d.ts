@@ -177,7 +177,7 @@ export declare abstract class Form<Generic extends FormishHTMLElement> extends B
     disable(): this;
     enable(): this;
     toggleEnabled(on: boolean): this;
-    value(): unknown;
+    value(): any;
     value(val: any): this;
     flashBad(): Promise<void>;
     flashGood(): Promise<void>;

@@ -1082,7 +1082,7 @@ export abstract class Form<Generic extends FormishHTMLElement>
     }
 
     /**Returns `value`*/
-    value(): unknown;
+    value(): any;
     /**`value(null)` or `value('')` → reset. */
     value(val: any): this;
     value(val?) {
