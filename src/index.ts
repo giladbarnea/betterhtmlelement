@@ -1055,7 +1055,7 @@ abstract class Form<Generic extends FormishHTMLElement>
     }
 
     /**Returns `value`*/
-    value(): string;
+    value(): unknown;
     /**`value(null)` or `value('')` → reset. */
     value(val: any): this;
     value(val?) {
@@ -1298,6 +1298,17 @@ class CheckboxInput extends Changable<"checkbox", HTMLInputElement> {
         }
     }
 
+    /**Returns `value`*/
+    value(): boolean;
+    /**`value(null)` or `value('')` → reset. */
+    value(val: any): this;
+    value(val?) {
+        if (val === undefined) {
+            return this.checked;
+        } else {
+            return this.toggleChecked(val);
+        }
+    }
 
     clear() {
         return this.uncheck();
@@ -1349,9 +1360,21 @@ class Select extends Changable<undefined, HTMLSelectElement> {
         return this.e.item(index) as HTMLOptionElement
     }
 
+    /**Returns `value`*/
+    value(): HTMLOptionElement;
+    /**`value(null)` or `value('')` → reset. */
+    value(val: any): this;
+    value(val?) {
+        if (val === undefined) {
+            return this.selected;
+        } else {
+            this.selected = val;
+            return this;
+        }
+    }
 
     clear() {
-        this.selectedIndex = -1;
+        this.selectedIndex = 0;
         return this;
     }
 
