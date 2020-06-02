@@ -936,6 +936,14 @@ export class CheckboxInput extends Changable {
             return this.uncheck();
         }
     }
+    value(val) {
+        if (val === undefined) {
+            return this.checked;
+        }
+        else {
+            return this.toggleChecked(val);
+        }
+    }
     clear() {
         return this.uncheck();
     }
@@ -974,8 +982,17 @@ export class Select extends Changable {
     item(index) {
         return this.e.item(index);
     }
+    value(val) {
+        if (val === undefined) {
+            return this.selected;
+        }
+        else {
+            this.selected = val;
+            return this;
+        }
+    }
     clear() {
-        this.selectedIndex = -1;
+        this.selectedIndex = 0;
         return this;
     }
 }
