@@ -743,7 +743,7 @@ export class Form extends BetterHTMLElement {
     }
     value(val) {
         if (val === undefined) {
-            return this.e.value;
+            return bool(this.e.value) ? this.e.value : undefined;
         }
         else {
             this.e.value = val;
