@@ -1055,7 +1055,7 @@ abstract class Form<Generic extends FormishHTMLElement>
     }
 
     /**Returns `value`*/
-    value(): unknown;
+    value(): any;
     /**`value(null)` or `value('')` → reset. */
     value(val: any): this;
     value(val?) {
@@ -1216,6 +1216,7 @@ class TextInput extends Input<"text"> {
         }
 
     }
+
 
     keydown(_fn: (_event: KeyboardEvent) => Promise<any>): this {
         const fn = async (event) => {
