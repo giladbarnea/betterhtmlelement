@@ -26,12 +26,7 @@
     "jsdelivr": "dist/bhe.js",
     "author": "Gilad Barnea",
     "license": "ISC",
-    "devDependencies": {
-        "@types/jest": "^25.2.1",
-        "@types/node": "latest",
-        "jest": "^25.5.4",
-        "ts-jest": "^25.4.0",
-        "typescript": "^3.8.3"
-    },
-    "dependencies": {}
+    "dependencies": {
+        "typescript": "^3.9.2"
+    }
 }

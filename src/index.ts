@@ -15,40 +15,30 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     /**Wrap an existing HTMLElement. Optionally cache existing `children`*/
     constructor({htmlElement, children}: { htmlElement: Generic; children?: ChildrenObj });
     constructor(elemOptions) {
-        const {
+        let {
             tag, cls, setid, // create
             htmlElement, byid, query, children // wrap existing
         } = elemOptions;
 
         // *** Argument Errors
-        // ** wrapping args: only one
-        if ([byid, htmlElement, query].filter(x => Boolean(x)).length > 1) {
+        // ** wrapping args: assert max one (or none if creating new)
+        if ([byid, htmlElement, query, tag].filter(x => x !== undefined).length > 1) {
             throw new MutuallyExclusiveArgs({
-                byid, query, htmlElement
-            }, `Choose only one way to get an existing element; by its id, query, or actual element`)
+                byid, query, htmlElement, tag
+            }, 'Either wrap an existing element by passing one of `byid` / `query` / `htmlElement`, or create a new one by passing `tag`.')
         }
-        // ** creating new elem args: both creators and wrappers
-        // * if creating new with `tag`, no meaning to either children, byid, htmlElement, or query
-        if (tag !== undefined && anyValue([children, byid, htmlElement, query])) {
-            throw new MutuallyExclusiveArgs({
-                tag,
-                byid,
-                htmlElement,
-                query
-            }, `Either create a new elem via "tag", or get an existing one via either "byid", "htmlElement", or "query" (and maybe cache its "children")`)
+        // ** creating new elem args: assert creators and wrappers not mixed
+        // * if creating new with either `tag` / `setid` , no meaning to either children, byid, htmlElement, or query
+        if (anyDefined([tag, cls, setid]) && anyDefined([children, byid, htmlElement, query])) {
+            throw new MutuallyExclusiveArgs([
+                {tag, cls, setid},
+                {children, byid, htmlElement, query}
+            ], `Can't have args from both sets`)
         }
-        if (anyValue([tag, cls, setid]) && anyValue([children, byid, htmlElement, query])) {
-            throw new MutuallyExclusiveArgs({
-                group1: {cls, setid},
-                group2: {children, byid, htmlElement, query}
-            }, `Can't have args from both groups`)
+        if (allUndefined([tag, byid, htmlElement, query])) {
+            throw new NotEnoughArgs(1, {tag, byid, htmlElement, query}, 'either');
         }
-        if (noValue([tag, cls, setid]) && noValue([children, byid, htmlElement, query])) {
-            throw new NotEnoughArgs([1], {
-                group1: {cls, setid},
-                group2: {children, byid, htmlElement, query}
-            }, `Expecting at least one arg from a given group`)
-        }
+
 
         // ** tag (CREATE element)
         if (tag !== undefined) {
@@ -58,22 +48,30 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
             } else {
                 this._htmlElement = document.createElement(tag) as Generic;
             }
-            // ** wrap EXISTING element
+
+        } else { // ** wrap EXISTING element
             // * byid
-        } else if (byid !== undefined) {
-            this._htmlElement = document.getElementById(byid) as Generic;
-        } else {
-            // * query
-            if (query !== undefined) {
-                this._htmlElement = document.querySelector(query) as Generic;
+            if (byid !== undefined) {
+                if (byid.startsWith('#')) {
+                    console.warn(`param 'byid' starts with '#', stripping it: ${byid}`);
+                    byid = byid.substr(1);
+                }
+                this._htmlElement = document.getElementById(byid) as Generic;
             } else {
-                // * htmlElement
-                if (htmlElement !== undefined) {
-                    this._htmlElement = htmlElement;
+                // * query
+                if (query !== undefined) {
+                    this._htmlElement = document.querySelector(query) as Generic;
+                } else {
+                    // * htmlElement
+                    if (htmlElement !== undefined) {
+                        this._htmlElement = htmlElement;
+                    }
                 }
             }
         }
-
+        if (!bool(this._htmlElement)) {
+            throw new Error(`${this} constructor ended up with no 'this._htmlElement'. Passed options: ${summary(elemOptions)}`)
+        }
         if (cls !== undefined) {
             this.class(cls);
         }
@@ -132,7 +130,27 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     }
 
     toString() {
-        return `${this.e.tagName} #${this.id()} .${this.e.classList}`
+        const proto = Object.getPrototypeOf(this);
+        const protoStr = proto.constructor.toString();
+        let str = protoStr.substring(6, protoStr.indexOf('{') - 1);
+
+        let tag = this.e?.tagName;
+        let id = this.id();
+        let classList = this.e?.classList;
+        if (anyTruthy([id, classList, tag])) {
+            str += ` (`;
+            if (tag) {
+                str += `<${tag.toLowerCase()}>`
+            }
+            if (id) {
+                str += `#${id}`
+            }
+            if (classList) {
+                str += `.${classList}`
+            }
+            str += `)`;
+        }
+        return str
     }
 
     /**Sets `this._htmlElement` to `newHtmlElement._htmlElement`.
@@ -209,7 +227,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     id(): string;
     id(id?) {
         if (id === undefined) {
-            return this.e.id;
+            return this.e?.id;
         } else {
             this.e.id = id;
             return this;

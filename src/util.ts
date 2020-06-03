@@ -258,7 +258,7 @@ function isFunction(fn) {
     return !!fn && toStringed === '[object Function]'
 }
 
-function anyValue(obj): boolean {
+function anyDefined(obj): boolean {
     let array;
     if (isObject(obj)) {
         array = Object.values(obj);
@@ -267,10 +267,22 @@ function anyValue(obj): boolean {
     } else {
         throw new TypeError(`expected array or obj, got: ${typeof obj}`);
     }
-    return array.filter(x => Boolean(x)).length > 0;
+    return array.filter(x => x !== undefined).length > 0;
 }
 
-function noValue(obj): boolean {
+function anyTruthy(obj): boolean {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    } else if (isArray(obj)) {
+        array = obj;
+    } else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => bool(x)).length > 0;
+}
+
+function allUndefined(obj): boolean {
     let array;
     if (isObject(obj)) {
         array = Object.values(obj)
@@ -279,7 +291,7 @@ function noValue(obj): boolean {
     } else {
         throw new TypeError(`expected array or obj, got: ${typeof obj}`)
     }
-    return array.filter(x => Boolean(x)).length === 0
+    return array.filter(x => x !== undefined).length === 0
 }
 
 

@@ -1,15 +1,6 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-function getArgNamesValues(argsWithValues) {
+function getArgsFullRepr(argsWithValues) {
     return Object.entries(argsWithValues)
-        .flatMap(([argname, argval]) => `${argname}: ${argval}`)
+        .flatMap(([argname, argval]) => `${argname}: ${isObject(argval) ? `{${getArgsFullRepr(argval)}}` : argval}`)
         .join('", "');
 }
 function getArgsWithValues(passedArgs) {
@@ -21,33 +12,54 @@ function getArgsWithValues(passedArgs) {
     }
     return argsWithValues;
 }
+function summary(argset) {
+    const argsWithValues = getArgsWithValues(argset);
+    const argsFullRepr = getArgsFullRepr(argsWithValues);
+    let argNames = Object.keys(argset);
+    return `${argNames.length} args (${argNames}); ${Object.keys(argsWithValues).length} had value: "${argsFullRepr}".\n`;
+}
 class MutuallyExclusiveArgs extends Error {
     constructor(passedArgs, details) {
-        const argsWithValues = getArgsWithValues(passedArgs);
-        const argNamesValues = getArgNamesValues(argsWithValues);
-        let message = `Didn't receive exactly one arg. `;
-        message += `Instead, out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
+        let message = `Didn't receive exactly one arg`;
+        if (isArray(passedArgs)) {
+            message += ` from the following mutually exclusive sets of args.\n`;
+            for (let [i, argset] of enumerate(passedArgs)) {
+                message += `Out of set #${i + 1}, which consists of ${summary(argset)}`;
+            }
+        }
+        else {
+            message += ` from the following mutually exclusive set of args.\nOut of ${summary(passedArgs)}`;
+        }
+        if (details) {
+            message += `Details: ${details}`;
+        }
         super(message);
     }
 }
 class NotEnoughArgs extends Error {
-    constructor(expected, passedArgs, details) {
-        const argsWithValues = getArgsWithValues(passedArgs);
-        const argNamesValues = getArgNamesValues(argsWithValues);
+    constructor(expected, passedArgs, relation) {
         let message;
         if (isArray(expected)) {
             let [min, max] = expected;
             if (max === undefined) {
-                message = `Didn't receive enough args: expected at least ${min}. `;
+                message = `Didn't receive enough args: expected at least ${min}`;
             }
             else {
-                message = `Didn't receive enough args: expected between ${min} and ${max}. `;
+                message = `Didn't receive enough args: expected between ${min} and ${max}`;
             }
         }
         else {
-            message = `Didn't receive enough args: expected exactly ${expected}. `;
+            message = `Didn't receive enough args: expected exactly ${expected}`;
         }
-        message += `Out of ${Object.keys(passedArgs).length} received (${Object.keys(passedArgs)}), ${Object.keys(argsWithValues).length} had value: "${argNamesValues}". ${details ? 'Details: ' + details : ''}`;
+        if (isArray(passedArgs)) {
+            message += ` from ${relation} set of arguments.\n`;
+            for (let [i, argset] of enumerate(passedArgs)) {
+                message += `Out of set #${i + 1}, which consists of ${summary(argset)}`;
+            }
+        }
+        else {
+            message += ` from the following set of args.\nOut of ${summary(passedArgs)}`;
+        }
         super(message);
     }
 }
@@ -57,31 +69,20 @@ class BetterHTMLElement {
         this._isSvg = false;
         this._listeners = {};
         this._cachedChildren = {};
-        const { tag, cls, setid, htmlElement, byid, query, children } = elemOptions;
-        if ([byid, htmlElement, query].filter(x => Boolean(x)).length > 1) {
+        let { tag, cls, setid, htmlElement, byid, query, children } = elemOptions;
+        if ([byid, htmlElement, query, tag].filter(x => x !== undefined).length > 1) {
             throw new MutuallyExclusiveArgs({
-                byid, query, htmlElement
-            }, `Choose only one way to get an existing element; by its id, query, or actual element`);
+                byid, query, htmlElement, tag
+            }, 'Either wrap an existing element by passing one of `byid` / `query` / `htmlElement`, or create a new one by passing `tag`.');
         }
-        if (tag !== undefined && anyValue([children, byid, htmlElement, query])) {
-            throw new MutuallyExclusiveArgs({
-                tag,
-                byid,
-                htmlElement,
-                query
-            }, `Either create a new elem via "tag", or get an existing one via either "byid", "htmlElement", or "query" (and maybe cache its "children")`);
+        if (anyDefined([tag, cls, setid]) && anyDefined([children, byid, htmlElement, query])) {
+            throw new MutuallyExclusiveArgs([
+                { tag, cls, setid },
+                { children, byid, htmlElement, query }
+            ], `Can't have args from both sets`);
         }
-        if (anyValue([tag, cls, setid]) && anyValue([children, byid, htmlElement, query])) {
-            throw new MutuallyExclusiveArgs({
-                group1: { cls, setid },
-                group2: { children, byid, htmlElement, query }
-            }, `Can't have args from both groups`);
-        }
-        if (noValue([tag, cls, setid]) && noValue([children, byid, htmlElement, query])) {
-            throw new NotEnoughArgs([1], {
-                group1: { cls, setid },
-                group2: { children, byid, htmlElement, query }
-            }, `Expecting at least one arg from a given group`);
+        if (allUndefined([tag, byid, htmlElement, query])) {
+            throw new NotEnoughArgs(1, { tag, byid, htmlElement, query }, 'either');
         }
         if (tag !== undefined) {
             if (['svg', 'path'].includes(tag.toLowerCase())) {
@@ -92,18 +93,27 @@ class BetterHTMLElement {
                 this._htmlElement = document.createElement(tag);
             }
         }
-        else if (byid !== undefined) {
-            this._htmlElement = document.getElementById(byid);
-        }
         else {
-            if (query !== undefined) {
-                this._htmlElement = document.querySelector(query);
+            if (byid !== undefined) {
+                if (byid.startsWith('#')) {
+                    console.warn(`param 'byid' starts with '#', stripping it: ${byid}`);
+                    byid = byid.substr(1);
+                }
+                this._htmlElement = document.getElementById(byid);
             }
             else {
-                if (htmlElement !== undefined) {
-                    this._htmlElement = htmlElement;
+                if (query !== undefined) {
+                    this._htmlElement = document.querySelector(query);
+                }
+                else {
+                    if (htmlElement !== undefined) {
+                        this._htmlElement = htmlElement;
+                    }
                 }
             }
+        }
+        if (!bool(this._htmlElement)) {
+            throw new Error(`${this} constructor ended up with no 'this._htmlElement'. Passed options: ${summary(elemOptions)}`);
         }
         if (cls !== undefined) {
             this.class(cls);
@@ -157,7 +167,27 @@ class BetterHTMLElement {
         }
     }
     toString() {
-        return `${this.e.tagName} #${this.id()} .${this.e.classList}`;
+        var _a, _b;
+        const proto = Object.getPrototypeOf(this);
+        const protoStr = proto.constructor.toString();
+        let str = protoStr.substring(6, protoStr.indexOf('{') - 1);
+        let tag = (_a = this.e) === null || _a === void 0 ? void 0 : _a.tagName;
+        let id = this.id();
+        let classList = (_b = this.e) === null || _b === void 0 ? void 0 : _b.classList;
+        if (anyTruthy([id, classList, tag])) {
+            str += ` (`;
+            if (tag) {
+                str += `<${tag.toLowerCase()}>`;
+            }
+            if (id) {
+                str += `#${id}`;
+            }
+            if (classList) {
+                str += `.${classList}`;
+            }
+            str += `)`;
+        }
+        return str;
     }
     wrapSomethingElse(newHtmlElement) {
         this._cachedChildren = {};
@@ -205,8 +235,9 @@ class BetterHTMLElement {
         }
     }
     id(id) {
+        var _a;
         if (id === undefined) {
-            return this.e.id;
+            return (_a = this.e) === null || _a === void 0 ? void 0 : _a.id;
         }
         else {
             this.e.id = id;
@@ -801,19 +832,15 @@ class Form extends BetterHTMLElement {
             return this;
         }
     }
-    flashBad() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.addClass('bad');
-            yield wait(2000);
-            this.removeClass('bad');
-        });
+    async flashBad() {
+        this.addClass('bad');
+        await wait(2000);
+        this.removeClass('bad');
     }
-    flashGood() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.addClass('good');
-            yield wait(2000);
-            this.removeClass('good');
-        });
+    async flashGood() {
+        this.addClass('good');
+        await wait(2000);
+        this.removeClass('good');
     }
     clear() {
         return this.value(null);
@@ -821,23 +848,19 @@ class Form extends BetterHTMLElement {
     _preEvent() {
         this.disable();
     }
-    _onEventSuccess(ret) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (ret instanceof Error && this.flashBad) {
-                yield this.flashBad();
-            }
-            else if (this.flashGood) {
-                this.flashGood();
-            }
-        });
+    async _onEventSuccess(ret) {
+        if (ret instanceof Error && this.flashBad) {
+            await this.flashBad();
+        }
+        else if (this.flashGood) {
+            this.flashGood();
+        }
     }
-    _onEventError(e) {
-        return __awaiter(this, void 0, void 0, function* () {
-            console.error(e);
-            if (this.flashBad) {
-                yield this.flashBad();
-            }
-        });
+    async _onEventError(e) {
+        console.error(e);
+        if (this.flashBad) {
+            await this.flashBad();
+        }
     }
     _postEvent() {
         this.enable();
@@ -863,19 +886,19 @@ class Button extends Form {
         }
     }
     click(_fn) {
-        const fn = (event) => __awaiter(this, void 0, void 0, function* () {
+        const fn = async (event) => {
             try {
                 this._preEvent();
-                const ret = yield _fn(event);
-                yield this._onEventSuccess(ret);
+                const ret = await _fn(event);
+                await this._onEventSuccess(ret);
             }
             catch (e) {
-                yield this._onEventError(e);
+                await this._onEventError(e);
             }
             finally {
                 this._postEvent();
             }
-        });
+        };
         return super.click(fn);
     }
 }
@@ -928,46 +951,46 @@ class TextInput extends Input {
         }
     }
     keydown(_fn) {
-        const fn = (event) => __awaiter(this, void 0, void 0, function* () {
+        const fn = async (event) => {
             if (event.key !== 'Enter') {
                 return;
             }
             if (!bool(this.value())) {
                 if (this.flashBad) {
-                    yield this.flashBad();
+                    await this.flashBad();
                 }
                 return;
             }
             try {
                 this._preEvent();
-                const ret = yield _fn(event);
-                yield this._onEventSuccess(ret);
+                const ret = await _fn(event);
+                await this._onEventSuccess(ret);
             }
             catch (e) {
-                yield this._onEventError(e);
+                await this._onEventError(e);
             }
             finally {
                 this._postEvent();
             }
-        });
+        };
         return super.keydown(fn);
     }
 }
 class Changable extends Input {
     change(_fn) {
-        const fn = (event) => __awaiter(this, void 0, void 0, function* () {
+        const fn = async (event) => {
             try {
                 this._preEvent();
-                const ret = yield _fn(event);
-                yield this._onEventSuccess(ret);
+                const ret = await _fn(event);
+                await this._onEventSuccess(ret);
             }
             catch (e) {
-                yield this._onEventError(e);
+                await this._onEventError(e);
             }
             finally {
                 this._postEvent();
             }
-        });
+        };
         return super.change(fn);
     }
 }
@@ -1006,14 +1029,9 @@ class CheckboxInput extends Changable {
     clear() {
         return this.uncheck();
     }
-    _onEventError(e) {
-        const _super = Object.create(null, {
-            _onEventError: { get: () => super._onEventError }
-        });
-        return __awaiter(this, void 0, void 0, function* () {
-            this.toggleChecked(!this.checked);
-            yield _super._onEventError.call(this, e);
-        });
+    async _onEventError(e) {
+        this.toggleChecked(!this.checked);
+        await super._onEventError(e);
     }
 }
 class Select extends Changable {
@@ -1178,7 +1196,7 @@ function isFunction(fn) {
     let toStringed = {}.toString.call(fn);
     return !!fn && toStringed === '[object Function]';
 }
-function anyValue(obj) {
+function anyDefined(obj) {
     let array;
     if (isObject(obj)) {
         array = Object.values(obj);
@@ -1189,9 +1207,9 @@ function anyValue(obj) {
     else {
         throw new TypeError(`expected array or obj, got: ${typeof obj}`);
     }
-    return array.filter(x => Boolean(x)).length > 0;
+    return array.filter(x => x !== undefined).length > 0;
 }
-function noValue(obj) {
+function anyTruthy(obj) {
     let array;
     if (isObject(obj)) {
         array = Object.values(obj);
@@ -1202,7 +1220,20 @@ function noValue(obj) {
     else {
         throw new TypeError(`expected array or obj, got: ${typeof obj}`);
     }
-    return array.filter(x => Boolean(x)).length === 0;
+    return array.filter(x => bool(x)).length > 0;
+}
+function allUndefined(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    }
+    else if (isArray(obj)) {
+        array = obj;
+    }
+    else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => x !== undefined).length === 0;
 }
 function isBHE(bhe, bheSubType) {
     return (bhe instanceof bheSubType);

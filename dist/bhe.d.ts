@@ -1,10 +1,11 @@
-declare function getArgNamesValues(argsWithValues: object): string;
-declare function getArgsWithValues(passedArgs: object): object;
+declare function getArgsFullRepr(argsWithValues: TMap<any>): string;
+declare function getArgsWithValues(passedArgs: TMap<any>): TMap<any>;
+declare function summary(argset: TMap<any>): string;
 declare class MutuallyExclusiveArgs extends Error {
-    constructor(passedArgs: object, details?: string);
+    constructor(passedArgs: TMap<any> | TMap<any>[], details?: string);
 }
 declare class NotEnoughArgs extends Error {
-    constructor(expected: number | number[], passedArgs: object, details?: string);
+    constructor(expected: number | number[], passedArgs: TMap<any> | TMap<any>[], relation?: 'each' | 'either');
 }
 declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
 declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
@@ -39,7 +40,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     static wrapWithBHE(htmlElement: HTMLDivElement): Div;
     static wrapWithBHE(htmlElement: HTMLSelectElement): Div;
     static wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
-    toString(): string;
+    toString(): any;
     wrapSomethingElse<T extends HTMLElement>(newHtmlElement: BetterHTMLElement<T>): this;
     wrapSomethingElse(newHtmlElement: Node): this;
     html(html: string): this;
@@ -468,8 +469,9 @@ declare function isEmptyArr(collection: any): boolean;
 declare function isEmptyObj(obj: any): boolean;
 declare function isFunction<T>(fn: T): fn is T;
 declare function isFunction(fn: AnyFunction): fn is AnyFunction;
-declare function anyValue(obj: any): boolean;
-declare function noValue(obj: any): boolean;
+declare function anyDefined(obj: any): boolean;
+declare function anyTruthy(obj: any): boolean;
+declare function allUndefined(obj: any): boolean;
 declare function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType: any): bhe is T;
 declare function isType<T>(arg: T): arg is T;
 declare function isObject(obj: any): boolean;
