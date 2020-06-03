@@ -1066,7 +1066,7 @@ class Select extends Changable {
     }
     value(val) {
         if (val === undefined) {
-            return this.selected;
+            return this.selected.value;
         }
         else {
             this.selected = val;

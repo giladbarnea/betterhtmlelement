@@ -231,7 +231,7 @@ declare class Select extends Changable<undefined, HTMLSelectElement> {
     set selected(val: HTMLOptionElement);
     get options(): HTMLOptionElement[];
     item(index: any): HTMLOptionElement;
-    value(): HTMLOptionElement;
+    value(): string;
     value(val: any): this;
     clear(): this;
 }
