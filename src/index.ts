@@ -1380,12 +1380,12 @@ class Select extends Changable<undefined, HTMLSelectElement> {
     }
 
     /**Returns `value`*/
-    value(): HTMLOptionElement;
+    value(): string;
     /**`value(null)` or `value('')` → reset. */
     value(val: any): this;
     value(val?) {
         if (val === undefined) {
-            return this.selected;
+            return this.selected.value;
         } else {
             this.selected = val;
             return this;
