@@ -835,7 +835,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     }
 
     /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/
-    data(key: string, parse: boolean = true): string | TMap<string> {
+    getdata(key: string, parse: boolean = true): string | TMap<string> {
         // TODO: jquery doesn't affect data-* attrs in DOM. https://api.jquery.com/data/
         const data = this.e.getAttribute(`data-${key}`);
         if (parse === true) {

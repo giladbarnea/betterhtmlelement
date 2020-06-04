@@ -116,7 +116,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     attr(attrValPairs: TMap<string | boolean>): this;
     attr(attributeName: string): string;
     removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this;
-    data(key: string, parse?: boolean): string | TMap<string>;
+    getdata(key: string, parse?: boolean): string | TMap<string>;
     private _cache;
 }
 declare class Div extends BetterHTMLElement<HTMLDivElement> {

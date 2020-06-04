@@ -656,7 +656,7 @@ class BetterHTMLElement {
         }
         return this;
     }
-    data(key, parse = true) {
+    getdata(key, parse = true) {
         const data = this.e.getAttribute(`data-${key}`);
         if (parse === true) {
             return JSON.parse(data);
