@@ -848,8 +848,8 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     private _cache(key, child: BetterHTMLElement | BetterHTMLElement[]): void {
         const oldchild = this._cachedChildren[key];
         if (oldchild !== undefined) {
-            console.warn(`Overwriting this._cachedChildren[${key}]!`, 'old value:',
-                oldchild, 'new value:', child, `they're different: ${oldchild == child}`
+            console.warn(`Overwriting this._cachedChildren[${key}]!`, `old child: ${oldchild}`,
+                `new child: ${child}`, `are they different?: ${oldchild == child}`
             );
         }
         this[key] = child;
@@ -1193,10 +1193,11 @@ class Input<TInputType extends InputType, Generic extends FormishHTMLElement = H
         } else if (query !== undefined) {
             super({query, children});
         } else {
-            super({tag: "input", cls, setid})
+            super({tag: "input" as Element2Tag<Generic>, cls, setid})
         }
 
         if (type !== undefined) {
+            // @ts-ignore
             this._htmlElement.type = type;
         }
 

@@ -63,6 +63,8 @@ class NotEnoughArgs extends Error {
         super(message);
     }
 }
+const inp = input({ type: "checkbox" });
+const Inp = new Input({ type: "checkbox" });
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 class BetterHTMLElement {
     constructor(elemOptions) {
@@ -668,7 +670,7 @@ class BetterHTMLElement {
     _cache(key, child) {
         const oldchild = this._cachedChildren[key];
         if (oldchild !== undefined) {
-            console.warn(`Overwriting this._cachedChildren[${key}]!`, 'old value:', oldchild, 'new value:', child, `they're different: ${oldchild == child}`);
+            console.warn(`Overwriting this._cachedChildren[${key}]!`, `old child: ${oldchild}`, `new child: ${child}`, `are they different?: ${oldchild == child}`);
         }
         this[key] = child;
         this._cachedChildren[key] = child;

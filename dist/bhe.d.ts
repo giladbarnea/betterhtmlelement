@@ -7,6 +7,8 @@ declare class MutuallyExclusiveArgs extends Error {
 declare class NotEnoughArgs extends Error {
     constructor(expected: number | number[], passedArgs: TMap<any> | TMap<any>[], relation?: 'each' | 'either');
 }
+declare const inp: Input<"checkbox", HTMLInputElement>;
+declare const Inp: Input<InputType, HTMLInputElement>;
 declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
 declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     protected _htmlElement: Generic;

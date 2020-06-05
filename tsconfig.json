@@ -28,6 +28,9 @@
         "src/**/*"
     ]
     //    "exclude": [
+    //        "**/ignore*"
+    //    ]
+    //    "exclude": [
     //        "dist/*",
     //        "misc/*",
     //        "test/*"
