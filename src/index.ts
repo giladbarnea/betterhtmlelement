@@ -938,11 +938,27 @@ class Span extends BetterHTMLElement<HTMLSpanElement> {
     }
 }
 
-class Img extends BetterHTMLElement<HTMLImageElement> {
+class Img<Q extends QuerySelector = QuerySelector> extends BetterHTMLElement<HTMLImageElement> {
 
     /**Create a new Img element, or wrap an existing one by passing htmlElement. Optionally set its id, src or cls.*/
-    constructor({setid, cls, src, byid, query, htmlElement, children}) {
-
+    constructor({cls, setid, src}: {
+        cls?: string, setid?: string,
+        src?: string
+    });
+    constructor({byid, children}: {
+        byid: string, children?: ChildrenObj
+    });
+    constructor({query, children}: {
+        query: QueryOrPreciseTag<Q, "img">,
+        children?: ChildrenObj
+    });
+    constructor({htmlElement, children}: {
+        htmlElement: HTMLImageElement;
+        children?: ChildrenObj
+    })
+    constructor();
+    constructor(imgOpts?) {
+        const {cls, setid, src, byid, query, htmlElement, children} = imgOpts;
         if (htmlElement !== undefined) {
             super({htmlElement, children});
         } else if (byid !== undefined) {
@@ -1128,8 +1144,23 @@ abstract class Form<Generic extends FormishHTMLElement>
 }
 
 
-class Button extends Form<HTMLButtonElement> {
-    constructor(buttonOpts) {
+class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonElement> {
+    constructor({cls, setid, text}: {
+        cls?: string, setid?: string, text?: string
+    });
+    constructor({byid, children}: {
+        byid: string, children?: ChildrenObj
+    });
+    constructor({query, children}: {
+        query: QueryOrPreciseTag<Q, "button">,
+        children?: ChildrenObj
+    })
+    constructor({htmlElement, children}: {
+        htmlElement: HTMLButtonElement;
+        children?: ChildrenObj
+    })
+    constructor();
+    constructor(buttonOpts?) {
         const {setid, cls, text, byid, query, htmlElement, children} = buttonOpts;
         if (htmlElement !== undefined) {
             super({htmlElement, children});
@@ -1175,15 +1206,14 @@ class Input<TInputType extends InputType,
     extends Form<Generic> {
     type: TInputType;
 
-    constructor({cls, setid, type, placeholder}: {
+    constructor({cls, setid, type}: {
         cls?: string, setid?: string,
-        type?: TInputType,
-        placeholder?: string
+        type?: TInputType
     });
 
     constructor({byid, children}: { byid: string, children?: ChildrenObj });
     constructor({query, children}: {
-        query: Exclude<Q, QuerySelector<NotTag<"input">>>,
+        query: QueryOrPreciseTag<Q, "input">,
         children?: ChildrenObj
     });
 
@@ -1195,9 +1225,7 @@ class Input<TInputType extends InputType,
     constructor();
     constructor(inputOpts?) {
         const {setid, cls, type, byid, query, htmlElement, children} = inputOpts;
-        // if (noValue(arguments[0])) {
-        //     throw new NotEnoughArgs([1], arguments[0])
-        // }
+
 
         if (htmlElement !== undefined) {
             super({htmlElement, children});
@@ -1219,20 +1247,33 @@ class Input<TInputType extends InputType,
 
 }
 
-class TextInput extends Input<"text"> {
-    constructor(opts) {
+class TextInput<Q extends QuerySelector = QuerySelector> extends Input<"text"> {
+    constructor({cls, setid, placeholder}: {
+        cls?: string, setid?: string,
+        placeholder?: string
+    });
+
+    constructor({byid, children}: { byid: string, children?: ChildrenObj });
+    constructor({query, children}: {
+        query: QueryOrPreciseTag<Q, "input">,
+        children?: ChildrenObj
+    });
+
+    constructor({htmlElement, children}: {
+        htmlElement: HTMLInputElement;
+        children?: ChildrenObj
+    });
+
+    constructor();
+    constructor(opts?) {
         opts.type = 'text';
         super(opts);
         const {placeholder, type} = opts;
         if (placeholder !== undefined) {
-            if (type) {
-                if (type === "number" && typeof placeholder !== "number") {
-                    console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring`)
-                } else if (type === "text" && typeof placeholder !== "string") {
-                    console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring`)
-                } else {
-                    this.placeholder(placeholder);
-                }
+            if (type && type !== typeof placeholder && !(type === "text" && typeof placeholder !== "string")) {
+                console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring placeholder option.`)
+            } else {
+                this.placeholder(placeholder)
             }
         }
     }
@@ -1459,7 +1500,7 @@ function elem(elemOptions) {
 function span({cls, setid, text}: { cls?: string, setid?: string, text?: string }): Span;
 function span({byid, children}: { byid: string, children?: ChildrenObj }): Span;
 function span<Q extends QuerySelector>({query, children}: {
-    query: Q extends QuerySelector<NotTag<"span">> ? never : Q,
+    query: QueryOrPreciseTag<Q, "span">,
     children?: ChildrenObj
 }): Span;
 function span<E extends HTMLSpanElement>({htmlElement, children}: {
@@ -1482,11 +1523,11 @@ function div({byid, children}: {
     byid: string, children?: ChildrenObj
 }): Div;
 function div<Q extends QuerySelector>({query, children}: {
-    query: Q extends QuerySelector<NotTag<"div">> ? never : Q,
+    query: QueryOrPreciseTag<Q, "div">,
     children?: ChildrenObj
 }): Div;
-function div<E extends HTMLDivElement>({htmlElement, children}: {
-    htmlElement: E;
+function div({htmlElement, children}: {
+    htmlElement: HTMLDivElement;
     children?: ChildrenObj
 }): Div;
 function div(): Div
@@ -1505,11 +1546,11 @@ function button({byid, children}: {
     byid: string, children?: ChildrenObj
 }): Button;
 function button<Q extends QuerySelector>({query, children}: {
-    query: Q extends QuerySelector<NotTag<"button">> ? never : Q,
+    query: QueryOrPreciseTag<Q, "button">,
     children?: ChildrenObj
 }): Button;
-function button<E extends HTMLButtonElement>({htmlElement, children}: {
-    htmlElement: E;
+function button({htmlElement, children}: {
+    htmlElement: HTMLButtonElement;
     children?: ChildrenObj
 }): Button;
 function button(): Button
@@ -1528,7 +1569,7 @@ function input<TInputType extends InputType, Generic extends FormishHTMLElement 
 }): Input<TInputType, Generic>;
 function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({byid, children}: { byid: string, children?: ChildrenObj }): Input<TInputType, Generic>;
 function input<Q extends QuerySelector, TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({query, children}: {
-    query: Q extends QuerySelector<NotTag<"input">> ? never : Q,
+    query: QueryOrPreciseTag<Q, "input">,
     children?: ChildrenObj
 }): Input<TInputType, Generic>;
 function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({htmlElement, children}: {
@@ -1559,11 +1600,11 @@ function img({byid, children}: {
     byid: string, children?: ChildrenObj
 }): Img;
 function img<Q extends QuerySelector>({query, children}: {
-    query: Q extends QuerySelector<NotTag<"img">> ? never : Q,
+    query: QueryOrPreciseTag<Q, "img">,
     children?: ChildrenObj
 }): Img;
-function img<E extends HTMLImageElement>({htmlElement, children}: {
-    htmlElement: E;
+function img({htmlElement, children}: {
+    htmlElement: HTMLImageElement;
     children?: ChildrenObj
 }): Img;
 function img(): Img
@@ -1578,11 +1619,11 @@ function img(imgOpts?): Img {
 function paragraph({cls, setid, text}: { cls?: string, setid?: string, text?: string }): Paragraph;
 function paragraph({byid, children}: { byid: string, children?: ChildrenObj }): Paragraph;
 function paragraph<Q extends QuerySelector>({query, children}: {
-    query: Q extends QuerySelector<NotTag<"p">> ? never : Q,
+    query: QueryOrPreciseTag<Q, "p">,
     children?: ChildrenObj
 }): Paragraph;
-function paragraph<E extends HTMLParagraphElement>({htmlElement, children}: {
-    htmlElement: E;
+function paragraph({htmlElement, children}: {
+    htmlElement: HTMLParagraphElement;
     children?: ChildrenObj
 }): Paragraph;
 function paragraph(): Paragraph
@@ -1604,11 +1645,11 @@ function anchor({byid, children}: {
     byid: string, children?: ChildrenObj
 }): Anchor;
 function anchor<Q extends QuerySelector>({query, children}: {
-    query: Q extends QuerySelector<NotTag<"a">> ? never : Q,
+    query: QueryOrPreciseTag<Q, "a">,
     children?: ChildrenObj
 }): Anchor;
-function anchor<E extends HTMLAnchorElement>({htmlElement, children}: {
-    htmlElement: E;
+function anchor({htmlElement, children}: {
+    htmlElement: HTMLAnchorElement;
     children?: ChildrenObj
 }): Anchor;
 function anchor(): Anchor

@@ -735,7 +735,8 @@ class Span extends BetterHTMLElement {
     }
 }
 class Img extends BetterHTMLElement {
-    constructor({ setid, cls, src, byid, query, htmlElement, children }) {
+    constructor(imgOpts) {
+        const { cls, setid, src, byid, query, htmlElement, children } = imgOpts;
         if (htmlElement !== undefined) {
             super({ htmlElement, children });
         }
@@ -928,16 +929,11 @@ class TextInput extends Input {
         super(opts);
         const { placeholder, type } = opts;
         if (placeholder !== undefined) {
-            if (type) {
-                if (type === "number" && typeof placeholder !== "number") {
-                    console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring`);
-                }
-                else if (type === "text" && typeof placeholder !== "string") {
-                    console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring`);
-                }
-                else {
-                    this.placeholder(placeholder);
-                }
+            if (type && type !== typeof placeholder && !(type === "text" && typeof placeholder !== "string")) {
+                console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring placeholder option.`);
+            }
+            else {
+                this.placeholder(placeholder);
             }
         }
     }

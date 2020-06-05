@@ -34,6 +34,7 @@ type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventNa
  */
 type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
 type NotTag<T extends Tag> = Exclude<Tag, T>;
+type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<NotTag<T>>>;
 // /**
 //  *"a", "div", "gilad".
 //  *Tag2Element expects a tag and returns an HTMLElement.

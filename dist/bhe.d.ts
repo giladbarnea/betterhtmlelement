@@ -144,16 +144,25 @@ declare class Span extends BetterHTMLElement<HTMLSpanElement> {
         children?: ChildrenObj;
     });
 }
-declare class Img extends BetterHTMLElement<HTMLImageElement> {
-    constructor({ setid, cls, src, byid, query, htmlElement, children }: {
-        setid: any;
-        cls: any;
-        src: any;
-        byid: any;
-        query: any;
-        htmlElement: any;
-        children: any;
+declare class Img<Q extends QuerySelector = QuerySelector> extends BetterHTMLElement<HTMLImageElement> {
+    constructor({ cls, setid, src }: {
+        cls?: string;
+        setid?: string;
+        src?: string;
     });
+    constructor({ byid, children }: {
+        byid: string;
+        children?: ChildrenObj;
+    });
+    constructor({ query, children }: {
+        query: QueryOrPreciseTag<Q, "img">;
+        children?: ChildrenObj;
+    });
+    constructor({ htmlElement, children }: {
+        htmlElement: HTMLImageElement;
+        children?: ChildrenObj;
+    });
+    constructor();
     src(src: string): this;
     src(): string;
 }
@@ -195,24 +204,40 @@ declare abstract class Form<Generic extends FormishHTMLElement> extends BetterHT
     _onEventError(e: any): Promise<void>;
     _postEvent(): void;
 }
-declare class Button extends Form<HTMLButtonElement> {
-    constructor(buttonOpts: any);
-    click(_fn?: (_event: MouseEvent) => Promise<any>): this;
-}
-declare class Input<TInputType extends InputType, Generic extends FormishHTMLElement = HTMLInputElement, Q extends QuerySelector = QuerySelector> extends Form<Generic> {
-    type: TInputType;
-    constructor({ cls, setid, type, placeholder }: {
+declare class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonElement> {
+    constructor({ cls, setid, text }: {
         cls?: string;
         setid?: string;
-        type?: TInputType;
-        placeholder?: string;
+        text?: string;
     });
     constructor({ byid, children }: {
         byid: string;
         children?: ChildrenObj;
     });
     constructor({ query, children }: {
-        query: Exclude<Q, QuerySelector<NotTag<"input">>>;
+        query: QueryOrPreciseTag<Q, "button">;
+        children?: ChildrenObj;
+    });
+    constructor({ htmlElement, children }: {
+        htmlElement: HTMLButtonElement;
+        children?: ChildrenObj;
+    });
+    constructor();
+    click(_fn?: (_event: MouseEvent) => Promise<any>): this;
+}
+declare class Input<TInputType extends InputType, Generic extends FormishHTMLElement = HTMLInputElement, Q extends QuerySelector = QuerySelector> extends Form<Generic> {
+    type: TInputType;
+    constructor({ cls, setid, type }: {
+        cls?: string;
+        setid?: string;
+        type?: TInputType;
+    });
+    constructor({ byid, children }: {
+        byid: string;
+        children?: ChildrenObj;
+    });
+    constructor({ query, children }: {
+        query: QueryOrPreciseTag<Q, "input">;
         children?: ChildrenObj;
     });
     constructor({ htmlElement, children }: {
@@ -221,8 +246,25 @@ declare class Input<TInputType extends InputType, Generic extends FormishHTMLEle
     });
     constructor();
 }
-declare class TextInput extends Input<"text"> {
-    constructor(opts: any);
+declare class TextInput<Q extends QuerySelector = QuerySelector> extends Input<"text"> {
+    constructor({ cls, setid, placeholder }: {
+        cls?: string;
+        setid?: string;
+        placeholder?: string;
+    });
+    constructor({ byid, children }: {
+        byid: string;
+        children?: ChildrenObj;
+    });
+    constructor({ query, children }: {
+        query: QueryOrPreciseTag<Q, "input">;
+        children?: ChildrenObj;
+    });
+    constructor({ htmlElement, children }: {
+        htmlElement: HTMLInputElement;
+        children?: ChildrenObj;
+    });
+    constructor();
     placeholder(val: string): this;
     placeholder(): string;
     keydown(_fn: (_event: KeyboardEvent) => Promise<any>): this;
@@ -280,7 +322,7 @@ declare function span({ byid, children }: {
     children?: ChildrenObj;
 }): Span;
 declare function span<Q extends QuerySelector>({ query, children }: {
-    query: Q extends QuerySelector<NotTag<"span">> ? never : Q;
+    query: QueryOrPreciseTag<Q, "span">;
     children?: ChildrenObj;
 }): Span;
 declare function span<E extends HTMLSpanElement>({ htmlElement, children }: {
@@ -298,11 +340,11 @@ declare function div({ byid, children }: {
     children?: ChildrenObj;
 }): Div;
 declare function div<Q extends QuerySelector>({ query, children }: {
-    query: Q extends QuerySelector<NotTag<"div">> ? never : Q;
+    query: QueryOrPreciseTag<Q, "div">;
     children?: ChildrenObj;
 }): Div;
-declare function div<E extends HTMLDivElement>({ htmlElement, children }: {
-    htmlElement: E;
+declare function div({ htmlElement, children }: {
+    htmlElement: HTMLDivElement;
     children?: ChildrenObj;
 }): Div;
 declare function div(): Div;
@@ -316,11 +358,11 @@ declare function button({ byid, children }: {
     children?: ChildrenObj;
 }): Button;
 declare function button<Q extends QuerySelector>({ query, children }: {
-    query: Q extends QuerySelector<NotTag<"button">> ? never : Q;
+    query: QueryOrPreciseTag<Q, "button">;
     children?: ChildrenObj;
 }): Button;
-declare function button<E extends HTMLButtonElement>({ htmlElement, children }: {
-    htmlElement: E;
+declare function button({ htmlElement, children }: {
+    htmlElement: HTMLButtonElement;
     children?: ChildrenObj;
 }): Button;
 declare function button(): Button;
@@ -335,7 +377,7 @@ declare function input<TInputType extends InputType = InputType, Generic extends
     children?: ChildrenObj;
 }): Input<TInputType, Generic>;
 declare function input<Q extends QuerySelector, TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({ query, children }: {
-    query: Q extends QuerySelector<NotTag<"input">> ? never : Q;
+    query: QueryOrPreciseTag<Q, "input">;
     children?: ChildrenObj;
 }): Input<TInputType, Generic>;
 declare function input<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = HTMLInputElement>({ htmlElement, children }: {
@@ -354,11 +396,11 @@ declare function img({ byid, children }: {
     children?: ChildrenObj;
 }): Img;
 declare function img<Q extends QuerySelector>({ query, children }: {
-    query: Q extends QuerySelector<NotTag<"img">> ? never : Q;
+    query: QueryOrPreciseTag<Q, "img">;
     children?: ChildrenObj;
 }): Img;
-declare function img<E extends HTMLImageElement>({ htmlElement, children }: {
-    htmlElement: E;
+declare function img({ htmlElement, children }: {
+    htmlElement: HTMLImageElement;
     children?: ChildrenObj;
 }): Img;
 declare function img(): Img;
@@ -372,11 +414,11 @@ declare function paragraph({ byid, children }: {
     children?: ChildrenObj;
 }): Paragraph;
 declare function paragraph<Q extends QuerySelector>({ query, children }: {
-    query: Q extends QuerySelector<NotTag<"p">> ? never : Q;
+    query: QueryOrPreciseTag<Q, "p">;
     children?: ChildrenObj;
 }): Paragraph;
-declare function paragraph<E extends HTMLParagraphElement>({ htmlElement, children }: {
-    htmlElement: E;
+declare function paragraph({ htmlElement, children }: {
+    htmlElement: HTMLParagraphElement;
     children?: ChildrenObj;
 }): Paragraph;
 declare function paragraph(): Paragraph;
@@ -391,11 +433,11 @@ declare function anchor({ byid, children }: {
     children?: ChildrenObj;
 }): Anchor;
 declare function anchor<Q extends QuerySelector>({ query, children }: {
-    query: Q extends QuerySelector<NotTag<"a">> ? never : Q;
+    query: QueryOrPreciseTag<Q, "a">;
     children?: ChildrenObj;
 }): Anchor;
-declare function anchor<E extends HTMLAnchorElement>({ htmlElement, children }: {
-    htmlElement: E;
+declare function anchor({ htmlElement, children }: {
+    htmlElement: HTMLAnchorElement;
     children?: ChildrenObj;
 }): Anchor;
 declare function anchor(): Anchor;
@@ -414,6 +456,7 @@ declare type EventName2Function<E extends EventName = EventName> = {
 declare type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventName2Function>>;
 declare type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
 declare type NotTag<T extends Tag> = Exclude<Tag, T>;
+declare type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<NotTag<T>>>;
 declare type TagOrString = Tag | string;
 declare type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
 declare type Element2Tag<T> = T extends HTMLInputElement ? "input" : T extends HTMLAnchorElement ? "a" : T extends HTMLImageElement ? "img" : Tag;
