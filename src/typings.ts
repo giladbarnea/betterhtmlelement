@@ -95,10 +95,11 @@ type Element2Tag<T> =
         : T extends HTMLImageElement ? "img"
             : Tag
 
+
 // type MapValues<T> = { [K in keyof T]: T[K] }[keyof T];
+// type HTMLElements = MapValues<HTMLElementTagNameMap>;
 
 // HTMLDivElement, ...
-// type HTMLElements = MapValues<HTMLElementTagNameMap>;
 // type Filter<T> = T extends HTMLElements ? T : never;
 // type GenericFilter<T, U> = T extends U ? T : never;
 
@@ -116,12 +117,12 @@ type Enumerated<T> =
         : T extends TRecMap<(infer U)> ? [keyof T, U][]
         : T extends boolean ? never : any;
 type Returns<T> = (s: string) => T;
-type TReturnBoolean = (s: string) => boolean;
+// type TReturnBoolean = (s: string) => boolean;
 type AnyFunction = (...args: any[]) => any;
 
 
-type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
-type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
+// type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
+// type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
 
 
 // TODO: https://www.npmjs.com/package/csstype

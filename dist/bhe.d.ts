@@ -7,8 +7,6 @@ declare class MutuallyExclusiveArgs extends Error {
 declare class NotEnoughArgs extends Error {
     constructor(expected: number | number[], passedArgs: TMap<any> | TMap<any>[], relation?: 'each' | 'either');
 }
-declare const inp: Input<"checkbox", HTMLInputElement>;
-declare const Inp: Input<InputType, HTMLInputElement>;
 declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
 declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     protected _htmlElement: Generic;
@@ -201,9 +199,27 @@ declare class Button extends Form<HTMLButtonElement> {
     constructor(buttonOpts: any);
     click(_fn?: (_event: MouseEvent) => Promise<any>): this;
 }
-declare class Input<TInputType extends InputType, Generic extends FormishHTMLElement = HTMLInputElement> extends Form<Generic> {
+declare class Input<TInputType extends InputType, Generic extends FormishHTMLElement = HTMLInputElement, Q extends QuerySelector = QuerySelector> extends Form<Generic> {
     type: TInputType;
-    constructor(inputOpts: any);
+    constructor({ cls, setid, type, placeholder }: {
+        cls?: string;
+        setid?: string;
+        type?: TInputType;
+        placeholder?: string;
+    });
+    constructor({ byid, children }: {
+        byid: string;
+        children?: ChildrenObj;
+    });
+    constructor({ query, children }: {
+        query: Exclude<Q, QuerySelector<NotTag<"input">>>;
+        children?: ChildrenObj;
+    });
+    constructor({ htmlElement, children }: {
+        htmlElement: Generic;
+        children?: ChildrenObj;
+    });
+    constructor();
 }
 declare class TextInput extends Input<"text"> {
     constructor(opts: any);
@@ -404,10 +420,7 @@ declare type Element2Tag<T> = T extends HTMLInputElement ? "input" : T extends H
 declare type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>;
 declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TRecMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
 declare type Returns<T> = (s: string) => T;
-declare type TReturnBoolean = (s: string) => boolean;
 declare type AnyFunction = (...args: any[]) => any;
-declare type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
-declare type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
 declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
 declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 interface CssOptions extends PartialCssStyleDeclaration {

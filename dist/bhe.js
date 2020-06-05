@@ -63,8 +63,6 @@ class NotEnoughArgs extends Error {
         super(message);
     }
 }
-const inp = input({ type: "checkbox" });
-const Inp = new Input({ type: "checkbox" });
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 class BetterHTMLElement {
     constructor(elemOptions) {

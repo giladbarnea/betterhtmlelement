@@ -1169,18 +1169,31 @@ class Button extends Form<HTMLButtonElement> {
 
 }
 
-class Input<TInputType extends InputType, Generic extends FormishHTMLElement = HTMLInputElement> extends Form<Generic> {
-    // constructor({cls, setid, type, placeholder}: {
-    //     cls?: string, setid?: string,
-    //     type?: "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local",
-    //     placeholder?: string
-    // });
-    // constructor({byid, children}: { byid: string, children?: ChildrenObj });
-    // constructor({query, children}: { query: string, children?: ChildrenObj });
-    // constructor({htmlElement, children}: { htmlElement: HTMLInputElement; children?: ChildrenObj });
+class Input<TInputType extends InputType,
+    Generic extends FormishHTMLElement = HTMLInputElement,
+    Q extends QuerySelector = QuerySelector>
+    extends Form<Generic> {
     type: TInputType;
 
-    constructor(inputOpts) {
+    constructor({cls, setid, type, placeholder}: {
+        cls?: string, setid?: string,
+        type?: TInputType,
+        placeholder?: string
+    });
+
+    constructor({byid, children}: { byid: string, children?: ChildrenObj });
+    constructor({query, children}: {
+        query: Exclude<Q, QuerySelector<NotTag<"input">>>,
+        children?: ChildrenObj
+    });
+
+    constructor({htmlElement, children}: {
+        htmlElement: Generic;
+        children?: ChildrenObj
+    });
+
+    constructor();
+    constructor(inputOpts?) {
         const {setid, cls, type, byid, query, htmlElement, children} = inputOpts;
         // if (noValue(arguments[0])) {
         //     throw new NotEnoughArgs([1], arguments[0])
