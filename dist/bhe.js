@@ -366,7 +366,7 @@ class BetterHTMLElement {
     }
     insertAfter(node) {
         if (node instanceof BetterHTMLElement) {
-            node.e.after(this._htmlElement);
+            node._htmlElement.after(this._htmlElement);
         }
         else {
             node.after(this._htmlElement);
@@ -396,7 +396,7 @@ class BetterHTMLElement {
     }
     appendTo(node) {
         if (node instanceof BetterHTMLElement) {
-            node.e.append(this._htmlElement);
+            node._htmlElement.append(this._htmlElement);
         }
         else {
             node.append(this._htmlElement);
@@ -416,7 +416,7 @@ class BetterHTMLElement {
     }
     insertBefore(node) {
         if (node instanceof BetterHTMLElement) {
-            node.e.before(this._htmlElement);
+            node._htmlElement.before(this._htmlElement);
         }
         else {
             node.before(this._htmlElement);

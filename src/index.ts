@@ -361,7 +361,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
     insertAfter(node: BetterHTMLElement | HTMLElement): this {
         if (node instanceof BetterHTMLElement) {
-            node.e.after(this._htmlElement);
+            node._htmlElement.after(this._htmlElement);
         } else {
             node.after(this._htmlElement);
         }
@@ -394,7 +394,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
     appendTo(node: BetterHTMLElement | HTMLElement): this {
         if (node instanceof BetterHTMLElement) {
-            node.e.append(this._htmlElement);
+            node._htmlElement.append(this._htmlElement);
         } else {
             node.append(this._htmlElement);
         }
@@ -417,7 +417,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     /**Insert `this` just before a `BetterHTMLElement` or a vanilla `Node`s.*/
     insertBefore(node: BetterHTMLElement | HTMLElement): this {
         if (node instanceof BetterHTMLElement) {
-            node.e.before(this._htmlElement);
+            node._htmlElement.before(this._htmlElement);
         } else {
             node.before(this._htmlElement);
         }
