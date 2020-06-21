@@ -1,6 +1,6 @@
 function getArgsFullRepr(argsWithValues) {
     return Object.entries(argsWithValues)
-        .flatMap(([argname, argval]) => `${argname}: ${isObject(argval) ? `{${getArgsFullRepr(argval)}}` : argval}`)
+        .flatMap(([argname, argval]) => `${argname} (${typeof argval}): ${isObject(argval) ? `{${getArgsFullRepr(argval)}}` : argval}`)
         .join('", "');
 }
 function getArgsWithValues(passedArgs) {
@@ -63,14 +63,37 @@ class NotEnoughArgs extends Error {
         super(message);
     }
 }
+class BHETypeError extends TypeError {
+    constructor(options) {
+        let { faultyValue, expected, where, message } = options;
+        const repr = getArgsFullRepr(faultyValue);
+        let msg = '';
+        if (where) {
+            msg += `${where} | `;
+        }
+        msg += `Got ${repr}. `;
+        if (expected) {
+            if (isArray(expected)) {
+                expected = expected.join(" | ");
+            }
+            msg += ` Expected: ${expected}. `;
+        }
+        if (message) {
+            msg += `Details:\n${message}`;
+        }
+        super(msg);
+    }
+}
+class ValueError extends BHETypeError {
+}
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 class BetterHTMLElement {
     constructor(elemOptions) {
         this._isSvg = false;
         this._listeners = {};
         this._cachedChildren = {};
-        let { tag, cls, setid, htmlElement, byid, query, children } = elemOptions;
-        if ([byid, htmlElement, query, tag].filter(x => x !== undefined).length > 1) {
+        let { tag, cls, setid, html, htmlElement, byid, query, children } = elemOptions;
+        if ([tag, byid, query, htmlElement].filter(x => x !== undefined).length > 1) {
             throw new MutuallyExclusiveArgs({
                 byid, query, htmlElement, tag
             }, 'Either wrap an existing element by passing one of `byid` / `query` / `htmlElement`, or create a new one by passing `tag`.');
@@ -117,6 +140,9 @@ class BetterHTMLElement {
         }
         if (cls !== undefined) {
             this.class(cls);
+        }
+        if (html !== undefined) {
+            this.html(html);
         }
         if (children !== undefined) {
             this.cacheChildren(children);
@@ -171,9 +197,9 @@ class BetterHTMLElement {
         const proto = Object.getPrototypeOf(this);
         const protoStr = proto.constructor.toString();
         let str = protoStr.substring(6, protoStr.indexOf('{') - 1);
-        let tag = (_a = this.e) === null || _a === void 0 ? void 0 : _a.tagName;
+        let tag = (_a = this._htmlElement) === null || _a === void 0 ? void 0 : _a.tagName;
         let id = this.id();
-        let classList = (_b = this.e) === null || _b === void 0 ? void 0 : _b.classList;
+        let classList = (_b = this._htmlElement) === null || _b === void 0 ? void 0 : _b.classList;
         if (anyTruthy([id, classList, tag])) {
             str += ` (`;
             if (tag) {
@@ -218,39 +244,39 @@ class BetterHTMLElement {
     }
     html(html) {
         if (html === undefined) {
-            return this.e.innerHTML;
+            return this._htmlElement.innerHTML;
         }
         else {
-            this.e.innerHTML = html;
+            this._htmlElement.innerHTML = html;
             return this;
         }
     }
     text(txt) {
         if (txt === undefined) {
-            return this.e.innerText;
+            return this._htmlElement.innerText;
         }
         else {
-            this.e.innerText = txt;
+            this._htmlElement.innerText = txt;
             return this;
         }
     }
     id(id) {
         var _a;
         if (id === undefined) {
-            return (_a = this.e) === null || _a === void 0 ? void 0 : _a.id;
+            return (_a = this._htmlElement) === null || _a === void 0 ? void 0 : _a.id;
         }
         else {
-            this.e.id = id;
+            this._htmlElement.id = id;
             return this;
         }
     }
     css(css) {
         if (typeof css === 'string') {
-            return this.e.style[css];
+            return this._htmlElement.style[css];
         }
         else {
             for (let [styleAttr, styleVal] of enumerate(css)) {
-                this.e.style[styleAttr] = styleVal;
+                this._htmlElement.style[styleAttr] = styleVal;
             }
             return this;
         }
@@ -264,58 +290,58 @@ class BetterHTMLElement {
     }
     class(cls) {
         if (cls === undefined) {
-            return Array.from(this.e.classList);
+            return Array.from(this._htmlElement.classList);
         }
         else if (isFunction(cls)) {
-            return Array.from(this.e.classList).find(cls);
+            return Array.from(this._htmlElement.classList).find(cls);
         }
         else {
             if (this._isSvg) {
-                this.e.classList = [cls];
+                this._htmlElement.classList = [cls];
             }
             else {
-                this.e.className = cls;
+                this._htmlElement.className = cls;
             }
             return this;
         }
     }
     addClass(cls, ...clses) {
-        this.e.classList.add(cls);
+        this._htmlElement.classList.add(cls);
         for (let c of clses) {
-            this.e.classList.add(c);
+            this._htmlElement.classList.add(c);
         }
         return this;
     }
     removeClass(cls, ...clses) {
         if (isFunction(cls)) {
-            this.e.classList.remove(this.class(cls));
+            this._htmlElement.classList.remove(this.class(cls));
             for (let c of clses) {
-                this.e.classList.remove(this.class(c));
+                this._htmlElement.classList.remove(this.class(c));
             }
         }
         else {
-            this.e.classList.remove(cls);
+            this._htmlElement.classList.remove(cls);
             for (let c of clses) {
-                this.e.classList.remove(c);
+                this._htmlElement.classList.remove(c);
             }
         }
         return this;
     }
     replaceClass(oldToken, newToken) {
         if (isFunction(oldToken)) {
-            this.e.classList.replace(this.class(oldToken), newToken);
+            this._htmlElement.classList.replace(this.class(oldToken), newToken);
         }
         else {
-            this.e.classList.replace(oldToken, newToken);
+            this._htmlElement.classList.replace(oldToken, newToken);
         }
         return this;
     }
     toggleClass(cls, force) {
         if (isFunction(cls)) {
-            this.e.classList.toggle(this.class(cls), force);
+            this._htmlElement.classList.toggle(this.class(cls), force);
         }
         else {
-            this.e.classList.toggle(cls, force);
+            this._htmlElement.classList.toggle(cls, force);
         }
         return this;
     }
@@ -324,37 +350,37 @@ class BetterHTMLElement {
             return this.class(cls) !== undefined;
         }
         else {
-            return this.e.classList.contains(cls);
+            return this._htmlElement.classList.contains(cls);
         }
     }
     after(...nodes) {
         for (let node of nodes) {
             if (node instanceof BetterHTMLElement) {
-                this.e.after(node.e);
+                this._htmlElement.after(node.e);
             }
             else {
-                this.e.after(node);
+                this._htmlElement.after(node);
             }
         }
         return this;
     }
     insertAfter(node) {
         if (node instanceof BetterHTMLElement) {
-            node.e.after(this.e);
+            node.e.after(this._htmlElement);
         }
         else {
-            node.after(this.e);
+            node.after(this._htmlElement);
         }
         return this;
     }
     append(...nodes) {
         for (let node of nodes) {
             if (node instanceof BetterHTMLElement) {
-                this.e.append(node.e);
+                this._htmlElement.append(node.e);
             }
             else {
                 if (node instanceof Node) {
-                    this.e.append(node);
+                    this._htmlElement.append(node);
                 }
                 else {
                     if (Array.isArray(node)) {
@@ -370,35 +396,35 @@ class BetterHTMLElement {
     }
     appendTo(node) {
         if (node instanceof BetterHTMLElement) {
-            node.e.append(this.e);
+            node.e.append(this._htmlElement);
         }
         else {
-            node.append(this.e);
+            node.append(this._htmlElement);
         }
         return this;
     }
     before(...nodes) {
         for (let node of nodes) {
             if (node instanceof BetterHTMLElement) {
-                this.e.before(node.e);
+                this._htmlElement.before(node.e);
             }
             else {
-                this.e.before(node);
+                this._htmlElement.before(node);
             }
         }
         return this;
     }
     insertBefore(node) {
         if (node instanceof BetterHTMLElement) {
-            node.e.before(this.e);
+            node.e.before(this._htmlElement);
         }
         else {
-            node.before(this.e);
+            node.before(this._htmlElement);
         }
         return this;
     }
     replaceChild(newChild, oldChild) {
-        this.e.replaceChild(newChild, oldChild);
+        this._htmlElement.replaceChild(newChild, oldChild);
         return this;
     }
     cacheAppend(keyChildPairs) {
@@ -422,7 +448,7 @@ class BetterHTMLElement {
         return BetterHTMLElement;
     }
     child(selector, bheCls) {
-        const htmlElement = this.e.querySelector(selector);
+        const htmlElement = this._htmlElement.querySelector(selector);
         if (htmlElement === null) {
             console.warn(`${this}.child(${selector}): no child. returning undefined`);
             return undefined;
@@ -440,17 +466,17 @@ class BetterHTMLElement {
         let childrenVanilla;
         let childrenCollection;
         if (selector === undefined) {
-            childrenCollection = this.e.children;
+            childrenCollection = this._htmlElement.children;
         }
         else {
-            childrenCollection = this.e.querySelectorAll(selector);
+            childrenCollection = this._htmlElement.querySelectorAll(selector);
         }
         childrenVanilla = Array.from(childrenCollection);
         return childrenVanilla.map(this._cls().wrapWithBHE);
     }
     clone(deep) {
         console.warn(`${this}.clone() doesnt return a matching BHE subtype, but a regular BHE`);
-        return new BetterHTMLElement({ htmlElement: this.e.cloneNode(deep) });
+        return new BetterHTMLElement({ htmlElement: this._htmlElement.cloneNode(deep) });
     }
     cacheChildren(childrenObj) {
         for (let [key, value] of enumerate(childrenObj)) {
@@ -484,7 +510,7 @@ class BetterHTMLElement {
                 let match = /<(\w+)>$/.exec(value);
                 if (match) {
                     let tagName = match[1];
-                    const htmlElements = [...this.e.getElementsByTagName(tagName)];
+                    const htmlElements = [...this._htmlElement.getElementsByTagName(tagName)];
                     let bhes = [];
                     for (let htmlElement of htmlElements) {
                         bhes.push(this._cls().wrapWithBHE(htmlElement));
@@ -502,13 +528,13 @@ class BetterHTMLElement {
         return this;
     }
     empty() {
-        while (this.e.firstChild) {
-            this.e.removeChild(this.e.firstChild);
+        while (this._htmlElement.firstChild) {
+            this._htmlElement.removeChild(this._htmlElement.firstChild);
         }
         return this;
     }
     remove() {
-        this.e.remove();
+        this._htmlElement.remove();
         return this;
     }
     on(evTypeFnPairs, options) {
@@ -516,13 +542,13 @@ class BetterHTMLElement {
             const _f = function _f(evt) {
                 evFn(evt);
             };
-            this.e.addEventListener(evType, _f, options);
+            this._htmlElement.addEventListener(evType, _f, options);
             this._listeners[evType] = _f;
         }
         return this;
     }
     touchstart(fn, options) {
-        this.e.addEventListener('touchstart', function _f(ev) {
+        this._htmlElement.addEventListener('touchstart', function _f(ev) {
             ev.preventDefault();
             fn(ev);
             if (options && options.once) {
@@ -546,13 +572,13 @@ class BetterHTMLElement {
                 this.removeEventListener(action, _f);
             }
         };
-        this.e.addEventListener(action, _f, options);
+        this._htmlElement.addEventListener(action, _f, options);
         this._listeners.pointerdown = _f;
         return this;
     }
     click(fn, options) {
         if (fn === undefined) {
-            this.e.click();
+            this._htmlElement.click();
             return this;
         }
         else {
@@ -561,7 +587,7 @@ class BetterHTMLElement {
     }
     blur(fn, options) {
         if (fn === undefined) {
-            this.e.blur();
+            this._htmlElement.blur();
             return this;
         }
         else {
@@ -570,7 +596,7 @@ class BetterHTMLElement {
     }
     focus(fn, options) {
         if (fn === undefined) {
-            this.e.focus();
+            this._htmlElement.focus();
             return this;
         }
         else {
@@ -590,7 +616,7 @@ class BetterHTMLElement {
                 'bubbles': true,
                 'cancelable': true
             });
-            this.e.dispatchEvent(dblclick);
+            this._htmlElement.dispatchEvent(dblclick);
             return this;
         }
         else {
@@ -604,7 +630,7 @@ class BetterHTMLElement {
                 'bubbles': true,
                 'cancelable': true
             });
-            this.e.dispatchEvent(mouseenter);
+            this._htmlElement.dispatchEvent(mouseenter);
             return this;
         }
         else {
@@ -621,7 +647,7 @@ class BetterHTMLElement {
         return this.on({ mouseover: fn });
     }
     off(event) {
-        this.e.removeEventListener(event, this._listeners[event]);
+        this._htmlElement.removeEventListener(event, this._listeners[event]);
         return this;
     }
     allOff() {
@@ -633,11 +659,11 @@ class BetterHTMLElement {
     }
     attr(attrValPairs) {
         if (typeof attrValPairs === 'string') {
-            return this.e.getAttribute(attrValPairs);
+            return this._htmlElement.getAttribute(attrValPairs);
         }
         else {
             for (let [attr, val] of enumerate(attrValPairs)) {
-                this.e.setAttribute(attr, val);
+                this._htmlElement.setAttribute(attr, val);
             }
             return this;
         }
@@ -645,10 +671,10 @@ class BetterHTMLElement {
     removeAttr(qualifiedName, ...qualifiedNames) {
         let _removeAttribute;
         if (this._isSvg) {
-            _removeAttribute = (qualifiedName) => this.e.removeAttributeNS(SVG_NS_URI, qualifiedName);
+            _removeAttribute = (qualifiedName) => this._htmlElement.removeAttributeNS(SVG_NS_URI, qualifiedName);
         }
         else {
-            _removeAttribute = (qualifiedName) => this.e.removeAttribute(qualifiedName);
+            _removeAttribute = (qualifiedName) => this._htmlElement.removeAttribute(qualifiedName);
         }
         _removeAttribute(qualifiedName);
         for (let qn of qualifiedNames) {
@@ -657,7 +683,7 @@ class BetterHTMLElement {
         return this;
     }
     getdata(key, parse = true) {
-        const data = this.e.getAttribute(`data-${key}`);
+        const data = this._htmlElement.getAttribute(`data-${key}`);
         if (parse === true) {
             return JSON.parse(data);
         }
@@ -676,7 +702,10 @@ class BetterHTMLElement {
 }
 class Div extends BetterHTMLElement {
     constructor(divOpts) {
-        const { setid, cls, text, byid, query, htmlElement, children } = divOpts;
+        const { setid, cls, text, html, byid, query, htmlElement, children } = divOpts;
+        if (text !== undefined && html !== undefined) {
+            throw new MutuallyExclusiveArgs({ text, html });
+        }
         if (htmlElement !== undefined) {
             super({ htmlElement, children });
         }
@@ -687,16 +716,19 @@ class Div extends BetterHTMLElement {
             super({ query, children });
         }
         else {
-            super({ tag: "div", setid, cls });
-        }
-        if (text !== undefined) {
-            this.text(text);
+            super({ tag: "div", setid, cls, html });
+            if (text !== undefined) {
+                this.text(text);
+            }
         }
     }
 }
 class Paragraph extends BetterHTMLElement {
     constructor(pOpts) {
-        const { setid, cls, text, byid, query, htmlElement, children } = pOpts;
+        const { setid, cls, text, html, byid, query, htmlElement, children } = pOpts;
+        if (text !== undefined && html !== undefined) {
+            throw new MutuallyExclusiveArgs({ text, html });
+        }
         if (htmlElement !== undefined) {
             super({ htmlElement, children });
         }
@@ -707,16 +739,19 @@ class Paragraph extends BetterHTMLElement {
             super({ query, children });
         }
         else {
-            super({ tag: "p", setid, cls });
-        }
-        if (text !== undefined) {
-            this.text(text);
+            super({ tag: "p", setid, cls, html });
+            if (text !== undefined) {
+                this.text(text);
+            }
         }
     }
 }
 class Span extends BetterHTMLElement {
     constructor(spanOpts) {
-        const { setid, cls, text, byid, query, htmlElement, children } = spanOpts;
+        const { setid, cls, text, html, byid, query, htmlElement, children } = spanOpts;
+        if (text !== undefined && html !== undefined) {
+            throw new MutuallyExclusiveArgs({ text, html });
+        }
         if (htmlElement !== undefined) {
             super({ htmlElement, children });
         }
@@ -727,10 +762,10 @@ class Span extends BetterHTMLElement {
             super({ query, children });
         }
         else {
-            super({ tag: "span", setid, cls });
-        }
-        if (text !== undefined) {
-            this.text(text);
+            super({ tag: "span", setid, cls, html });
+            if (text !== undefined) {
+                this.text(text);
+            }
         }
     }
 }
@@ -748,9 +783,9 @@ class Img extends BetterHTMLElement {
         }
         else {
             super({ tag: "img", setid, cls });
-        }
-        if (src !== undefined) {
-            this.src(src);
+            if (src !== undefined) {
+                this.src(src);
+            }
         }
     }
     src(src) {
@@ -764,7 +799,10 @@ class Img extends BetterHTMLElement {
     }
 }
 class Anchor extends BetterHTMLElement {
-    constructor({ setid, cls, text, href, target, byid, query, htmlElement, children }) {
+    constructor({ setid, cls, text, html, href, target, byid, query, htmlElement, children }) {
+        if (text !== undefined && html !== undefined) {
+            throw new MutuallyExclusiveArgs({ text, html });
+        }
         if (htmlElement !== undefined) {
             super({ htmlElement, children });
         }
@@ -775,16 +813,16 @@ class Anchor extends BetterHTMLElement {
             super({ query, children });
         }
         else {
-            super({ tag: "a", setid, cls });
-        }
-        if (text !== undefined) {
-            this.text(text);
-        }
-        if (href !== undefined) {
-            this.href(href);
-        }
-        if (target !== undefined) {
-            this.target(target);
+            super({ tag: "a", setid, cls, html });
+            if (text !== undefined) {
+                this.text(text);
+            }
+            if (href !== undefined) {
+                this.href(href);
+            }
+            if (target !== undefined) {
+                this.target(target);
+            }
         }
     }
     href(val) {
@@ -806,18 +844,22 @@ class Anchor extends BetterHTMLElement {
 }
 class Form extends BetterHTMLElement {
     get disabled() {
-        return this.e.disabled;
+        return this._htmlElement.disabled;
     }
     disable() {
-        this.e.disabled = true;
+        this._htmlElement.disabled = true;
         return this;
     }
     enable() {
-        this.e.disabled = false;
+        this._htmlElement.disabled = false;
         return this;
     }
     toggleEnabled(on) {
-        if (on) {
+        if (isObject(on)) {
+            this._softErr(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleEnabled()" }));
+            return this;
+        }
+        if (bool(on)) {
             return this.enable();
         }
         else {
@@ -825,11 +867,16 @@ class Form extends BetterHTMLElement {
         }
     }
     value(val) {
+        var _a;
         if (val === undefined) {
-            return bool(this.e.value) ? this.e.value : undefined;
+            return (_a = this._htmlElement.value) !== null && _a !== void 0 ? _a : undefined;
         }
         else {
-            this.e.value = val;
+            if (isObject(val)) {
+                this._softErr(new BHETypeError({ faultyValue: { val }, expected: "primitive", where: "value()" }));
+                return this;
+            }
+            this._htmlElement.value = val;
             return this;
         }
     }
@@ -846,30 +893,57 @@ class Form extends BetterHTMLElement {
     clear() {
         return this.value(null);
     }
-    _preEvent() {
-        this.disable();
+    _beforeEvent(thisArg) {
+        let self = this === undefined ? thisArg : this;
+        return self.disable();
     }
-    async _onEventSuccess(ret) {
-        if (ret instanceof Error && this.flashBad) {
-            await this.flashBad();
+    _onEventSuccess(ret, thisArg) {
+        let self = this === undefined ? thisArg : this;
+        if (self.flashGood) {
+            self.flashGood();
         }
-        else if (this.flashGood) {
-            this.flashGood();
-        }
+        return self;
     }
-    async _onEventError(e) {
-        console.error(e);
-        if (this.flashBad) {
-            await this.flashBad();
+    async _softErr(e, thisArg) {
+        console.error(`${e.name}:\n${e.message}`);
+        let self = this === undefined ? thisArg : this;
+        if (self.flashBad) {
+            await self.flashBad();
         }
+        return self;
     }
-    _postEvent() {
-        this.enable();
+    async _softWarn(e, thisArg) {
+        console.warn(`${e.name}:\n${e.message}`);
+        let self = this === undefined ? thisArg : this;
+        if (self.flashBad) {
+            await self.flashBad();
+        }
+        return self;
+    }
+    _afterEvent(thisArg) {
+        let self = this === undefined ? thisArg : this;
+        return self.enable();
+    }
+    async _wrapFnInEventHooks(asyncFn, event) {
+        try {
+            this._beforeEvent();
+            const ret = await asyncFn(event);
+            await this._onEventSuccess(ret);
+        }
+        catch (e) {
+            await this._softErr(e);
+        }
+        finally {
+            this._afterEvent();
+        }
     }
 }
 class Button extends Form {
     constructor(buttonOpts) {
-        const { setid, cls, text, byid, query, htmlElement, children } = buttonOpts;
+        const { setid, cls, text, html, byid, query, htmlElement, children } = buttonOpts;
+        if (text !== undefined && html !== undefined) {
+            throw new MutuallyExclusiveArgs({ text, html });
+        }
         if (htmlElement !== undefined) {
             super({ htmlElement, children });
         }
@@ -880,25 +954,15 @@ class Button extends Form {
             super({ query, children });
         }
         else {
-            super({ tag: "button", setid, cls });
-        }
-        if (text !== undefined) {
-            this.text(text);
+            super({ tag: "button", setid, cls, html });
+            if (text !== undefined) {
+                this.text(text);
+            }
         }
     }
     click(_fn) {
         const fn = async (event) => {
-            try {
-                this._preEvent();
-                const ret = await _fn(event);
-                await this._onEventSuccess(ret);
-            }
-            catch (e) {
-                await this._onEventError(e);
-            }
-            finally {
-                this._postEvent();
-            }
+            await this._wrapFnInEventHooks(_fn, event);
         };
         return super.click(fn);
     }
@@ -917,9 +981,9 @@ class Input extends Form {
         }
         else {
             super({ tag: "input", cls, setid });
-        }
-        if (type !== undefined) {
-            this._htmlElement.type = type;
+            if (type !== undefined) {
+                this._htmlElement.type = type;
+            }
         }
     }
 }
@@ -927,22 +991,17 @@ class TextInput extends Input {
     constructor(opts) {
         opts.type = 'text';
         super(opts);
-        const { placeholder, type } = opts;
+        const { placeholder } = opts;
         if (placeholder !== undefined) {
-            if (type && type !== typeof placeholder && !(type === "text" && typeof placeholder !== "string")) {
-                console.warn(`placeholder type is ${typeof placeholder} but input type is ${type}. ignoring placeholder option.`);
-            }
-            else {
-                this.placeholder(placeholder);
-            }
+            this.placeholder(placeholder);
         }
     }
     placeholder(val) {
         if (val === undefined) {
-            return this.e.placeholder;
+            return this._htmlElement.placeholder;
         }
         else {
-            this.e.placeholder = val;
+            this._htmlElement.placeholder = val;
             return this;
         }
     }
@@ -951,23 +1010,12 @@ class TextInput extends Input {
             if (event.key !== 'Enter') {
                 return;
             }
-            if (!bool(this.value())) {
-                if (this.flashBad) {
-                    await this.flashBad();
-                }
+            let val = this.value();
+            if (!bool(val)) {
+                this._softWarn(new ValueError({ faultyValue: { val }, expected: "truthy", where: "keydown()" }));
                 return;
             }
-            try {
-                this._preEvent();
-                const ret = await _fn(event);
-                await this._onEventSuccess(ret);
-            }
-            catch (e) {
-                await this._onEventError(e);
-            }
-            finally {
-                this._postEvent();
-            }
+            await this._wrapFnInEventHooks(_fn, event);
         };
         return super.keydown(fn);
     }
@@ -975,17 +1023,7 @@ class TextInput extends Input {
 class Changable extends Input {
     change(_fn) {
         const fn = async (event) => {
-            try {
-                this._preEvent();
-                const ret = await _fn(event);
-                await this._onEventSuccess(ret);
-            }
-            catch (e) {
-                await this._onEventError(e);
-            }
-            finally {
-                this._postEvent();
-            }
+            await this._wrapFnInEventHooks(_fn, event);
         };
         return super.change(fn);
     }
@@ -996,17 +1034,21 @@ class CheckboxInput extends Changable {
         super(opts);
     }
     get checked() {
-        return this.e.checked;
+        return this._htmlElement.checked;
     }
     check() {
-        this.e.checked = true;
+        this._htmlElement.checked = true;
         return this;
     }
     uncheck() {
-        this.e.checked = false;
+        this._htmlElement.checked = false;
         return this;
     }
     toggleChecked(on) {
+        if (isObject(on)) {
+            this._softErr(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleChecked()" }));
+            return this;
+        }
         if (bool(on)) {
             return this.check();
         }
@@ -1015,19 +1057,24 @@ class CheckboxInput extends Changable {
         }
     }
     value(val) {
+        var _a;
         if (val === undefined) {
-            return this.checked;
+            return (_a = this._htmlElement.checked) !== null && _a !== void 0 ? _a : undefined;
         }
         else {
-            return this.toggleChecked(val);
+            if (isObject(val)) {
+                this._softErr(new BHETypeError({ faultyValue: { val }, expected: "primitive", where: "value()" }));
+            }
+            this._htmlElement.checked = val;
+            return this;
         }
     }
     clear() {
         return this.uncheck();
     }
-    async _onEventError(e) {
+    async _softErr(e, thisArg) {
         this.toggleChecked(!this.checked);
-        await super._onEventError(e);
+        return super._softErr(e);
     }
 }
 class Select extends Changable {
@@ -1035,17 +1082,21 @@ class Select extends Changable {
         super(selectOpts);
     }
     get selectedIndex() {
-        return this.e.selectedIndex;
+        return this._htmlElement.selectedIndex;
     }
     set selectedIndex(val) {
-        this.e.selectedIndex = val;
+        this._htmlElement.selectedIndex = val;
     }
     get selected() {
         return this.item(this.selectedIndex);
     }
     set selected(val) {
         if (val instanceof HTMLOptionElement) {
-            this.selectedIndex = this.options.findIndex(o => o === val);
+            let index = this.options.findIndex(o => o === val);
+            if (index === -1) {
+                this._softWarn(new ValueError({ faultyValue: { val }, where: "set selected(val)", message: `no option equals passed val` }));
+            }
+            this.selectedIndex = index;
         }
         else if (typeof val === 'number') {
             this.selectedIndex = val;
@@ -1055,14 +1106,15 @@ class Select extends Changable {
         }
     }
     get options() {
-        return [...this.e.options];
+        return [...this._htmlElement.options];
     }
     item(index) {
-        return this.e.item(index);
+        return this._htmlElement.item(index);
     }
     value(val) {
+        var _a;
         if (val === undefined) {
-            return this.selected.value;
+            return (_a = this.selected.value) !== null && _a !== void 0 ? _a : undefined;
         }
         else {
             this.selected = val;
@@ -1230,6 +1282,27 @@ function allUndefined(obj) {
         throw new TypeError(`expected array or obj, got: ${typeof obj}`);
     }
     return array.filter(x => x !== undefined).length === 0;
+}
+async function waitUntil(cond, checkInterval = 20, timeout = Infinity) {
+    if (checkInterval <= 0) {
+        throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
+    }
+    if (checkInterval > timeout) {
+        throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). checkInterval has to be lower than timeout.`);
+    }
+    const loops = timeout / checkInterval;
+    if (loops <= 1) {
+        console.warn(`loops <= 1, you probably didn't want this to happen`);
+    }
+    let count = 0;
+    while (count < loops) {
+        if (cond()) {
+            return true;
+        }
+        await wait(checkInterval);
+        count++;
+    }
+    return false;
 }
 function isBHE(bhe, bheSubType) {
     return (bhe instanceof bheSubType);

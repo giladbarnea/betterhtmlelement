@@ -119,9 +119,9 @@ type Enumerated<T> =
         : T extends boolean ? never : any;
 type Returns<T> = (s: string) => T;
 // type TReturnBoolean = (s: string) => boolean;
-type AnyFunction = (...args: any[]) => any;
 
 
+type Awaited<T> = T extends Promise<infer U> ? U : T;
 // type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
 // type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
 

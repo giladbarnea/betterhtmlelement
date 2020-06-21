@@ -1,7 +1,7 @@
 function getArgsFullRepr(argsWithValues: TMap<any>): string {
     return Object.entries(argsWithValues)
         // @ts-ignore
-        .flatMap(([argname, argval]) => `${argname}: ${isObject(argval) ? `{${getArgsFullRepr(argval)}}` : argval}`)
+        .flatMap(([argname, argval]) => `${argname} (${typeof argval}): ${isObject(argval) ? `{${getArgsFullRepr(argval)}}` : argval}`)
         .join('", "');
 }
 
@@ -24,7 +24,13 @@ function summary(argset: TMap<any>): string {
 
 /**Prints what was expected and what was actually passed.*/
 class MutuallyExclusiveArgs extends Error {
-    constructor(passedArgs: TMap<any> | TMap<any>[], details?: string) {
+    /**@param passedArgs - key:value pairs of argName:argValue, where each arg is mutually exclusive with all others*/
+    constructor(passedArgs: TMap<any>, details?: string)
+    /**@param passedArgs - Array of mutually exclusive sets of args, where an arg from one set means there can't be any args from the other sets.
+     * Each set is key:value pairs of argName:argValue.*/
+    constructor(passedArgs: TMap<any>[], details?: string)
+    /**Either a argName:argValue map or an array of such maps, to indicate mutually exclusive sets of args.*/
+    constructor(passedArgs, details?: string) {
         let message = `Didn't receive exactly one arg`;
         if (isArray(passedArgs)) {
             message += ` from the following mutually exclusive sets of args.\n`;
@@ -71,4 +77,31 @@ class NotEnoughArgs extends Error {
 
         super(message);
     }
+}
+
+class BHETypeError extends TypeError {
+
+    constructor(options: { faultyValue: TMap<any>, expected?: any | any[], where?: string, message?: string }) {
+        let { faultyValue, expected, where, message } = options;
+        const repr = getArgsFullRepr(faultyValue);
+        let msg = '';
+        if (where) {
+            msg += `${where} | `
+        }
+        msg += `Got ${repr}. `;
+        if (expected) {
+            if (isArray(expected)) {
+                expected = expected.join(" | ")
+            }
+            msg += ` Expected: ${expected}. `
+        }
+        if (message) {
+            msg += `Details:\n${message}`
+        }
+        super(msg);
+    }
+}
+
+class ValueError extends BHETypeError {
+
 }

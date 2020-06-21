@@ -2,10 +2,21 @@ declare function getArgsFullRepr(argsWithValues: TMap<any>): string;
 declare function getArgsWithValues(passedArgs: TMap<any>): TMap<any>;
 declare function summary(argset: TMap<any>): string;
 declare class MutuallyExclusiveArgs extends Error {
-    constructor(passedArgs: TMap<any> | TMap<any>[], details?: string);
+    constructor(passedArgs: TMap<any>, details?: string);
+    constructor(passedArgs: TMap<any>[], details?: string);
 }
 declare class NotEnoughArgs extends Error {
     constructor(expected: number | number[], passedArgs: TMap<any> | TMap<any>[], relation?: 'each' | 'either');
+}
+declare class BHETypeError extends TypeError {
+    constructor(options: {
+        faultyValue: TMap<any>;
+        expected?: any | any[];
+        where?: string;
+        message?: string;
+    });
+}
+declare class ValueError extends BHETypeError {
 }
 declare const SVG_NS_URI = "http://www.w3.org/2000/svg";
 declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
@@ -13,10 +24,11 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     private readonly _isSvg;
     private readonly _listeners;
     private _cachedChildren;
-    constructor({ tag, cls, setid }: {
+    constructor({ tag, cls, setid, html }: {
         tag: Element2Tag<Generic>;
         cls?: string;
         setid?: string;
+        html?: string;
     });
     constructor({ byid, children }: {
         byid: string;
@@ -119,8 +131,29 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     getdata(key: string, parse?: boolean): string | TMap<string>;
     private _cache;
 }
-declare class Div extends BetterHTMLElement<HTMLDivElement> {
-    constructor(divOpts: any);
+declare class Div<Q extends QuerySelector = QuerySelector> extends BetterHTMLElement<HTMLDivElement> {
+    constructor({ cls, setid, text }: {
+        cls?: string;
+        setid?: string;
+        text?: string;
+    });
+    constructor({ cls, setid, html }: {
+        cls?: string;
+        setid?: string;
+        html?: string;
+    });
+    constructor({ byid, children }: {
+        byid: string;
+        children?: ChildrenObj;
+    });
+    constructor({ query, children }: {
+        query: QueryOrPreciseTag<Q, "div">;
+        children?: ChildrenObj;
+    });
+    constructor({ htmlElement, children }: {
+        htmlElement: HTMLDivElement;
+        children?: ChildrenObj;
+    });
 }
 declare class Paragraph extends BetterHTMLElement<HTMLParagraphElement> {
     constructor(pOpts: any);
@@ -130,6 +163,11 @@ declare class Span extends BetterHTMLElement<HTMLSpanElement> {
         cls?: string;
         setid?: string;
         text?: string;
+    });
+    constructor({ cls, setid, html }: {
+        cls?: string;
+        setid?: string;
+        html?: string;
     });
     constructor({ byid, children }: {
         byid: string;
@@ -167,10 +205,11 @@ declare class Img<Q extends QuerySelector = QuerySelector> extends BetterHTMLEle
     src(): string;
 }
 declare class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
-    constructor({ setid, cls, text, href, target, byid, query, htmlElement, children }: {
+    constructor({ setid, cls, text, html, href, target, byid, query, htmlElement, children }: {
         setid: any;
         cls: any;
         text: any;
+        html: any;
         href: any;
         target: any;
         byid: any;
@@ -193,22 +232,32 @@ declare abstract class Form<Generic extends FormishHTMLElement> extends BetterHT
     get disabled(): boolean;
     disable(): this;
     enable(): this;
+    toggleEnabled(on: null | undefined | 0): this;
     toggleEnabled(on: boolean): this;
     value(): any;
+    value(val: undefined): any;
+    value(val: null | ''): this;
     value(val: any): this;
     flashBad(): Promise<void>;
     flashGood(): Promise<void>;
     clear(): this;
-    _preEvent(): void;
-    _onEventSuccess(ret: any): Promise<void>;
-    _onEventError(e: any): Promise<void>;
-    _postEvent(): void;
+    _beforeEvent(thisArg?: this): this;
+    _onEventSuccess(ret: any, thisArg?: this): this;
+    _softErr(e: Error, thisArg?: this): Promise<this>;
+    _softWarn(e: Error, thisArg?: this): Promise<this>;
+    _afterEvent(thisArg?: this): this;
+    protected _wrapFnInEventHooks<F extends (event: Event) => Promise<any>>(asyncFn: F, event: Event): Promise<void>;
 }
 declare class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonElement> {
     constructor({ cls, setid, text }: {
         cls?: string;
         setid?: string;
         text?: string;
+    });
+    constructor({ cls, setid, html }: {
+        cls?: string;
+        setid?: string;
+        html?: string;
     });
     constructor({ byid, children }: {
         byid: string;
@@ -277,11 +326,14 @@ declare class CheckboxInput extends Changable<"checkbox", HTMLInputElement> {
     get checked(): boolean;
     check(): this;
     uncheck(): this;
+    toggleChecked(on: null | undefined | 0): this;
     toggleChecked(on: boolean): this;
-    value(): boolean;
+    value(): any;
+    value(val: undefined): any;
+    value(val: null | ''): this;
     value(val: any): this;
     clear(): this;
-    _onEventError(e: any): Promise<void>;
+    _softErr(e: Error, thisArg?: this): Promise<this>;
 }
 declare class Select extends Changable<undefined, HTMLSelectElement> {
     constructor(selectOpts: any);
@@ -290,15 +342,18 @@ declare class Select extends Changable<undefined, HTMLSelectElement> {
     get selected(): HTMLOptionElement;
     set selected(val: HTMLOptionElement);
     get options(): HTMLOptionElement[];
-    item(index: any): HTMLOptionElement;
-    value(): string;
-    value(val: any): this;
+    item(index: number): HTMLOptionElement;
+    value(): any;
+    value(val: undefined): any;
+    value(val: null | '' | boolean): this;
+    value(val: HTMLOptionElement | number | any): this;
     clear(): this;
 }
-declare function elem<T extends Tag>({ tag, cls, setid }: {
+declare function elem<T extends Tag>({ tag, cls, setid, html }: {
     tag: T;
     cls?: string;
     setid?: string;
+    html?: string;
 }): T extends Tag ? BetterHTMLElement<HTMLElementTagNameMap[T]> : never;
 declare function elem({ byid, children }: {
     byid: string;
@@ -316,6 +371,11 @@ declare function span({ cls, setid, text }: {
     cls?: string;
     setid?: string;
     text?: string;
+}): Span;
+declare function span({ cls, setid, html }: {
+    cls?: string;
+    setid?: string;
+    html?: string;
 }): Span;
 declare function span({ byid, children }: {
     byid: string;
@@ -335,6 +395,11 @@ declare function div({ cls, setid, text }: {
     setid?: string;
     text?: string;
 }): Div;
+declare function div({ cls, setid, html }: {
+    cls?: string;
+    setid?: string;
+    html?: string;
+}): Div;
 declare function div({ byid, children }: {
     byid: string;
     children?: ChildrenObj;
@@ -352,6 +417,11 @@ declare function button({ cls, setid, text }: {
     cls?: string;
     setid?: string;
     text?: string;
+}): Button;
+declare function button({ cls, setid, html }: {
+    cls?: string;
+    setid?: string;
+    html?: string;
 }): Button;
 declare function button({ byid, children }: {
     byid: string;
@@ -409,6 +479,11 @@ declare function paragraph({ cls, setid, text }: {
     setid?: string;
     text?: string;
 }): Paragraph;
+declare function paragraph({ cls, setid, html }: {
+    cls?: string;
+    setid?: string;
+    html?: string;
+}): Paragraph;
 declare function paragraph({ byid, children }: {
     byid: string;
     children?: ChildrenObj;
@@ -422,11 +497,19 @@ declare function paragraph({ htmlElement, children }: {
     children?: ChildrenObj;
 }): Paragraph;
 declare function paragraph(): Paragraph;
-declare function anchor({ cls, setid, href, target }: {
+declare function anchor({ cls, setid, href, target, text }: {
     cls?: string;
     setid?: string;
     href?: string;
     target?: string;
+    text?: string;
+}): Anchor;
+declare function anchor({ cls, setid, href, target, html }: {
+    cls?: string;
+    setid?: string;
+    href?: string;
+    target?: string;
+    html?: string;
 }): Anchor;
 declare function anchor({ byid, children }: {
     byid: string;
@@ -463,7 +546,7 @@ declare type Element2Tag<T> = T extends HTMLInputElement ? "input" : T extends H
 declare type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>;
 declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TRecMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
 declare type Returns<T> = (s: string) => T;
-declare type AnyFunction = (...args: any[]) => any;
+declare type Awaited<T> = T extends Promise<infer U> ? U : T;
 declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
 declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 interface CssOptions extends PartialCssStyleDeclaration {
@@ -525,11 +608,12 @@ declare function bool(val: any): boolean;
 declare function isArray<T>(obj: any): obj is Array<T>;
 declare function isEmptyArr(collection: any): boolean;
 declare function isEmptyObj(obj: any): boolean;
-declare function isFunction<T>(fn: T): fn is T;
-declare function isFunction(fn: AnyFunction): fn is AnyFunction;
+declare function isFunction<F>(fn: F): fn is F;
+declare function isFunction(fn: (...args: any[]) => any): fn is (...args: any[]) => any;
 declare function anyDefined(obj: any): boolean;
 declare function anyTruthy(obj: any): boolean;
 declare function allUndefined(obj: any): boolean;
+declare function waitUntil(cond: () => boolean, checkInterval?: number, timeout?: number): Promise<boolean>;
 declare function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType: any): bhe is T;
 declare function isType<T>(arg: T): arg is T;
 declare function isObject(obj: any): boolean;
