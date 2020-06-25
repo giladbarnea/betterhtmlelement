@@ -241,11 +241,16 @@ declare abstract class Form<Generic extends FormishHTMLElement> extends BetterHT
     flashBad(): Promise<void>;
     flashGood(): Promise<void>;
     clear(): this;
-    _beforeEvent(thisArg?: this): this;
-    _onEventSuccess(ret: any, thisArg?: this): this;
-    _softErr(e: Error, thisArg?: this): Promise<this>;
-    _softWarn(e: Error, thisArg?: this): Promise<this>;
-    _afterEvent(thisArg?: this): this;
+    _beforeEvent(): this;
+    _beforeEvent(thisArg: this): this;
+    _onEventSuccess(ret: any): this;
+    _onEventSuccess(ret: any, thisArg: this): this;
+    _softErr(e: Error): Promise<this>;
+    _softErr(e: Error, thisArg: this): Promise<this>;
+    _softWarn(e: Error): Promise<this>;
+    _softWarn(e: Error, thisArg: this): Promise<this>;
+    _afterEvent(): this;
+    _afterEvent(thisArg: this): this;
     protected _wrapFnInEventHooks<F extends (event: Event) => Promise<any>>(asyncFn: F, event: Event): Promise<void>;
 }
 declare class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonElement> {

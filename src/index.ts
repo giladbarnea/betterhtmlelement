@@ -1155,12 +1155,16 @@ abstract class Form<Generic extends FormishHTMLElement>
     }
 
     // ** Event Hooks
+    _beforeEvent(): this;
     /**Calls `self.disable()`.*/
+    _beforeEvent(thisArg: this): this
     _beforeEvent(thisArg?: this): this {
         let self = this === undefined ? thisArg : this;
         return self.disable()
     }
 
+    _onEventSuccess(ret: any): this
+    _onEventSuccess(ret: any, thisArg: this): this
     /**Calls `self.flashGood()`.*/
     _onEventSuccess(ret: any, thisArg?: this): this {
         let self = this === undefined ? thisArg : this;
@@ -1170,6 +1174,8 @@ abstract class Form<Generic extends FormishHTMLElement>
         return self
     }
 
+    async _softErr(e: Error): Promise<this>;
+    async _softErr(e: Error, thisArg: this): Promise<this>;
     /**Logs error to console and calls `self.flashBad()`.*/
     async _softErr(e: Error, thisArg?: this): Promise<this> {
         console.error(`${e.name}:\n${e.message}`);
@@ -1180,6 +1186,8 @@ abstract class Form<Generic extends FormishHTMLElement>
         return self
     }
 
+    async _softWarn(e: Error): Promise<this>;
+    async _softWarn(e: Error, thisArg: this): Promise<this>;
     /**Logs warning to console and calls `self.flashBad()`.*/
     async _softWarn(e: Error, thisArg?: this): Promise<this> {
         console.warn(`${e.name}:\n${e.message}`);
@@ -1190,6 +1198,8 @@ abstract class Form<Generic extends FormishHTMLElement>
         return self
     }
 
+    _afterEvent(): this;
+    _afterEvent(thisArg: this): this;
     /**Calls `self.enable()`.*/
     _afterEvent(thisArg?: this): this {
         let self = this === undefined ? thisArg : this;

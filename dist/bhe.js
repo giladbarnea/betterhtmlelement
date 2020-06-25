@@ -869,7 +869,7 @@ class Form extends BetterHTMLElement {
     value(val) {
         var _a;
         if (val === undefined) {
-            return (_a = this._htmlElement.value) !== null && _a !== void 0 ? _a : undefined;
+            return _a = this._htmlElement.value, (_a !== null && _a !== void 0 ? _a : undefined);
         }
         else {
             if (isObject(val)) {
@@ -1059,7 +1059,7 @@ class CheckboxInput extends Changable {
     value(val) {
         var _a;
         if (val === undefined) {
-            return (_a = this._htmlElement.checked) !== null && _a !== void 0 ? _a : undefined;
+            return _a = this._htmlElement.checked, (_a !== null && _a !== void 0 ? _a : undefined);
         }
         else {
             if (isObject(val)) {
@@ -1114,7 +1114,7 @@ class Select extends Changable {
     value(val) {
         var _a;
         if (val === undefined) {
-            return (_a = this.selected.value) !== null && _a !== void 0 ? _a : undefined;
+            return _a = this.selected.value, (_a !== null && _a !== void 0 ? _a : undefined);
         }
         else {
             this.selected = val;
