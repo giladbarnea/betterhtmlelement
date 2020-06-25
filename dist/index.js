@@ -6,12 +6,18 @@ export class BetterHTMLElement {
         this._isSvg = false;
         this._listeners = {};
         this._cachedChildren = {};
-        let { tag, cls, setid, html, htmlElement, byid, query, children } = elemOptions;
+        let { tag, cls, setid, html, // create
+        htmlElement, byid, query, children // wrap existing
+         } = elemOptions;
+        // *** Argument Errors
+        // ** wrapping args: assert max one (or none if creating new)
         if ([tag, byid, query, htmlElement].filter(x => x !== undefined).length > 1) {
             throw new MutuallyExclusiveArgs({
                 byid, query, htmlElement, tag
             }, 'Either wrap an existing element by passing one of `byid` / `query` / `htmlElement`, or create a new one by passing `tag`.');
         }
+        // ** creating new elem args: assert creators and wrappers not mixed
+        // * if creating new with either `tag` / `setid` , no meaning to either children, byid, htmlElement, or query
         if (anyDefined([tag, cls, setid]) && anyDefined([children, byid, htmlElement, query])) {
             throw new MutuallyExclusiveArgs([
                 { tag, cls, setid },
@@ -21,6 +27,7 @@ export class BetterHTMLElement {
         if (allUndefined([tag, byid, htmlElement, query])) {
             throw new NotEnoughArgs(1, { tag, byid, htmlElement, query }, 'either');
         }
+        // ** tag (CREATE element)
         if (tag !== undefined) {
             if (['svg', 'path'].includes(tag.toLowerCase())) {
                 this._isSvg = true;
@@ -30,7 +37,8 @@ export class BetterHTMLElement {
                 this._htmlElement = document.createElement(tag);
             }
         }
-        else {
+        else { // ** wrap EXISTING element
+            // * byid
             if (byid !== undefined) {
                 if (byid.startsWith('#')) {
                     console.warn(`param 'byid' starts with '#', stripping it: ${byid}`);
@@ -39,10 +47,12 @@ export class BetterHTMLElement {
                 this._htmlElement = document.getElementById(byid);
             }
             else {
+                // * query
                 if (query !== undefined) {
                     this._htmlElement = document.querySelector(query);
                 }
                 else {
+                    // * htmlElement
                     if (htmlElement !== undefined) {
                         this._htmlElement = htmlElement;
                     }
@@ -65,11 +75,13 @@ export class BetterHTMLElement {
             this.id(setid);
         }
     }
+    /**Return the wrapped HTMLElement*/
     get e() {
         return this._htmlElement;
     }
     static wrapWithBHE(element) {
         const tag = element.tagName.toLowerCase();
+        // const tag = element.tagName.toLowerCase() as Tag;
         if (tag === 'div') {
             return div({ htmlElement: element });
         }
@@ -150,6 +162,7 @@ export class BetterHTMLElement {
             this.on(Object.assign(Object.assign({}, this._listeners), newHtmlElement._listeners));
         }
         else {
+            // No way to get newHtmlElement event listeners besides hacking Element.prototype
             this.on(this._listeners);
             this._htmlElement.replaceWith(newHtmlElement);
             this._htmlElement = newHtmlElement;
@@ -195,6 +208,7 @@ export class BetterHTMLElement {
             return this;
         }
     }
+    /**Remove the value of the passed style properties*/
     uncss(...removeProps) {
         let css = {};
         for (let prop of removeProps) {
@@ -211,6 +225,8 @@ export class BetterHTMLElement {
         }
         else {
             if (this._isSvg) {
+                // @ts-ignore
+                // noinspection JSConstantReassignment
                 this._htmlElement.classList = [cls];
             }
             else {
@@ -267,6 +283,8 @@ export class BetterHTMLElement {
             return this._htmlElement.classList.contains(cls);
         }
     }
+    // *** Nodes
+    /**Insert at least one `node` just after `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     after(...nodes) {
         for (let node of nodes) {
             if (node instanceof BetterHTMLElement) {
@@ -278,6 +296,7 @@ export class BetterHTMLElement {
         }
         return this;
     }
+    /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
     insertAfter(node) {
         if (node instanceof BetterHTMLElement) {
             node._htmlElement.after(this._htmlElement);
@@ -287,6 +306,9 @@ export class BetterHTMLElement {
         }
         return this;
     }
+    /**Insert at least one `node` after the last child of `this`.
+     * Any `node` can be either a `BetterHTMLElement`, a vanilla `Node`,
+     * a `{someKey: BetterHTMLElement}` pairs object, or a `[someKey, BetterHTMLElement]` tuple.*/
     append(...nodes) {
         for (let node of nodes) {
             if (node instanceof BetterHTMLElement) {
@@ -308,6 +330,7 @@ export class BetterHTMLElement {
         }
         return this;
     }
+    /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
     appendTo(node) {
         if (node instanceof BetterHTMLElement) {
             node._htmlElement.append(this._htmlElement);
@@ -317,6 +340,7 @@ export class BetterHTMLElement {
         }
         return this;
     }
+    /**Insert at least one `node` just before `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
     before(...nodes) {
         for (let node of nodes) {
             if (node instanceof BetterHTMLElement) {
@@ -328,6 +352,7 @@ export class BetterHTMLElement {
         }
         return this;
     }
+    /**Insert `this` just before a `BetterHTMLElement` or a vanilla `Node`s.*/
     insertBefore(node) {
         if (node instanceof BetterHTMLElement) {
             node._htmlElement.before(this._htmlElement);
@@ -390,16 +415,38 @@ export class BetterHTMLElement {
     }
     clone(deep) {
         console.warn(`${this}.clone() doesnt return a matching BHE subtype, but a regular BHE`);
+        // TODO: return new this()?
         return new BetterHTMLElement({ htmlElement: this._htmlElement.cloneNode(deep) });
     }
+    /**
+     * Stores child BHE's in `this` so they can be accessed e.g. `navbar.home.class('selected')`.
+     * @example
+     * navbar.cacheChildren({ 'home': 'button.home' })
+     * // or
+     * maindiv.cacheChildren({ 'welcome': paragraph({ 'query': 'p.welcome' }) })
+     * // `childrenObj` can be recursive and mixed, e.g.
+     * navbar.cacheChildren({
+     *      home: {
+     *          'li.navbar-item-home': {
+     *              thumbnail: 'img.home-thumbnail',
+     *              expand: button({ byid: 'home_expand' })
+     *          }
+     *      }
+     *  });
+     * navbar.home.class("selected");
+     * navbar.home.thumbnail.css(...);
+     * navbar.home.expand.click( e => {...} )
+     * @see this.child*/
     cacheChildren(childrenObj) {
         for (let [key, value] of enumerate(childrenObj)) {
             let type = typeof value;
             if (isObject(value)) {
                 if (value instanceof BetterHTMLElement) {
+                    // { "myimg": img(...) }
                     this._cache(key, value);
                 }
                 else {
+                    // { "mydiv": { "myimg": img(...), "myinput": input(...) } }
                     let entries = Object.entries(value);
                     if (entries[1] !== undefined) {
                         console.warn(`cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
@@ -411,6 +458,7 @@ export class BetterHTMLElement {
                     }
                     let [selector, obj] = entries[0];
                     if (isFunction(obj)) {
+                        // bhe constructor
                         let bhe = this.child(selector, obj);
                         this._cache(key, bhe);
                     }
@@ -423,7 +471,9 @@ export class BetterHTMLElement {
             else if (type === "string") {
                 let match = /<(\w+)>$/.exec(value);
                 if (match) {
+                    // { "options": "<option>" }
                     let tagName = match[1];
+                    // @ts-ignore
                     const htmlElements = [...this._htmlElement.getElementsByTagName(tagName)];
                     let bhes = [];
                     for (let htmlElement of htmlElements) {
@@ -432,6 +482,7 @@ export class BetterHTMLElement {
                     this._cache(key, bhes);
                 }
                 else {
+                    // { "myinput": "input[type=checkbox]" }
                     this._cache(key, this.child(value));
                 }
             }
@@ -441,17 +492,21 @@ export class BetterHTMLElement {
         }
         return this;
     }
+    /**Remove all children from DOM*/
     empty() {
         while (this._htmlElement.firstChild) {
             this._htmlElement.removeChild(this._htmlElement.firstChild);
         }
         return this;
     }
+    /**Remove element from DOM*/
     remove() {
         this._htmlElement.remove();
         return this;
     }
+    // *** Events
     on(evTypeFnPairs, options) {
+        // const foo = evTypeFnPairs["abort"];
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
                 evFn(evt);
@@ -461,20 +516,36 @@ export class BetterHTMLElement {
         }
         return this;
     }
+    /*
+    Chronology:
+    mousedown   touchstart	pointerdown
+    mouseenter		        pointerenter
+    mouseleave		        pointerleave
+    mousemove	touchmove	pointermove
+    mouseout		        pointerout
+    mouseover		        pointerover
+    mouseup	    touchend    pointerup
+    */
+    /** Add a `touchstart` event listener. This is the fast alternative to `click` listeners for mobile (no 300ms wait). */
     touchstart(fn, options) {
         this._htmlElement.addEventListener('touchstart', function _f(ev) {
-            ev.preventDefault();
+            ev.preventDefault(); // otherwise "touchmove" is triggered
             fn(ev);
-            if (options && options.once) {
+            if (options && options.once) // TODO: maybe native options.once is enough
+             {
                 this.removeEventListener('touchstart', _f);
             }
         }, options);
+        // TODO: this._listeners, or use this.on(
         return this;
     }
+    /** Add a `pointerdown` event listener if browser supports `pointerdown`, else send `mousedown` (safari). */
     pointerdown(fn, options) {
         let action;
         try {
-            action = window.PointerEvent ? 'pointerdown' : 'mousedown';
+            // TODO: check if PointerEvent exists instead of try/catch
+            // @ts-ignore
+            action = window.PointerEvent ? 'pointerdown' : 'mousedown'; // safari doesn't support pointerdown
         }
         catch (e) {
             action = 'mousedown';
@@ -482,7 +553,8 @@ export class BetterHTMLElement {
         const _f = function _f(ev) {
             ev.preventDefault();
             fn(ev);
-            if (options && options.once) {
+            if (options && options.once) // TODO: maybe native options.once is enough
+             {
                 this.removeEventListener(action, _f);
             }
         };
@@ -517,9 +589,11 @@ export class BetterHTMLElement {
             return this.on({ focus: fn }, options);
         }
     }
+    /**Add a `change` event listener*/
     change(fn, options) {
         return this.on({ change: fn }, options);
     }
+    /**Add a `contextmenu` event listener*/
     contextmenu(fn, options) {
         return this.on({ contextmenu: fn }, options);
     }
@@ -538,6 +612,8 @@ export class BetterHTMLElement {
         }
     }
     mouseenter(fn, options) {
+        // mouseover: also child elements
+        // mouseenter: only bound element
         if (fn === undefined) {
             const mouseenter = new MouseEvent('mouseenter', {
                 'view': window,
@@ -551,19 +627,32 @@ export class BetterHTMLElement {
             return this.on({ mouseenter: fn }, options);
         }
     }
+    /**Add a `keydown` event listener*/
     keydown(fn, options) {
         return this.on({ keydown: fn }, options);
     }
+    /**Add a `mouseout` event listener*/
     mouseout(fn, options) {
+        //mouseleave and mouseout are similar but differ in that mouseleave does not bubble and mouseout does.
+        // This means that mouseleave is fired when the pointer has exited the element and all of its descendants,
+        // whereas mouseout is fired when the pointer leaves the element or leaves one of the element's descendants
+        // (even if the pointer is still within the element).
         return this.on({ mouseout: fn }, options);
     }
+    /**Add a `mouseover` event listener*/
     mouseover(fn, options) {
+        // mouseover: also child elements
+        // mouseenter: only bound element
+        // return this.on({mouseover: fn}, options)
         return this.on({ mouseover: fn });
     }
+    /** Remove the event listener of `event`, if exists.*/
     off(event) {
+        // TODO: Should remove listener from this._listeners?
         this._htmlElement.removeEventListener(event, this._listeners[event]);
         return this;
     }
+    /** Remove all event listeners in `_listeners`*/
     allOff() {
         for (let i = 0; i < Object.keys(this._listeners).length; i++) {
             let event = this._listeners[i];
@@ -582,6 +671,7 @@ export class BetterHTMLElement {
             return this;
         }
     }
+    /** `removeAttribute` */
     removeAttr(qualifiedName, ...qualifiedNames) {
         let _removeAttribute;
         if (this._isSvg) {
@@ -596,7 +686,9 @@ export class BetterHTMLElement {
         }
         return this;
     }
+    /**`getAttribute(`data-${key}`)`. JSON.parse it by default.*/
     getdata(key, parse = true) {
+        // TODO: jquery doesn't affect data-* attrs in DOM. https://api.jquery.com/data/
         const data = this._htmlElement.getAttribute(`data-${key}`);
         if (parse === true) {
             return JSON.parse(data);
@@ -639,6 +731,9 @@ export class Div extends BetterHTMLElement {
 }
 export class Paragraph extends BetterHTMLElement {
     constructor(pOpts) {
+        // if (noValue(arguments[0])) {
+        //     throw new NotEnoughArgs([1], arguments[0])
+        // }
         const { setid, cls, text, html, byid, query, htmlElement, children } = pOpts;
         if (text !== undefined && html !== undefined) {
             throw new MutuallyExclusiveArgs({ text, html });
@@ -760,6 +855,25 @@ export class Form extends BetterHTMLElement {
     get disabled() {
         return this._htmlElement.disabled;
     }
+    /**
+     Button < Input
+     Select - Input: add(), item(), length, namedItem(), options, remove(), selectedIndex, selectedOptions, ITERATOR
+     Select - Button: add() autocomplete item() length multiple namedItem() options remove() required selectedIndex selectedOptions size ITERATOR
+     Button - Select: formAction formEnctype formMethod formNoValidate formTarget
+
+     Input uniques:
+     accept checked defaultChecked defaultValue dirName files indeterminate list max maxLength min minLength pattern placeholder readOnly select() selectionDirection selectionEnd selectionStart setRangeText() setSelectionRange() src step stepDown() stepUp() useMap valueAsDate valueAsNumber
+
+     Select uniques:
+     add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
+
+     Shared among Button, Select and Input: (or Button and Select, same)
+     checkValidity() disabled form labels name reportValidity() setCustomValidity() type validationMessage validity value willValidate
+
+     Shared ammong Selecct and Input:
+     autocomplete checkValidity() disabled form labels multiple name reportValidity() required setCustomValidity() type validationMessage validity value willValidate
+
+     */
     disable() {
         this._htmlElement.disabled = true;
         return this;
@@ -768,6 +882,8 @@ export class Form extends BetterHTMLElement {
         this._htmlElement.disabled = false;
         return this;
     }
+    /**Enables if `on` is truthy, otherwise disables.
+     Errors if `on` is non-primitive (object, array).*/
     toggleEnabled(on) {
         if (isObject(on)) {
             this._softErr(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleEnabled()" }));
@@ -811,6 +927,7 @@ export class Form extends BetterHTMLElement {
         let self = this === undefined ? thisArg : this;
         return self.disable();
     }
+    /**Calls `self.flashGood()`.*/
     _onEventSuccess(ret, thisArg) {
         let self = this === undefined ? thisArg : this;
         if (self.flashGood) {
@@ -818,6 +935,7 @@ export class Form extends BetterHTMLElement {
         }
         return self;
     }
+    /**Logs error to console and calls `self.flashBad()`.*/
     async _softErr(e, thisArg) {
         console.error(`${e.name}:\n${e.message}`);
         let self = this === undefined ? thisArg : this;
@@ -826,6 +944,7 @@ export class Form extends BetterHTMLElement {
         }
         return self;
     }
+    /**Logs warning to console and calls `self.flashBad()`.*/
     async _softWarn(e, thisArg) {
         console.warn(`${e.name}:\n${e.message}`);
         let self = this === undefined ? thisArg : this;
@@ -834,10 +953,12 @@ export class Form extends BetterHTMLElement {
         }
         return self;
     }
+    /**Calls `self.enable()`.*/
     _afterEvent(thisArg) {
         let self = this === undefined ? thisArg : this;
         return self.enable();
     }
+    /**Used by e.g. `click(fn)` to wrap passed `fn` safely and trigger `_[before|after|on]Event[Success|Error]`.*/
     async _wrapFnInEventHooks(asyncFn, event) {
         try {
             this._beforeEvent();
@@ -896,6 +1017,7 @@ export class Input extends Form {
         else {
             super({ tag: "input", cls, setid });
             if (type !== undefined) {
+                // @ts-ignore
                 this._htmlElement.type = type;
             }
         }
@@ -942,6 +1064,7 @@ export class Changable extends Input {
         return super.change(fn);
     }
 }
+/**Patches Form's `value()` to set/get `_htmlElement.checked`, and `clear()` to uncheck. */
 export class CheckboxInput extends Changable {
     constructor(opts) {
         opts.type = 'checkbox';
@@ -958,6 +1081,8 @@ export class CheckboxInput extends Changable {
         this._htmlElement.checked = false;
         return this;
     }
+    /**checks on if `on` is truthy, otherwise unchecks.
+     Errors if `on` is non-primitive (object, array).*/
     toggleChecked(on) {
         if (isObject(on)) {
             this._softErr(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleChecked()" }));
@@ -992,6 +1117,8 @@ export class CheckboxInput extends Changable {
     }
 }
 export class Select extends Changable {
+    // Select uniques:
+    // add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
     constructor(selectOpts) {
         super(selectOpts);
     }
@@ -1004,6 +1131,7 @@ export class Select extends Changable {
     get selected() {
         return this.item(this.selectedIndex);
     }
+    /**@param val - Either a specific HTMLOptionElement, number (index)*/
     set selected(val) {
         if (val instanceof HTMLOptionElement) {
             let index = this.options.findIndex(o => o === val);
@@ -1035,6 +1163,7 @@ export class Select extends Changable {
             return this;
         }
     }
+    /**Sets `selected` to 0th element. Equivalent to `value(0)`.*/
     clear() {
         this.selectedIndex = 0;
         return this;

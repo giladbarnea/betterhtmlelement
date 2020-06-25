@@ -1,6 +1,7 @@
 import { enumerate, isArray, isObject } from "./util.js";
 export function getArgsFullRepr(argsWithValues) {
     return Object.entries(argsWithValues)
+        // @ts-ignore
         .flatMap(([argname, argval]) => `${argname} (${typeof argval}): ${isObject(argval) ? `{${getArgsFullRepr(argval)}}` : argval}`)
         .join('", "');
 }
@@ -19,7 +20,9 @@ export function summary(argset) {
     let argNames = Object.keys(argset);
     return `${argNames.length} args (${argNames}); ${Object.keys(argsWithValues).length} had value: "${argsFullRepr}".\n`;
 }
+/**Prints what was expected and what was actually passed.*/
 export class MutuallyExclusiveArgs extends Error {
+    /**Either a argName:argValue map or an array of such maps, to indicate mutually exclusive sets of args.*/
     constructor(passedArgs, details) {
         let message = `Didn't receive exactly one arg`;
         if (isArray(passedArgs)) {
