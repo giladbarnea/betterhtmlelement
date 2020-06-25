@@ -7,7 +7,8 @@
 // function enumerate<T>(obj: T): T extends string[]
 //     ? [number, string][]
 //     : [keyof T, T[keyof T]][] {
-import {AnyFunction, Enumerated, TMap} from "./typings";
+import { Enumerated, TMap } from "./typings";
+import { BetterHTMLElement } from "./index.js";
 
 
 export function enumerate<T>(obj: T): Enumerated<T> {
@@ -234,8 +235,8 @@ export function isEmptyObj(obj): boolean {
 }
 
 
-export function isFunction<T>(fn: T): fn is T
-export function isFunction(fn: AnyFunction): fn is AnyFunction
+export function isFunction<F>(fn: F): fn is F
+export function isFunction(fn: (...args: any[]) => any): fn is (...args: any[]) => any
 export function isFunction(fn) {
     // 0                   false
     // 1                   false
@@ -270,6 +271,77 @@ export function isFunction(fn) {
     return !!fn && toStringed === '[object Function]'
 }
 
+export function anyDefined(obj): boolean {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    } else if (isArray(obj)) {
+        array = obj;
+    } else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => x !== undefined).length > 0;
+}
+
+export function anyTruthy(obj): boolean {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    } else if (isArray(obj)) {
+        array = obj;
+    } else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => bool(x)).length > 0;
+}
+
+export function allUndefined(obj): boolean {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj)
+    } else if (isArray(obj)) {
+        array = obj;
+    } else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`)
+    }
+    return array.filter(x => x !== undefined).length === 0
+}
+
+/**Check every `checkInterval` ms if `cond()` is truthy. If, within `timeout`, cond() is truthy, return `true`. Return `false` if time is out.
+ * @example
+ * // Give the user a 200ms chance to get her pointer over "mydiv". Continue immediately once she does, or after 200ms if she doesn't.
+ * mydiv.pointerenter( () => mydiv.pointerHovering = true; )
+ * const pointerOnMydiv = await waitUntil(() => mydiv.pointerHovering, 200, 10);*/
+export async function waitUntil(cond: () => boolean, checkInterval: number = 20, timeout: number = Infinity): Promise<boolean> {
+    if (checkInterval <= 0) {
+        throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
+    }
+    if (checkInterval > timeout) {
+        throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). checkInterval has to be lower than timeout.`);
+    }
+
+    const loops = timeout / checkInterval;
+    if (loops <= 1) {
+        console.warn(`loops <= 1, you probably didn't want this to happen`);
+    }
+    let count = 0;
+    while (count < loops) {
+        if (cond()) {
+            return true;
+        }
+        await wait(checkInterval);
+        count++;
+    }
+    return false;
+}
+
+export function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType): bhe is T {
+    return (bhe instanceof bheSubType)
+}
+
+export function isType<T>(arg: T): arg is T {
+    return true
+}
 
 export function isTMap<T>(obj: TMap<T>): obj is TMap<T> {
     // 0                   false
@@ -306,6 +378,7 @@ export function isTMap<T>(obj: TMap<T>): obj is TMap<T> {
 
 
 // *  underscore.js
+/**true for any non-primitive, including array, function*/
 export function isObject(obj): boolean {
     // 0                   false
     // 1                   false
@@ -420,9 +493,7 @@ export function noValue(obj): boolean {
 }
 
 
-export function isType<T>(arg: T): arg is T {
-    return true
-}
+
 
 
 

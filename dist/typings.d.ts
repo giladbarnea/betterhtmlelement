@@ -14,16 +14,14 @@ export declare type EventName2Function<E extends EventName = EventName> = {
 export declare type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventName2Function>>;
 export declare type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
 export declare type NotTag<T extends Tag> = Exclude<Tag, T>;
+export declare type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<NotTag<T>>>;
 export declare type TagOrString = Tag | string;
 export declare type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
 export declare type Element2Tag<T> = T extends HTMLInputElement ? "input" : T extends HTMLAnchorElement ? "a" : T extends HTMLImageElement ? "img" : Tag;
 export declare type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>;
 export declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TRecMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
 export declare type Returns<T> = (s: string) => T;
-export declare type TReturnBoolean = (s: string) => boolean;
-export declare type AnyFunction = (...args: any[]) => any;
-export declare type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
-export declare type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
+export declare type Awaited<T> = T extends Promise<infer U> ? U : T;
 export declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
 export declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
 export interface CssOptions extends PartialCssStyleDeclaration {

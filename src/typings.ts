@@ -1,7 +1,7 @@
 // TODO: why <EventName> needed in allOff()?
 
 
-import {BetterHTMLElement} from "./index";
+import { BetterHTMLElement } from "./index";
 
 export interface TMap<T> {
     [s: string]: T;
@@ -86,6 +86,7 @@ expectsMouseEventFunctionPairs(pairs);*/
  */
 export type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
 export type NotTag<T extends Tag> = Exclude<Tag, T>;
+export type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<NotTag<T>>>;
 // /**
 //  *"a", "div", "gilad".
 //  *Tag2Element expects a tag and returns an HTMLElement.
@@ -114,7 +115,7 @@ export type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ?
 
 // Tag2BHE["a"] → Anchor
 /*
-export interface Tag2BHE {
+interface Tag2BHE {
     "img": Img,
     "a": Anchor,
     "input": Input<HTMLInputElement>,
@@ -169,12 +170,12 @@ export type Enumerated<T> =
         : T extends TRecMap<(infer U)> ? [keyof T, U][]
         : T extends boolean ? never : any;
 export type Returns<T> = (s: string) => T;
-export type TReturnBoolean = (s: string) => boolean;
-export type AnyFunction = (...args: any[]) => any;
+// type TReturnBoolean = (s: string) => boolean;
 
 
-export type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
-export type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
+export type Awaited<T> = T extends Promise<infer U> ? U : T;
+// type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
+// type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
 
 
 /////////////////////////////////////////////////

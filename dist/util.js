@@ -65,6 +65,72 @@ export function isFunction(fn) {
     let toStringed = {}.toString.call(fn);
     return !!fn && toStringed === '[object Function]';
 }
+export function anyDefined(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    }
+    else if (isArray(obj)) {
+        array = obj;
+    }
+    else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => x !== undefined).length > 0;
+}
+export function anyTruthy(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    }
+    else if (isArray(obj)) {
+        array = obj;
+    }
+    else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => bool(x)).length > 0;
+}
+export function allUndefined(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    }
+    else if (isArray(obj)) {
+        array = obj;
+    }
+    else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => x !== undefined).length === 0;
+}
+export async function waitUntil(cond, checkInterval = 20, timeout = Infinity) {
+    if (checkInterval <= 0) {
+        throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
+    }
+    if (checkInterval > timeout) {
+        throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). checkInterval has to be lower than timeout.`);
+    }
+    const loops = timeout / checkInterval;
+    if (loops <= 1) {
+        console.warn(`loops <= 1, you probably didn't want this to happen`);
+    }
+    let count = 0;
+    while (count < loops) {
+        if (cond()) {
+            return true;
+        }
+        await wait(checkInterval);
+        count++;
+    }
+    return false;
+}
+export function isBHE(bhe, bheSubType) {
+    return (bhe instanceof bheSubType);
+}
+export function isType(arg) {
+    return true;
+}
 export function isTMap(obj) {
     return {}.toString.call(obj) == '[object Object]';
 }
@@ -136,8 +202,5 @@ export function noValue(obj) {
         throw new TypeError(`expected array or obj, got: ${typeof obj}`);
     }
     return array.filter(x => Boolean(x)).length === 0;
-}
-export function isType(arg) {
-    return true;
 }
 //# sourceMappingURL=util.js.map
