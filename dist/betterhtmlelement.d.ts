@@ -1,4 +1,160 @@
-import { ChildrenObj, CssOptions, Element2Tag, EventName, EventName2Function, QueryOrPreciseTag, QuerySelector, Returns, Tag, TMap } from "./typings";
+export interface TMap<T> {
+    [s: string]: T;
+    [s: number]: T;
+}
+export interface TRecMap<T> {
+    [s: string]: T | TRecMap<T>;
+    [s: number]: T | TRecMap<T>;
+}
+export declare type EventName = keyof HTMLElementEventMap;
+export declare type EventName2Function<E extends EventName = EventName> = {
+    [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+}[E];
+export declare type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventName2Function>>;
+/**
+ * "a", "div"
+ * @example
+ * const foo = <K extends Tag>(tag: K) => document.createElement(tag);
+ * foo("a") → HTMLAnchorElement
+ * foo("BAD") // error
+ */
+export declare type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
+export declare type NotTag<T extends Tag> = Exclude<Tag, T>;
+export declare type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<NotTag<T>>>;
+export declare type TagOrString = Tag | string;
+/**
+ * "a", "div", "gilad".
+ * QuerySelector expects a tag and returns a Tag.
+ * @example
+ * const bar = <K extends Tag | string>(query: QuerySelector<K>) => document.querySelector(query);
+ * bar("a") → HTMLAnchorElement
+ * bar("gilad") → HTMLSelectElement | HTMLLegendElement | ...
+ */
+export declare type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
+export declare type Element2Tag<T> = T extends HTMLInputElement ? "input" : T extends HTMLAnchorElement ? "a" : T extends HTMLImageElement ? "img" : Tag;
+export declare type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>;
+export declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TRecMap<(infer U)> ? [keyof T, U][] : T extends boolean ? never : any;
+export declare type Returns<T> = (s: string) => T;
+export declare type Awaited<T> = T extends Promise<infer U> ? U : T;
+export declare type OmittedCssProps = "animationDirection" | "animationFillMode" | "animationIterationCount" | "animationPlayState" | "animationTimingFunction" | "opacity" | "padding" | "paddingBottom" | "paddingLeft" | "paddingRight" | "paddingTop" | "preload" | "width";
+export declare type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
+export interface CssOptions extends PartialCssStyleDeclaration {
+    animationDirection?: AnimationDirection;
+    animationFillMode?: AnimationFillMode;
+    animationIterationCount?: number;
+    animationPlayState?: AnimationPlayState;
+    animationTimingFunction?: AnimationTimingFunction;
+    opacity?: string | number;
+    padding?: string | number;
+    paddingBottom?: string | number;
+    paddingLeft?: string | number;
+    paddingRight?: string | number;
+    paddingTop?: string | number;
+    preload?: "auto" | string;
+    width?: string | number;
+}
+export declare type CubicBezierFunction = [number, number, number, number];
+export declare type Jumpterm = 'jump-start' | 'jump-end' | 'jump-none' | 'jump-both' | 'start' | 'end';
+/**Displays an animation iteration along n stops along the transition, displaying each stop for equal lengths of time.
+ * For example, if n is 5,  there are 5 steps.
+ * Whether the animation holds temporarily at 0%, 20%, 40%, 60% and 80%, on the 20%, 40%, 60%, 80% and 100%, or makes 5 stops between the 0% and 100% along the animation, or makes 5 stops including the 0% and 100% marks (on the 0%, 25%, 50%, 75%, and 100%) depends on which of the following jump terms is used*/
+export declare type StepsFunction = [number, Jumpterm];
+export declare type AnimationTimingFunction = 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'step-start' | 'step-end' | StepsFunction | CubicBezierFunction;
+export declare type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
+export declare type AnimationFillMode = 'none' | 'forwards' | 'backwards' | 'both';
+export interface TransformOptions {
+    matrix?: [number, number, number, number, number, number];
+    matrix3d?: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number];
+    perspective?: string;
+    rotate?: string;
+    rotate3d?: [number, number, number, string];
+    rotateX?: string;
+    rotateY?: string;
+    rotateZ?: string;
+    scale?: number;
+    scale3d?: [number, number, number];
+    scaleX?: [number, number, number];
+    scaleY?: [number, number, number];
+    skew?: [string, string];
+    skewX?: string;
+    skewY?: string;
+    translate?: [string, string];
+    translate3d?: [string, string, string];
+    translateX?: string;
+    translateY?: string;
+    translateZ?: string;
+}
+export interface AnimateOptions {
+    delay?: string;
+    direction?: AnimationDirection;
+    duration: string;
+    fillMode?: AnimationFillMode;
+    iterationCount?: number;
+    name: string;
+    playState?: AnimationPlayState;
+    /** Also accepts:
+     * cubic-bezier(p1, p2, p3, p4)
+     * 'ease' == 'cubic-bezier(0.25, 0.1, 0.25, 1.0)'
+     * 'linear' == 'cubic-bezier(0.0, 0.0, 1.0, 1.0)'
+     * 'ease-in' == 'cubic-bezier(0.42, 0, 1.0, 1.0)'
+     * 'ease-out' == 'cubic-bezier(0, 0, 0.58, 1.0)'
+     * 'ease-in-out' == 'cubic-bezier(0.42, 0, 0.58, 1.0)'
+     * */
+    timingFunction?: AnimationTimingFunction;
+}
+export declare function enumerate<T>(obj: T): Enumerated<T>;
+export declare function wait(ms: number): Promise<any>;
+export declare function bool(val: any): boolean;
+export declare function isArray<T>(obj: any): obj is Array<T>;
+export declare function isEmptyArr(collection: any): boolean;
+export declare function isEmptyObj(obj: any): boolean;
+export declare function isFunction<F>(fn: F): fn is F;
+export declare function isFunction(fn: (...args: any[]) => any): fn is (...args: any[]) => any;
+export declare function anyDefined(obj: any): boolean;
+export declare function anyTruthy(obj: any): boolean;
+export declare function allUndefined(obj: any): boolean;
+/**Check every `checkInterval` ms if `cond()` is truthy. If, within `timeout`, cond() is truthy, return `true`. Return `false` if time is out.
+ * @example
+ * // Give the user a 200ms chance to get her pointer over "mydiv". Continue immediately once she does, or after 200ms if she doesn't.
+ * mydiv.pointerenter( () => mydiv.pointerHovering = true; )
+ * const pointerOnMydiv = await waitUntil(() => mydiv.pointerHovering, 200, 10);*/
+export declare function waitUntil(cond: () => boolean, checkInterval?: number, timeout?: number): Promise<boolean>;
+export declare function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType: any): bhe is T;
+export declare function isType<T>(arg: T): arg is T;
+export declare function isTMap<T>(obj: TMap<T>): obj is TMap<T>;
+/**true for any non-primitive, including array, function*/
+export declare function isObject(obj: any): boolean;
+export declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
+export declare function getLength(collection: any): number;
+export declare function isArrayLike(collection: any): boolean;
+export declare function extend(sup: any, child: any): any;
+export declare function anyValue(obj: any): boolean;
+export declare function equalsAny(obj: any, ...others: any[]): boolean;
+export declare function noValue(obj: any): boolean;
+export declare function getArgsFullRepr(argsWithValues: TMap<any>): string;
+export declare function getArgsWithValues(passedArgs: TMap<any>): TMap<any>;
+export declare function summary(argset: TMap<any>): string;
+/**Prints what was expected and what was actually passed.*/
+export declare class MutuallyExclusiveArgs extends Error {
+    /**@param passedArgs - key:value pairs of argName:argValue, where each arg is mutually exclusive with all others*/
+    constructor(passedArgs: TMap<any>, details?: string);
+    /**@param passedArgs - Array of mutually exclusive sets of args, where an arg from one set means there can't be any args from the other sets.
+     * Each set is key:value pairs of argName:argValue.*/
+    constructor(passedArgs: TMap<any>[], details?: string);
+}
+export declare class NotEnoughArgs extends Error {
+    constructor(expected: number | number[], passedArgs: TMap<any> | TMap<any>[], relation?: 'each' | 'either');
+}
+export declare class BHETypeError extends TypeError {
+    constructor(options: {
+        faultyValue: TMap<any>;
+        expected?: any | any[];
+        where?: string;
+        message?: string;
+    });
+}
+export declare class ValueError extends BHETypeError {
+}
 export declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     protected _htmlElement: Generic;
     private readonly _isSvg;
@@ -348,15 +504,17 @@ export declare abstract class Form<Generic extends FormishHTMLElement> extends B
     protected _wrapFnInEventHooks<F extends (event: Event) => Promise<any>>(asyncFn: F, event: Event): Promise<void>;
 }
 export declare class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonElement> {
-    constructor({ cls, setid, text }: {
+    constructor({ cls, setid, text, click }: {
         cls?: string;
         setid?: string;
         text?: string;
+        click?: (event: MouseEvent) => any;
     });
-    constructor({ cls, setid, html }: {
+    constructor({ cls, setid, html, click }: {
         cls?: string;
         setid?: string;
         html?: string;
+        click?: (event: MouseEvent) => any;
     });
     constructor({ byid, children }: {
         byid: string;
@@ -534,11 +692,13 @@ export declare function button({ cls, setid, text }: {
     cls?: string;
     setid?: string;
     text?: string;
+    click?: (event: MouseEvent) => any;
 }): Button;
 export declare function button({ cls, setid, html }: {
     cls?: string;
     setid?: string;
     html?: string;
+    click?: (event: MouseEvent) => any;
 }): Button;
 export declare function button({ byid, children }: {
     byid: string;

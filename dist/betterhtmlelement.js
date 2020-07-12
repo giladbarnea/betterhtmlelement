@@ -1,7 +1,593 @@
-import { allUndefined, anyDefined, anyTruthy, bool, enumerate, isFunction, isObject, wait } from "./util";
-import { BHETypeError, MutuallyExclusiveArgs, NotEnoughArgs, summary, ValueError } from "./exceptions";
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+///////////////////////////////////
+// *** Utilities
+///////////////////////////////////
+// function enumerate(obj: undefined): [void];
+// function enumerate<T>(obj: T): never;
+// function enumerate<T>(obj: T): [keyof T, T[keyof T]][];
+// function enumerate<T>(obj: T): T extends string[]
+//     ? [number, string][]
+//     : [keyof T, T[keyof T]][] {
+function enumerate(obj) {
+    // undefined    []
+    // {}           []
+    // []           []
+    // ""           []
+    // number       TypeError
+    // null         TypeError
+    // boolean      TypeError
+    // Function     TypeError
+    // "foo"        [ [0, "f"], [1, "o"], [2, "o"] ]
+    // [ "foo" ]    [ [0, "foo"] ]
+    // [ 10 ]       [ [0, 10] ]
+    // { a: "foo" } [ ["a", "foo"] ]
+    // // ()=>{}    ?
+    let typeofObj = typeof obj;
+    if (obj === undefined
+        || isEmptyObj(obj)
+        || isEmptyArr(obj)
+        // @ts-ignore
+        || obj === "") {
+        return [];
+    }
+    if (obj === null
+        || typeofObj === "boolean"
+        || typeofObj === "number"
+        || typeofObj === "function") {
+        throw new TypeError(`${typeofObj} object is not iterable`);
+    }
+    let array = [];
+    if (isArray(obj)) {
+        let i = 0;
+        for (let x of obj) {
+            array.push([i, x]);
+            i++;
+        }
+    }
+    else {
+        for (let prop in obj) {
+            array.push([prop, obj[prop]]);
+        }
+    }
+    return array;
+}
+exports.enumerate = enumerate;
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+exports.wait = wait;
+function bool(val) {
+    // 0                    false
+    // 1                    true
+    // '0'                  true
+    // '1'                  true
+    // ' '                  true
+    // ''                   false
+    // 'foo'                true
+    // ()=>{}               true
+    // Boolean              true
+    // Boolean()            false
+    // Boolean(false)       false
+    // Boolean(true)        true
+    // Function             true
+    // Function()           true
+    // Number               true
+    // Number(0)            false
+    // Number(1)            true
+    // Number()             false
+    // [ 0 ]                true
+    // [ 1 ]                true
+    // [ [] ]               true
+    // [ false ]            true
+    // [ true ]             true
+    // []                   false       unlike native
+    // document.body        true
+    // false                false
+    // function(){}         true
+    // new Boolean          false       unlike native
+    // new Boolean()        false       unlike native
+    // new Boolean(false)   false       unlike native
+    // new Boolean(true)    true
+    // new Function         true
+    // new Function()       true
+    // new Number           false       unlike native
+    // new Number(0)        false       unlike native
+    // new Number(1)        true
+    // new Number()         false       unlike native
+    // new Timeline(...)    true
+    // new class{}          false       unlike native
+    // null                 false
+    // true                 true
+    // undefined            false
+    // { hi : 'bye' }       true
+    // {}                   false       unlike native
+    if (!val) {
+        return false;
+    }
+    const typeofval = typeof val;
+    if (typeofval !== 'object') {
+        if (typeofval === 'function') {
+            return true;
+        }
+        else {
+            return !!val;
+        }
+    }
+    // let keysLength = Object.keys(val).length;
+    let toStringed = {}.toString.call(val);
+    if (toStringed === '[object Object]' || toStringed === '[object Array]') {
+        return Object.keys(val).length !== 0;
+    }
+    // Boolean, Number, HTMLElement...
+    return !!val.valueOf();
+}
+exports.bool = bool;
+function isArray(obj) {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // 'foo'               false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // / [ 1 ]             true
+    // / []                true
+    // false               false
+    // function(){}        false
+    // new Boolean()       false
+    // new Boolean(false)  false
+    // new Boolean(true)   false
+    // new Function()      false
+    // new Number(0)       false
+    // new Number(1)       false
+    // new Number()        false
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // {}                  false
+    if (!obj) {
+        return false;
+    }
+    return typeof obj !== 'string' && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+}
+exports.isArray = isArray;
+function isEmptyArr(collection) {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // [ 1 ]               false
+    // / []                true
+    // false               false
+    // function(){}        false
+    // new Boolean()       false
+    // new Boolean(false)  false
+    // new Boolean(true)   false
+    // new Function()      false
+    // new Number(0)       false
+    // new Number(1)       false
+    // new Number()        false
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // {}                  false
+    return isArray(collection) && getLength(collection) === 0;
+}
+exports.isEmptyArr = isEmptyArr;
+function isEmptyObj(obj) {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // [ 1 ]               false
+    // []                  false
+    // false               false
+    // function(){}        false
+    // / new Boolean()     true
+    // / new Boolean(false)true
+    // / new Boolean(true) true
+    // new Function()      false
+    // / new Number(0)     true
+    // / new Number(1)     true
+    // / new Number()      true
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // / {}                true
+    return isObject(obj) && !isArray(obj) && Object.keys(obj).length === 0;
+}
+exports.isEmptyObj = isEmptyObj;
+function isFunction(fn) {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // / ()=>{}              true
+    // / Boolean             true
+    // Boolean()           false
+    // / Function            true
+    // / Function()          true
+    // / Number              true
+    // Number()            false
+    // [ 1 ]               false
+    // []                  false
+    // false               false
+    // / function(){}        true
+    // new Boolean()       false
+    // new Boolean(false)  false
+    // new Boolean(true)   false
+    // / new Function()      true
+    // new Number(0)       false
+    // new Number(1)       false
+    // new Number()        false
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // {}                  false
+    let toStringed = {}.toString.call(fn);
+    return !!fn && toStringed === '[object Function]';
+}
+exports.isFunction = isFunction;
+function anyDefined(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    }
+    else if (isArray(obj)) {
+        array = obj;
+    }
+    else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => x !== undefined).length > 0;
+}
+exports.anyDefined = anyDefined;
+function anyTruthy(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    }
+    else if (isArray(obj)) {
+        array = obj;
+    }
+    else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => bool(x)).length > 0;
+}
+exports.anyTruthy = anyTruthy;
+function allUndefined(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    }
+    else if (isArray(obj)) {
+        array = obj;
+    }
+    else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => x !== undefined).length === 0;
+}
+exports.allUndefined = allUndefined;
+/**Check every `checkInterval` ms if `cond()` is truthy. If, within `timeout`, cond() is truthy, return `true`. Return `false` if time is out.
+ * @example
+ * // Give the user a 200ms chance to get her pointer over "mydiv". Continue immediately once she does, or after 200ms if she doesn't.
+ * mydiv.pointerenter( () => mydiv.pointerHovering = true; )
+ * const pointerOnMydiv = await waitUntil(() => mydiv.pointerHovering, 200, 10);*/
+async function waitUntil(cond, checkInterval = 20, timeout = Infinity) {
+    if (checkInterval <= 0) {
+        throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
+    }
+    if (checkInterval > timeout) {
+        throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). checkInterval has to be lower than timeout.`);
+    }
+    const loops = timeout / checkInterval;
+    if (loops <= 1) {
+        console.warn(`loops <= 1, you probably didn't want this to happen`);
+    }
+    let count = 0;
+    while (count < loops) {
+        if (cond()) {
+            return true;
+        }
+        await wait(checkInterval);
+        count++;
+    }
+    return false;
+}
+exports.waitUntil = waitUntil;
+function isBHE(bhe, bheSubType) {
+    return (bhe instanceof bheSubType);
+}
+exports.isBHE = isBHE;
+function isType(arg) {
+    return true;
+}
+exports.isType = isType;
+function isTMap(obj) {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // [ 1 ]             false
+    // []                false
+    // false               false
+    // function(){}        false
+    // new Boolean()     false
+    // new Boolean(false)false
+    // new Boolean(true) false
+    // new Function()      false
+    // new Number(0)     false
+    // new Number(1)     false
+    // new Number()      false
+    // null                false
+    // true                false
+    // undefined           false
+    // / { hi : 'bye' }    true
+    // / {}                true
+    return {}.toString.call(obj) == '[object Object]';
+}
+exports.isTMap = isTMap;
+// *  underscore.js
+/**true for any non-primitive, including array, function*/
+function isObject(obj) {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // / [ 1 ]             true
+    // / []                true
+    // false               false
+    // function(){}        false
+    // / new Boolean()     true
+    // / new Boolean(false)true
+    // / new Boolean(true) true
+    // new Function()      false
+    // / new Number(0)     true
+    // / new Number(1)     true
+    // / new Number()      true
+    // null                false
+    // true                false
+    // undefined           false
+    // / { hi : 'bye' }    true
+    // / {}                true
+    return typeof obj === 'object' && !!obj;
+}
+exports.isObject = isObject;
+function shallowProperty(key) {
+    return function (obj) {
+        return obj == null ? void 0 : obj[key];
+    };
+}
+exports.shallowProperty = shallowProperty;
+function getLength(collection) {
+    return shallowProperty('length')(collection);
+}
+exports.getLength = getLength;
+const MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+function isArrayLike(collection) {
+    const length = getLength(collection);
+    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
+}
+exports.isArrayLike = isArrayLike;
+// *  misc
+// child extends sup
+function extend(sup, child) {
+    child.prototype = sup.prototype;
+    const handler = {
+        construct
+    };
+    // "new BoyCls"
+    function construct(_, argArray) {
+        const obj = new child;
+        sup.apply(obj, argArray); // calls PersonCtor. Sets name
+        child.apply(obj, argArray); // calls BoyCtor. Sets age
+        return obj;
+    }
+    // @ts-ignore
+    const proxy = new Proxy(child, handler);
+    return proxy;
+}
+exports.extend = extend;
+function anyValue(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    }
+    else if (isArray(obj)) {
+        array = obj;
+    }
+    else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => Boolean(x)).length > 0;
+}
+exports.anyValue = anyValue;
+function equalsAny(obj, ...others) {
+    if (!others) {
+        throw new Error('Not even one other was passed');
+    }
+    let strict = !(isArrayLike(obj) && isObject(obj[obj.length - 1]) && obj[obj.length - 1].strict == false);
+    const _isEq = (_obj, _other) => strict ? _obj === _other : _obj == _other;
+    for (let other of others) {
+        if (_isEq(obj, other)) {
+            return true;
+        }
+    }
+    return false;
+}
+exports.equalsAny = equalsAny;
+function noValue(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    }
+    else if (isArray(obj)) {
+        array = obj;
+    }
+    else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => Boolean(x)).length === 0;
+}
+exports.noValue = noValue;
+///////////////////////////////////
+// *** Exceptions
+///////////////////////////////////
+function getArgsFullRepr(argsWithValues) {
+    return Object.entries(argsWithValues)
+        // @ts-ignore
+        .flatMap(([argname, argval]) => `${argname} (${typeof argval}): ${isObject(argval) ? `{${getArgsFullRepr(argval)}}` : argval}`)
+        .join('", "');
+}
+exports.getArgsFullRepr = getArgsFullRepr;
+function getArgsWithValues(passedArgs) {
+    const argsWithValues = {};
+    for (let [argname, argval] of Object.entries(passedArgs)) {
+        if (argval !== undefined) {
+            argsWithValues[argname] = argval;
+        }
+    }
+    return argsWithValues;
+}
+exports.getArgsWithValues = getArgsWithValues;
+function summary(argset) {
+    const argsWithValues = getArgsWithValues(argset);
+    const argsFullRepr = getArgsFullRepr(argsWithValues);
+    let argNames = Object.keys(argset);
+    return `${argNames.length} args (${argNames}); ${Object.keys(argsWithValues).length} had value: "${argsFullRepr}".\n`;
+}
+exports.summary = summary;
+/**Prints what was expected and what was actually passed.*/
+class MutuallyExclusiveArgs extends Error {
+    /**Either a argName:argValue map or an array of such maps, to indicate mutually exclusive sets of args.*/
+    constructor(passedArgs, details) {
+        let message = `Didn't receive exactly one arg`;
+        if (isArray(passedArgs)) {
+            message += ` from the following mutually exclusive sets of args.\n`;
+            for (let [i, argset] of enumerate(passedArgs)) {
+                message += `Out of set #${i + 1}, which consists of ${summary(argset)}`;
+            }
+        }
+        else {
+            message += ` from the following mutually exclusive set of args.\nOut of ${summary(passedArgs)}`;
+        }
+        if (details) {
+            message += `Details: ${details}`;
+        }
+        super(message);
+    }
+}
+exports.MutuallyExclusiveArgs = MutuallyExclusiveArgs;
+class NotEnoughArgs extends Error {
+    constructor(expected, passedArgs, relation) {
+        let message;
+        if (isArray(expected)) {
+            let [min, max] = expected;
+            if (max === undefined) {
+                message = `Didn't receive enough args: expected at least ${min}`;
+            }
+            else {
+                message = `Didn't receive enough args: expected between ${min} and ${max}`;
+            }
+        }
+        else {
+            message = `Didn't receive enough args: expected exactly ${expected}`;
+        }
+        if (isArray(passedArgs)) {
+            message += ` from ${relation} set of arguments.\n`;
+            for (let [i, argset] of enumerate(passedArgs)) {
+                message += `Out of set #${i + 1}, which consists of ${summary(argset)}`;
+            }
+        }
+        else {
+            message += ` from the following set of args.\nOut of ${summary(passedArgs)}`;
+        }
+        super(message);
+    }
+}
+exports.NotEnoughArgs = NotEnoughArgs;
+class BHETypeError extends TypeError {
+    constructor(options) {
+        let { faultyValue, expected, where, message } = options;
+        const repr = getArgsFullRepr(faultyValue);
+        let msg = '';
+        if (where) {
+            msg += `${where} | `;
+        }
+        msg += `Got ${repr}. `;
+        if (expected) {
+            if (isArray(expected)) {
+                expected = expected.join(" | ");
+            }
+            msg += ` Expected: ${expected}. `;
+        }
+        if (message) {
+            msg += `Details:\n${message}`;
+        }
+        super(msg);
+    }
+}
+exports.BHETypeError = BHETypeError;
+class ValueError extends BHETypeError {
+}
+exports.ValueError = ValueError;
+///////////////////////////////////
+// *** BetterHTMLElement
+///////////////////////////////////
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
-export class BetterHTMLElement {
+class BetterHTMLElement {
     constructor(elemOptions) {
         this._isSvg = false;
         this._listeners = {};
@@ -706,7 +1292,8 @@ export class BetterHTMLElement {
         this._cachedChildren[key] = child;
     }
 }
-export class Div extends BetterHTMLElement {
+exports.BetterHTMLElement = BetterHTMLElement;
+class Div extends BetterHTMLElement {
     constructor(divOpts) {
         const { setid, cls, text, html, byid, query, htmlElement, children } = divOpts;
         if (text !== undefined && html !== undefined) {
@@ -729,7 +1316,8 @@ export class Div extends BetterHTMLElement {
         }
     }
 }
-export class Paragraph extends BetterHTMLElement {
+exports.Div = Div;
+class Paragraph extends BetterHTMLElement {
     constructor(pOpts) {
         // if (noValue(arguments[0])) {
         //     throw new NotEnoughArgs([1], arguments[0])
@@ -755,7 +1343,8 @@ export class Paragraph extends BetterHTMLElement {
         }
     }
 }
-export class Span extends BetterHTMLElement {
+exports.Paragraph = Paragraph;
+class Span extends BetterHTMLElement {
     constructor(spanOpts) {
         const { setid, cls, text, html, byid, query, htmlElement, children } = spanOpts;
         if (text !== undefined && html !== undefined) {
@@ -778,7 +1367,8 @@ export class Span extends BetterHTMLElement {
         }
     }
 }
-export class Img extends BetterHTMLElement {
+exports.Span = Span;
+class Img extends BetterHTMLElement {
     constructor(imgOpts) {
         const { cls, setid, src, byid, query, htmlElement, children } = imgOpts;
         if (htmlElement !== undefined) {
@@ -807,7 +1397,8 @@ export class Img extends BetterHTMLElement {
         }
     }
 }
-export class Anchor extends BetterHTMLElement {
+exports.Img = Img;
+class Anchor extends BetterHTMLElement {
     constructor({ setid, cls, text, html, href, target, byid, query, htmlElement, children }) {
         if (text !== undefined && html !== undefined) {
             throw new MutuallyExclusiveArgs({ text, html });
@@ -851,7 +1442,8 @@ export class Anchor extends BetterHTMLElement {
         }
     }
 }
-export class Form extends BetterHTMLElement {
+exports.Anchor = Anchor;
+class Form extends BetterHTMLElement {
     get disabled() {
         return this._htmlElement.disabled;
     }
@@ -973,9 +1565,10 @@ export class Form extends BetterHTMLElement {
         }
     }
 }
-export class Button extends Form {
+exports.Form = Form;
+class Button extends Form {
     constructor(buttonOpts) {
-        const { setid, cls, text, html, byid, query, htmlElement, children } = buttonOpts;
+        const { setid, cls, text, html, byid, query, htmlElement, children, click } = buttonOpts;
         if (text !== undefined && html !== undefined) {
             throw new MutuallyExclusiveArgs({ text, html });
         }
@@ -993,16 +1586,23 @@ export class Button extends Form {
             if (text !== undefined) {
                 this.text(text);
             }
+            if (click !== undefined) {
+                this.click(click);
+            }
         }
     }
     click(_fn) {
-        const fn = async (event) => {
-            await this._wrapFnInEventHooks(_fn, event);
-        };
-        return super.click(fn);
+        if (_fn !== undefined) {
+            const fn = async (event) => {
+                await this._wrapFnInEventHooks(_fn, event);
+            };
+            return super.click(fn);
+        }
+        return super.click();
     }
 }
-export class Input extends Form {
+exports.Button = Button;
+class Input extends Form {
     constructor(inputOpts) {
         const { setid, cls, type, byid, query, htmlElement, children } = inputOpts;
         if (htmlElement !== undefined) {
@@ -1023,7 +1623,8 @@ export class Input extends Form {
         }
     }
 }
-export class TextInput extends Input {
+exports.Input = Input;
+class TextInput extends Input {
     constructor(opts) {
         opts.type = 'text';
         super(opts);
@@ -1056,7 +1657,8 @@ export class TextInput extends Input {
         return super.keydown(fn);
     }
 }
-export class Changable extends Input {
+exports.TextInput = TextInput;
+class Changable extends Input {
     change(_fn) {
         const fn = async (event) => {
             await this._wrapFnInEventHooks(_fn, event);
@@ -1064,8 +1666,9 @@ export class Changable extends Input {
         return super.change(fn);
     }
 }
+exports.Changable = Changable;
 /**Patches Form's `value()` to set/get `_htmlElement.checked`, and `clear()` to uncheck. */
-export class CheckboxInput extends Changable {
+class CheckboxInput extends Changable {
     constructor(opts) {
         opts.type = 'checkbox';
         super(opts);
@@ -1116,7 +1719,8 @@ export class CheckboxInput extends Changable {
         return super._softErr(e);
     }
 }
-export class Select extends Changable {
+exports.CheckboxInput = CheckboxInput;
+class Select extends Changable {
     // Select uniques:
     // add() item() length namedItem() options remove() selectedIndex selectedOptions ITERATOR
     constructor(selectOpts) {
@@ -1169,55 +1773,65 @@ export class Select extends Changable {
         return this;
     }
 }
-export function elem(elemOptions) {
+exports.Select = Select;
+function elem(elemOptions) {
     return new BetterHTMLElement(elemOptions);
 }
-export function span(spanOpts) {
+exports.elem = elem;
+function span(spanOpts) {
     if (!bool(spanOpts)) {
         spanOpts = {};
     }
     return new Span(spanOpts);
 }
-export function div(divOpts) {
+exports.span = span;
+function div(divOpts) {
     if (!bool(divOpts)) {
         divOpts = {};
     }
     return new Div(divOpts);
 }
-export function button(buttonOpts) {
+exports.div = div;
+function button(buttonOpts) {
     if (!bool(buttonOpts)) {
         buttonOpts = {};
     }
     return new Button(buttonOpts);
 }
-export function input(inputOpts) {
+exports.button = button;
+function input(inputOpts) {
     if (!bool(inputOpts)) {
         inputOpts = {};
     }
     return new Input(inputOpts);
 }
-export function select(selectOpts) {
+exports.input = input;
+function select(selectOpts) {
     if (!bool(selectOpts)) {
         selectOpts = {};
     }
     return new Select(selectOpts);
 }
-export function img(imgOpts) {
+exports.select = select;
+function img(imgOpts) {
     if (!bool(imgOpts)) {
         imgOpts = {};
     }
     return new Img(imgOpts);
 }
-export function paragraph(pOpts) {
+exports.img = img;
+function paragraph(pOpts) {
     if (!bool(pOpts)) {
         pOpts = {};
     }
     return new Paragraph(pOpts);
 }
-export function anchor(anchorOpts) {
+exports.paragraph = paragraph;
+function anchor(anchorOpts) {
     if (!bool(anchorOpts)) {
         anchorOpts = {};
     }
     return new Anchor(anchorOpts);
 }
-//# sourceMappingURL=index.js.map
+exports.anchor = anchor;
+//# sourceMappingURL=betterhtmlelement.js.map

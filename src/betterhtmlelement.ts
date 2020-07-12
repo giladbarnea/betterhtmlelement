@@ -1,6 +1,892 @@
-import { allUndefined, anyDefined, anyTruthy, bool, enumerate, isFunction, isObject, wait } from "./util";
-import { ChildrenObj, CssOptions, Element2Tag, EventName, EventName2Function, MapOfEventName2Function, QueryOrPreciseTag, QuerySelector, Returns, Tag, TagOrString, TMap } from "./typings";
-import { BHETypeError, MutuallyExclusiveArgs, NotEnoughArgs, summary, ValueError } from "./exceptions";
+///////////////////////////////////
+// *** Typing
+///////////////////////////////////
+export interface TMap<T> {
+    [s: string]: T;
+
+    [s: number]: T
+}
+
+export interface TRecMap<T> {
+    [s: string]: T | TRecMap<T>;
+
+    [s: number]: T | TRecMap<T>
+}
+
+// type IMap<T> = {
+//     [s in keyof T]: T
+// }
+
+
+// type EventNameFunctionMapOrig<E extends EventName> = {
+//     [P in E]?: (event: HTMLElementEventMap[P]) => void;
+// }[E];
+//
+// type EventNameFunctionMap2<E extends EventName> = E extends EventName ? (event: HTMLElementEventMap[E]) => void : never;
+// type EventNameFunctionMap3 = {
+//     [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+// }
+// type EventNameFunctionMap4<E extends EventName> = {
+//     [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+// }
+export type EventName = keyof HTMLElementEventMap;
+// EventName2Function<"click"> → function(event: MouseEvent) { }
+export type EventName2Function<E extends EventName = EventName> = {
+    [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+}[E]
+// e.g. { "mouseover" : MouseEvent, ... }
+export type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventName2Function>>
+
+
+/*type MouseOverFunction = EventName2Function<"mouseover">;
+
+
+function expectsMouseEventFunction(fn: (event: MouseEvent) => void) {
+
+}
+
+const mouseEventFunction: MouseOverFunction = (event: MouseEvent) => {
+};
+
+expectsMouseEventFunction(mouseEventFunction);
+
+function expectsMouseEventFunctionPairs(pairs: MapOfEventName2Function) {
+    for (let [evName, evFn] of Object.entries(pairs)) {
+        expectsMouseEventFunction(evFn)
+    }
+
+}
+
+const pairs: MapOfEventName2Function = {"mouseover": mouseEventFunction};
+expectsMouseEventFunctionPairs(pairs);*/
+
+
+// // HTMLTag2HTMLElement<"a"> → HTMLAnchorElement
+// type HTMLTag2HTMLElement<K extends keyof HTMLElementTagNameMap> = {
+//     [P in K]: HTMLElementTagNameMap[P]
+// }[K]
+//
+// // HTMLTag2HTMLElement2["a"] → HTMLAnchorElement
+// type HTMLTag2HTMLElement2 = {
+//     [P in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[P]
+// }
+//
+// // const a: HTMLTag2HTMLElement<"a"> = undefined;
+// // const b: HTMLTag2HTMLElement2["a"] = undefined;
+
+
+/**
+ * "a", "div"
+ * @example
+ * const foo = <K extends Tag>(tag: K) => document.createElement(tag);
+ * foo("a") → HTMLAnchorElement
+ * foo("BAD") // error
+ */
+export type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
+export type NotTag<T extends Tag> = Exclude<Tag, T>;
+export type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<NotTag<T>>>;
+// /**
+//  *"a", "div", "gilad".
+//  *Tag2Element expects a tag and returns an HTMLElement.
+//  *@example
+//  *const baz = <K extends Tag | string>(query: K) => document.querySelector(query);
+//  *baz("div") → HTMLDivElement
+//  *baz("diva") → HTMLSelectElement | HTMLLegendElement | ...
+//  */
+// type Tag2Element<K extends Tag = Tag> = K extends Tag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[Tag]
+export type TagOrString = Tag | string;
+/**
+ * "a", "div", "gilad".
+ * QuerySelector expects a tag and returns a Tag.
+ * @example
+ * const bar = <K extends Tag | string>(query: QuerySelector<K>) => document.querySelector(query);
+ * bar("a") → HTMLAnchorElement
+ * bar("gilad") → HTMLSelectElement | HTMLLegendElement | ...
+ */
+export type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
+
+// const foo = <K extends Tag>(tag: K) => document.createElement(tag);
+
+// const baz = <K extends Tag | string>(query: K) => document.querySelector(query);
+
+// const bar = <K extends Tag | string>(query: QuerySelector<K>) => document.querySelector(query);
+
+// Tag2BHE["a"] → Anchor
+/*
+interface Tag2BHE {
+    "img": Img,
+    "a": Anchor,
+    "input": Input<HTMLInputElement>,
+    "div": Div,
+    "p": Paragraph,
+    "button": Button,
+    "span": Span,
+}
+*/
+
+
+// type BHETag = keyof Tag2BHE;
+// type BHEHTMLElement =
+//     HTMLAnchorElement |
+//     HTMLInputElement |
+//     HTMLImageElement |
+//     HTMLParagraphElement |
+//     HTMLDivElement |
+//     HTMLButtonElement |
+//     HTMLSpanElement;
+//
+// type StdBHEHTMLElement =
+//     HTMLParagraphElement |
+//     HTMLDivElement |
+//     HTMLButtonElement |
+//     HTMLSpanElement
+
+export type Element2Tag<T> =
+    T extends HTMLInputElement ? "input"
+        : T extends HTMLAnchorElement ? "a"
+        : T extends HTMLImageElement ? "img"
+            : Tag
+
+// type MapValues<T> = { [K in keyof T]: T[K] }[keyof T];
+
+// HTMLDivElement, ...
+// type HTMLElements = MapValues<HTMLElementTagNameMap>;
+// type Filter<T> = T extends HTMLElements ? T : never;
+// type GenericFilter<T, U> = T extends U ? T : never;
+
+// const what: Element2Tag<HTMLDivElement> = undefined;
+// const what: Filter<HTMLInputElement, HTMLElements> = undefined;
+// const what: Filter<HTMLInputElement> = undefined;
+// const what: Element2Tag<HTMLAnchorElement> = undefined;
+
+
+// type ChildrenObj = TMap<Tag2Element> | TRecMap<Tag2Element>
+// type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
+export type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>
+export type Enumerated<T> =
+    T extends (infer U)[] ? [number, U][]
+        : T extends TRecMap<(infer U)> ? [keyof T, U][]
+        : T extends boolean ? never : any;
+export type Returns<T> = (s: string) => T;
+// type TReturnBoolean = (s: string) => boolean;
+
+
+export type Awaited<T> = T extends Promise<infer U> ? U : T;
+// type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
+// type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
+
+
+/////////////////////////////////////////////////
+/////////////// CSS /////////////////////////////
+/////////////////////////////////////////////////
+
+// TODO: https://www.npmjs.com/package/csstype
+export type OmittedCssProps = "animationDirection"
+    | "animationFillMode"
+    | "animationIterationCount"
+    | "animationPlayState"
+    | "animationTimingFunction"
+    | "opacity"
+    | "padding"
+    | "paddingBottom"
+    | "paddingLeft"
+    | "paddingRight"
+    | "paddingTop"
+    | "preload"
+    | "width"
+export type PartialCssStyleDeclaration = Omit<Partial<CSSStyleDeclaration>, OmittedCssProps>;
+
+export interface CssOptions extends PartialCssStyleDeclaration {
+    animationDirection?: AnimationDirection;
+    animationFillMode?: AnimationFillMode;
+    animationIterationCount?: number;
+    animationPlayState?: AnimationPlayState;
+    animationTimingFunction?: AnimationTimingFunction;
+    opacity?: string | number;
+    padding?: string | number;
+    paddingBottom?: string | number;
+    paddingLeft?: string | number;
+    paddingRight?: string | number;
+    paddingTop?: string | number;
+    preload?: "auto" | string;
+    width?: string | number;
+}
+
+
+export type CubicBezierFunction = [number, number, number, number];
+export type Jumpterm = 'jump-start' | 'jump-end' | 'jump-none' | 'jump-both' | 'start' | 'end';
+
+/**Displays an animation iteration along n stops along the transition, displaying each stop for equal lengths of time.
+ * For example, if n is 5,  there are 5 steps.
+ * Whether the animation holds temporarily at 0%, 20%, 40%, 60% and 80%, on the 20%, 40%, 60%, 80% and 100%, or makes 5 stops between the 0% and 100% along the animation, or makes 5 stops including the 0% and 100% marks (on the 0%, 25%, 50%, 75%, and 100%) depends on which of the following jump terms is used*/
+export type StepsFunction = [number, Jumpterm];
+export type AnimationTimingFunction =
+    'linear'
+    | 'ease'
+    | 'ease-in'
+    | 'ease-out'
+    | 'ease-in-out'
+    | 'step-start'
+    | 'step-end'
+    | StepsFunction
+    | CubicBezierFunction
+export type AnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
+export type AnimationFillMode = 'none' | 'forwards' | 'backwards' | 'both';
+
+export interface TransformOptions {
+    matrix?: [number, number, number, number, number, number],
+    matrix3d?: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number],
+    perspective?: string, // px
+    rotate?: string, // deg
+    rotate3d?: [number, number, number, string] // [,,,deg]
+    rotateX?: string,
+    rotateY?: string,
+    rotateZ?: string,
+    scale?: number, // 1.5
+    scale3d?: [number, number, number],
+    scaleX?: [number, number, number],
+    scaleY?: [number, number, number],
+    skew?: [string, string] // deg, deg
+    skewX?: string,
+    skewY?: string,
+    translate?: [string, string], // px, px
+    translate3d?: [string, string, string],
+    translateX?: string,
+    translateY?: string,
+    translateZ?: string,
+
+
+}
+
+export interface AnimateOptions {
+    delay?: string;
+    direction?: AnimationDirection;
+    duration: string;
+    fillMode?: AnimationFillMode;
+    iterationCount?: number;
+    name: string;
+    playState?: AnimationPlayState;
+    /** Also accepts:
+     * cubic-bezier(p1, p2, p3, p4)
+     * 'ease' == 'cubic-bezier(0.25, 0.1, 0.25, 1.0)'
+     * 'linear' == 'cubic-bezier(0.0, 0.0, 1.0, 1.0)'
+     * 'ease-in' == 'cubic-bezier(0.42, 0, 1.0, 1.0)'
+     * 'ease-out' == 'cubic-bezier(0, 0, 0.58, 1.0)'
+     * 'ease-in-out' == 'cubic-bezier(0.42, 0, 0.58, 1.0)'
+     * */
+    timingFunction?: AnimationTimingFunction;
+}
+
+///////////////////////////////////
+// *** Utilities
+///////////////////////////////////
+// function enumerate(obj: undefined): [void];
+
+// function enumerate<T>(obj: T): never;
+// function enumerate<T>(obj: T): [keyof T, T[keyof T]][];
+
+
+// function enumerate<T>(obj: T): T extends string[]
+//     ? [number, string][]
+//     : [keyof T, T[keyof T]][] {
+
+
+export function enumerate<T>(obj: T): Enumerated<T> {
+    // undefined    []
+    // {}           []
+    // []           []
+    // ""           []
+    // number       TypeError
+    // null         TypeError
+    // boolean      TypeError
+    // Function     TypeError
+    // "foo"        [ [0, "f"], [1, "o"], [2, "o"] ]
+    // [ "foo" ]    [ [0, "foo"] ]
+    // [ 10 ]       [ [0, 10] ]
+    // { a: "foo" } [ ["a", "foo"] ]
+    // // ()=>{}    ?
+    let typeofObj = typeof obj;
+    if (
+        obj === undefined
+        || isEmptyObj(obj)
+        || isEmptyArr(obj)
+        // @ts-ignore
+        || obj === ""
+    ) {
+        return [] as Enumerated<T>;
+    }
+
+    if (
+        obj === null
+        || typeofObj === "boolean"
+        || typeofObj === "number"
+        || typeofObj === "function"
+    ) {
+        throw new TypeError(`${typeofObj} object is not iterable`);
+    }
+    let array = [];
+    if (isArray(obj)) {
+        let i: number = 0;
+        for (let x of obj) {
+            array.push([i, x]);
+            i++;
+        }
+    } else {
+        for (let prop in obj) {
+            array.push([prop, obj[prop]]);
+        }
+    }
+    return array as Enumerated<T>;
+}
+
+export function wait(ms: number): Promise<any> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function bool(val: any): boolean {
+    // 0                    false
+    // 1                    true
+    // '0'                  true
+    // '1'                  true
+    // ' '                  true
+    // ''                   false
+    // 'foo'                true
+    // ()=>{}               true
+    // Boolean              true
+    // Boolean()            false
+    // Boolean(false)       false
+    // Boolean(true)        true
+    // Function             true
+    // Function()           true
+    // Number               true
+    // Number(0)            false
+    // Number(1)            true
+    // Number()             false
+    // [ 0 ]                true
+    // [ 1 ]                true
+    // [ [] ]               true
+    // [ false ]            true
+    // [ true ]             true
+    // []                   false       unlike native
+    // document.body        true
+    // false                false
+    // function(){}         true
+    // new Boolean          false       unlike native
+    // new Boolean()        false       unlike native
+    // new Boolean(false)   false       unlike native
+    // new Boolean(true)    true
+    // new Function         true
+    // new Function()       true
+    // new Number           false       unlike native
+    // new Number(0)        false       unlike native
+    // new Number(1)        true
+    // new Number()         false       unlike native
+    // new Timeline(...)    true
+    // new class{}          false       unlike native
+    // null                 false
+    // true                 true
+    // undefined            false
+    // { hi : 'bye' }       true
+    // {}                   false       unlike native
+
+
+    if (!val) {
+        return false;
+    }
+    const typeofval = typeof val;
+    if (typeofval !== 'object') {
+        if (typeofval === 'function') {
+            return true;
+        } else {
+            return !!val;
+        }
+    }
+    // let keysLength = Object.keys(val).length;
+    let toStringed = {}.toString.call(val);
+    if (toStringed === '[object Object]' || toStringed === '[object Array]') {
+        return Object.keys(val).length !== 0;
+    }
+
+    // Boolean, Number, HTMLElement...
+    return !!val.valueOf();
+}
+
+export function isArray<T>(obj): obj is Array<T> { // same as Array.isArray
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // 'foo'               false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // / [ 1 ]             true
+    // / []                true
+    // false               false
+    // function(){}        false
+    // new Boolean()       false
+    // new Boolean(false)  false
+    // new Boolean(true)   false
+    // new Function()      false
+    // new Number(0)       false
+    // new Number(1)       false
+    // new Number()        false
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // {}                  false
+    if (!obj) {
+        return false;
+    }
+    return typeof obj !== 'string' && (Array.isArray(obj) || typeof obj[Symbol.iterator] === 'function');
+}
+
+export function isEmptyArr(collection): boolean {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // [ 1 ]               false
+    // / []                true
+    // false               false
+    // function(){}        false
+    // new Boolean()       false
+    // new Boolean(false)  false
+    // new Boolean(true)   false
+    // new Function()      false
+    // new Number(0)       false
+    // new Number(1)       false
+    // new Number()        false
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // {}                  false
+    return isArray(collection) && getLength(collection) === 0
+}
+
+export function isEmptyObj(obj): boolean {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // [ 1 ]               false
+    // []                  false
+    // false               false
+    // function(){}        false
+    // / new Boolean()     true
+    // / new Boolean(false)true
+    // / new Boolean(true) true
+    // new Function()      false
+    // / new Number(0)     true
+    // / new Number(1)     true
+    // / new Number()      true
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // / {}                true
+    return isObject(obj) && !isArray(obj) && Object.keys(obj).length === 0
+}
+
+
+export function isFunction<F>(fn: F): fn is F
+export function isFunction(fn: (...args: any[]) => any): fn is (...args: any[]) => any
+export function isFunction(fn) {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // / ()=>{}              true
+    // / Boolean             true
+    // Boolean()           false
+    // / Function            true
+    // / Function()          true
+    // / Number              true
+    // Number()            false
+    // [ 1 ]               false
+    // []                  false
+    // false               false
+    // / function(){}        true
+    // new Boolean()       false
+    // new Boolean(false)  false
+    // new Boolean(true)   false
+    // / new Function()      true
+    // new Number(0)       false
+    // new Number(1)       false
+    // new Number()        false
+    // null                false
+    // true                false
+    // undefined           false
+    // { hi : 'bye' }      false
+    // {}                  false
+    let toStringed = {}.toString.call(fn);
+    return !!fn && toStringed === '[object Function]'
+}
+
+export function anyDefined(obj): boolean {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    } else if (isArray(obj)) {
+        array = obj;
+    } else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => x !== undefined).length > 0;
+}
+
+export function anyTruthy(obj): boolean {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    } else if (isArray(obj)) {
+        array = obj;
+    } else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => bool(x)).length > 0;
+}
+
+export function allUndefined(obj): boolean {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj)
+    } else if (isArray(obj)) {
+        array = obj;
+    } else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`)
+    }
+    return array.filter(x => x !== undefined).length === 0
+}
+
+/**Check every `checkInterval` ms if `cond()` is truthy. If, within `timeout`, cond() is truthy, return `true`. Return `false` if time is out.
+ * @example
+ * // Give the user a 200ms chance to get her pointer over "mydiv". Continue immediately once she does, or after 200ms if she doesn't.
+ * mydiv.pointerenter( () => mydiv.pointerHovering = true; )
+ * const pointerOnMydiv = await waitUntil(() => mydiv.pointerHovering, 200, 10);*/
+export async function waitUntil(cond: () => boolean, checkInterval: number = 20, timeout: number = Infinity): Promise<boolean> {
+    if (checkInterval <= 0) {
+        throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
+    }
+    if (checkInterval > timeout) {
+        throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). checkInterval has to be lower than timeout.`);
+    }
+
+    const loops = timeout / checkInterval;
+    if (loops <= 1) {
+        console.warn(`loops <= 1, you probably didn't want this to happen`);
+    }
+    let count = 0;
+    while (count < loops) {
+        if (cond()) {
+            return true;
+        }
+        await wait(checkInterval);
+        count++;
+    }
+    return false;
+}
+
+export function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType): bhe is T {
+    return (bhe instanceof bheSubType)
+}
+
+export function isType<T>(arg: T): arg is T {
+    return true
+}
+
+export function isTMap<T>(obj: TMap<T>): obj is TMap<T> {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // [ 1 ]             false
+    // []                false
+    // false               false
+    // function(){}        false
+    // new Boolean()     false
+    // new Boolean(false)false
+    // new Boolean(true) false
+    // new Function()      false
+    // new Number(0)     false
+    // new Number(1)     false
+    // new Number()      false
+    // null                false
+    // true                false
+    // undefined           false
+    // / { hi : 'bye' }    true
+    // / {}                true
+    return {}.toString.call(obj) == '[object Object]'
+}
+
+
+// *  underscore.js
+/**true for any non-primitive, including array, function*/
+export function isObject(obj): boolean {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // / [ 1 ]             true
+    // / []                true
+    // false               false
+    // function(){}        false
+    // / new Boolean()     true
+    // / new Boolean(false)true
+    // / new Boolean(true) true
+    // new Function()      false
+    // / new Number(0)     true
+    // / new Number(1)     true
+    // / new Number()      true
+    // null                false
+    // true                false
+    // undefined           false
+    // / { hi : 'bye' }    true
+    // / {}                true
+    return typeof obj === 'object' && !!obj;
+}
+
+export function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T] {
+    return function (obj) {
+        return obj == null ? void 0 : obj[key];
+    };
+}
+
+
+export function getLength(collection): number {
+    return shallowProperty('length')(collection)
+}
+
+
+const MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+
+export function isArrayLike(collection): boolean {
+    const length = getLength(collection);
+    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
+}
+
+
+// *  misc
+// child extends sup
+export function extend(sup, child) {
+    child.prototype = sup.prototype;
+    const handler = {
+        construct
+    };
+
+    // "new BoyCls"
+    function construct(_, argArray) {
+        const obj = new child;
+        sup.apply(obj, argArray);    // calls PersonCtor. Sets name
+        child.apply(obj, argArray); // calls BoyCtor. Sets age
+        return obj;
+    }
+
+
+    // @ts-ignore
+    const proxy = new Proxy(child, handler);
+    return proxy;
+}
+
+export function anyValue(obj) {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj);
+    } else if (isArray(obj)) {
+        array = obj;
+    } else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+    }
+    return array.filter(x => Boolean(x)).length > 0;
+}
+
+export function equalsAny(obj: any, ...others: any[]): boolean {
+    if (!others) {
+        throw new Error('Not even one other was passed');
+    }
+    let strict = !(isArrayLike(obj) && isObject(obj[obj.length - 1]) && obj[obj.length - 1].strict == false);
+    const _isEq = (_obj, _other) => strict ? _obj === _other : _obj == _other;
+    for (let other of others) {
+        if (_isEq(obj, other)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export function noValue(obj): boolean {
+    let array;
+    if (isObject(obj)) {
+        array = Object.values(obj)
+    } else if (isArray(obj)) {
+        array = obj;
+    } else {
+        throw new TypeError(`expected array or obj, got: ${typeof obj}`)
+    }
+    return array.filter(x => Boolean(x)).length === 0
+}
+
+///////////////////////////////////
+// *** Exceptions
+///////////////////////////////////
+
+export function getArgsFullRepr(argsWithValues: TMap<any>): string {
+    return Object.entries(argsWithValues)
+        // @ts-ignore
+        .flatMap(([argname, argval]) => `${argname} (${typeof argval}): ${isObject(argval) ? `{${getArgsFullRepr(argval)}}` : argval}`)
+        .join('", "');
+}
+
+export function getArgsWithValues(passedArgs: TMap<any>) {
+    const argsWithValues: TMap<any> = {};
+    for (let [argname, argval] of Object.entries(passedArgs)) {
+        if (argval !== undefined) {
+            argsWithValues[argname] = argval;
+        }
+    }
+    return argsWithValues;
+}
+
+export function summary(argset: TMap<any>): string {
+    const argsWithValues = getArgsWithValues(argset);
+    const argsFullRepr: string = getArgsFullRepr(argsWithValues);
+    let argNames = Object.keys(argset);
+    return `${argNames.length} args (${argNames}); ${Object.keys(argsWithValues).length} had value: "${argsFullRepr}".\n`;
+}
+
+/**Prints what was expected and what was actually passed.*/
+export class MutuallyExclusiveArgs extends Error {
+    /**@param passedArgs - key:value pairs of argName:argValue, where each arg is mutually exclusive with all others*/
+    constructor(passedArgs: TMap<any>, details?: string)
+    /**@param passedArgs - Array of mutually exclusive sets of args, where an arg from one set means there can't be any args from the other sets.
+     * Each set is key:value pairs of argName:argValue.*/
+    constructor(passedArgs: TMap<any>[], details?: string)
+    /**Either a argName:argValue map or an array of such maps, to indicate mutually exclusive sets of args.*/
+    constructor(passedArgs, details?: string) {
+        let message = `Didn't receive exactly one arg`;
+        if (isArray(passedArgs)) {
+            message += ` from the following mutually exclusive sets of args.\n`;
+            for (let [i, argset] of enumerate(passedArgs)) {
+                message += `Out of set #${i + 1}, which consists of ${summary(argset)}`
+            }
+        } else {
+            message += ` from the following mutually exclusive set of args.\nOut of ${summary(passedArgs)}`
+        }
+
+        if (details) {
+            message += `Details: ${details}`
+        }
+        super(message);
+    }
+
+
+}
+
+
+export class NotEnoughArgs extends Error {
+    constructor(expected: number | number[], passedArgs: TMap<any> | TMap<any>[], relation?: 'each' | 'either') {
+        let message;
+        if (isArray(expected)) {
+            let [min, max] = expected;
+            if (max === undefined) {
+                message = `Didn't receive enough args: expected at least ${min}`
+            } else {
+                message = `Didn't receive enough args: expected between ${min} and ${max}`
+            }
+        } else {
+            message = `Didn't receive enough args: expected exactly ${expected}`;
+        }
+
+        if (isArray(passedArgs)) {
+            message += ` from ${relation} set of arguments.\n`;
+            for (let [i, argset] of enumerate(passedArgs)) {
+                message += `Out of set #${i + 1}, which consists of ${summary(argset)}`
+            }
+
+        } else {
+            message += ` from the following set of args.\nOut of ${summary(passedArgs)}`;
+        }
+
+        super(message);
+    }
+}
+
+export class BHETypeError extends TypeError {
+
+    constructor(options: { faultyValue: TMap<any>, expected?: any | any[], where?: string, message?: string }) {
+        let { faultyValue, expected, where, message } = options;
+        const repr = getArgsFullRepr(faultyValue);
+        let msg = '';
+        if (where) {
+            msg += `${where} | `
+        }
+        msg += `Got ${repr}. `;
+        if (expected) {
+            if (isArray(expected)) {
+                expected = expected.join(" | ")
+            }
+            msg += ` Expected: ${expected}. `
+        }
+        if (message) {
+            msg += `Details:\n${message}`
+        }
+        super(msg);
+    }
+}
+
+export class ValueError extends BHETypeError {
+
+}
+
+///////////////////////////////////
+// *** BetterHTMLElement
+///////////////////////////////////
 
 const SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
@@ -1249,11 +2135,11 @@ export abstract class Form<Generic extends FormishHTMLElement>
 
 
 export class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonElement> {
-    constructor({ cls, setid, text }: {
-        cls?: string, setid?: string, text?: string
+    constructor({ cls, setid, text, click }: {
+        cls?: string, setid?: string, text?: string, click?: (event: MouseEvent) => any
     });
-    constructor({ cls, setid, html }: {
-        cls?: string, setid?: string, html?: string
+    constructor({ cls, setid, html, click }: {
+        cls?: string, setid?: string, html?: string, click?: (event: MouseEvent) => any
     });
     constructor({ byid, children }: {
         byid: string, children?: ChildrenObj
@@ -1268,7 +2154,7 @@ export class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLBu
     })
     constructor();
     constructor(buttonOpts?) {
-        const { setid, cls, text, html, byid, query, htmlElement, children } = buttonOpts;
+        const { setid, cls, text, html, byid, query, htmlElement, children, click } = buttonOpts;
         if (text !== undefined && html !== undefined) {
             throw new MutuallyExclusiveArgs({ text, html })
         }
@@ -1283,18 +2169,23 @@ export class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLBu
             if (text !== undefined) {
                 this.text(text);
             }
+            if (click !== undefined) {
+                this.click(click);
+            }
 
         }
 
     }
 
     click(_fn?: (_event: MouseEvent) => Promise<any>): this {
+        if (_fn !== undefined) {
+            const fn = async (event) => {
+                await this._wrapFnInEventHooks(_fn, event);
+            };
 
-        const fn = async (event) => {
-            await this._wrapFnInEventHooks(_fn, event);
-        };
-
-        return super.click(fn);
+            return super.click(fn);
+        }
+        return super.click()
     }
 
 
@@ -1643,10 +2534,10 @@ export function div(divOpts?): Div {
 
 
 export function button({ cls, setid, text }: {
-    cls?: string, setid?: string, text?: string
+    cls?: string, setid?: string, text?: string, click?: (event: MouseEvent) => any
 }): Button;
 export function button({ cls, setid, html }: {
-    cls?: string, setid?: string, html?: string
+    cls?: string, setid?: string, html?: string, click?: (event: MouseEvent) => any
 }): Button;
 export function button({ byid, children }: {
     byid: string, children?: ChildrenObj
