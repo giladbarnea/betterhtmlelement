@@ -540,6 +540,9 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
                 if (value instanceof BetterHTMLElement) {
                     // { "myimg": img(...) }
                     this._cache(key, value)
+                } else if (value instanceof HTMLElement) {
+                    const bhe = this._cls().wrapWithBHE(value)
+                    this._cache(key, bhe);
                 } else {
                     // { "mydiv": { "myimg": img(...), "myinput": input(...) } }
                     let entries = Object.entries(value);
@@ -547,7 +550,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
                         console.warn(
                             `cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
                                 key,
-                                "multiple selectors": entries.map(e => e[0]),
+                                entries,
                                 value,
                                 this: this
                             }
@@ -1224,11 +1227,11 @@ abstract class Form<Generic extends FormishHTMLElement>
 
 
 class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonElement> {
-    constructor({ cls, setid, text }: {
-        cls?: string, setid?: string, text?: string
+    constructor({ cls, setid, text, click }: {
+        cls?: string, setid?: string, text?: string, click?: (event: MouseEvent) => any
     });
-    constructor({ cls, setid, html }: {
-        cls?: string, setid?: string, html?: string
+    constructor({ cls, setid, html, click }: {
+        cls?: string, setid?: string, html?: string, click?: (event: MouseEvent) => any
     });
     constructor({ byid, children }: {
         byid: string, children?: ChildrenObj
@@ -1243,7 +1246,7 @@ class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonEle
     })
     constructor();
     constructor(buttonOpts?) {
-        const { setid, cls, text, html, byid, query, htmlElement, children } = buttonOpts;
+        const { setid, cls, text, html, byid, query, htmlElement, children, click } = buttonOpts;
         if (text !== undefined && html !== undefined) {
             throw new MutuallyExclusiveArgs({ text, html })
         }
@@ -1258,16 +1261,23 @@ class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonEle
             if (text !== undefined) {
                 this.text(text);
             }
+            if (click !== undefined) {
+                this.click(click);
+            }
 
         }
 
     }
 
     click(_fn?: (_event: MouseEvent) => Promise<any>): this {
-        const fn = async (event) => {
-            await this._wrapFnInEventHooks(_fn, event);
-        };
-        return super.click(fn);
+        if (_fn !== undefined) {
+            const fn = async (event) => {
+                await this._wrapFnInEventHooks(_fn, event);
+            };
+
+            return super.click(fn);
+        }
+        return super.click()
     }
 
 
@@ -1619,10 +1629,10 @@ function div(divOpts?): Div {
 
 
 function button({ cls, setid, text }: {
-    cls?: string, setid?: string, text?: string
+    cls?: string, setid?: string, text?: string, click?: (event: MouseEvent) => any
 }): Button;
 function button({ cls, setid, html }: {
-    cls?: string, setid?: string, html?: string
+    cls?: string, setid?: string, html?: string, click?: (event: MouseEvent) => any
 }): Button;
 function button({ byid, children }: {
     byid: string, children?: ChildrenObj

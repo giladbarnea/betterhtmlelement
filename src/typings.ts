@@ -126,6 +126,10 @@ type Awaited<T> = T extends Promise<infer U> ? U : T;
 // type Callable2<T1, F> = F extends (a1: T1, a2: HTMLElement) => infer R ? R : any;
 
 
+/////////////////////////////////////////////////
+/////////////// CSS /////////////////////////////
+/////////////////////////////////////////////////
+
 // TODO: https://www.npmjs.com/package/csstype
 type OmittedCssProps = "animationDirection"
     | "animationFillMode"

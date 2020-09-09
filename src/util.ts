@@ -339,10 +339,72 @@ function isType<T>(arg: T): arg is T {
     return true
 }
 
+function isTMap<T>(obj: TMap<T>): obj is TMap<T> {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // [ 1 ]             false
+    // []                false
+    // false               false
+    // function(){}        false
+    // new Boolean()     false
+    // new Boolean(false)false
+    // new Boolean(true) false
+    // new Function()      false
+    // new Number(0)     false
+    // new Number(1)     false
+    // new Number()      false
+    // null                false
+    // true                false
+    // undefined           false
+    // / { hi : 'bye' }    true
+    // / {}                true
+    return {}.toString.call(obj) == '[object Object]'
+}
+
 
 // *  underscore.js
 /**true for any non-primitive, including array, function*/
 function isObject(obj): boolean {
+    // 0                   false
+    // 1                   false
+    // ''                  false
+    // ' '                 false
+    // '0'                 false
+    // '1'                 false
+    // ()=>{}              false
+    // Boolean             false
+    // Boolean()           false
+    // Function            false
+    // Function()          false
+    // Number              false
+    // Number()            false
+    // / [ 1 ]             true
+    // / []                true
+    // false               false
+    // function(){}        false
+    // / new Boolean()     true
+    // / new Boolean(false)true
+    // / new Boolean(true) true
+    // new Function()      false
+    // / new Number(0)     true
+    // / new Number(1)     true
+    // / new Number()      true
+    // null                false
+    // true                false
+    // undefined           false
+    // / { hi : 'bye' }    true
+    // / {}                true
     return typeof obj === 'object' && !!obj;
 }
 
