@@ -254,15 +254,17 @@ declare abstract class Form<Generic extends FormishHTMLElement> extends BetterHT
     protected _wrapFnInEventHooks<F extends (event: Event) => Promise<any>>(asyncFn: F, event: Event): Promise<void>;
 }
 declare class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonElement> {
-    constructor({ cls, setid, text }: {
+    constructor({ cls, setid, text, click }: {
         cls?: string;
         setid?: string;
         text?: string;
+        click?: (event: MouseEvent) => any;
     });
-    constructor({ cls, setid, html }: {
+    constructor({ cls, setid, html, click }: {
         cls?: string;
         setid?: string;
         html?: string;
+        click?: (event: MouseEvent) => any;
     });
     constructor({ byid, children }: {
         byid: string;
@@ -422,11 +424,13 @@ declare function button({ cls, setid, text }: {
     cls?: string;
     setid?: string;
     text?: string;
+    click?: (event: MouseEvent) => any;
 }): Button;
 declare function button({ cls, setid, html }: {
     cls?: string;
     setid?: string;
     html?: string;
+    click?: (event: MouseEvent) => any;
 }): Button;
 declare function button({ byid, children }: {
     byid: string;
@@ -621,6 +625,7 @@ declare function allUndefined(obj: any): boolean;
 declare function waitUntil(cond: () => boolean, checkInterval?: number, timeout?: number): Promise<boolean>;
 declare function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType: any): bhe is T;
 declare function isType<T>(arg: T): arg is T;
+declare function isTMap<T>(obj: TMap<T>): obj is TMap<T>;
 declare function isObject(obj: any): boolean;
 declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];
 declare function getLength(collection: any): number;

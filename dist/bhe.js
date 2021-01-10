@@ -485,12 +485,16 @@ class BetterHTMLElement {
                 if (value instanceof BetterHTMLElement) {
                     this._cache(key, value);
                 }
+                else if (value instanceof HTMLElement) {
+                    const bhe = this._cls().wrapWithBHE(value);
+                    this._cache(key, bhe);
+                }
                 else {
                     let entries = Object.entries(value);
                     if (entries[1] !== undefined) {
                         console.warn(`cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
                             key,
-                            "multiple selectors": entries.map(e => e[0]),
+                            entries,
                             value,
                             this: this
                         });
@@ -692,9 +696,13 @@ class BetterHTMLElement {
         }
     }
     _cache(key, child) {
+        if (child === undefined) {
+            console.warn(`${this}._cache(key: "${key}") | 'child' is undefined. Not caching anything.`);
+            return;
+        }
         const oldchild = this._cachedChildren[key];
         if (oldchild !== undefined) {
-            console.warn(`Overwriting this._cachedChildren[${key}]!`, `old child: ${oldchild}`, `new child: ${child}`, `are they different?: ${oldchild == child}`);
+            console.warn(`${this}._cache() | Overwriting this._cachedChildren[${key}]!`, `old child: ${oldchild}`, `new child: ${child}`, `are they different?: ${oldchild == child}`);
         }
         this[key] = child;
         this._cachedChildren[key] = child;
@@ -940,7 +948,7 @@ class Form extends BetterHTMLElement {
 }
 class Button extends Form {
     constructor(buttonOpts) {
-        const { setid, cls, text, html, byid, query, htmlElement, children } = buttonOpts;
+        const { setid, cls, text, html, byid, query, htmlElement, children, click } = buttonOpts;
         if (text !== undefined && html !== undefined) {
             throw new MutuallyExclusiveArgs({ text, html });
         }
@@ -958,13 +966,19 @@ class Button extends Form {
             if (text !== undefined) {
                 this.text(text);
             }
+            if (click !== undefined) {
+                this.click(click);
+            }
         }
     }
     click(_fn) {
-        const fn = async (event) => {
-            await this._wrapFnInEventHooks(_fn, event);
-        };
-        return super.click(fn);
+        if (_fn !== undefined) {
+            const fn = async (event) => {
+                await this._wrapFnInEventHooks(_fn, event);
+            };
+            return super.click(fn);
+        }
+        return super.click();
     }
 }
 class Input extends Form {
@@ -1309,6 +1323,9 @@ function isBHE(bhe, bheSubType) {
 }
 function isType(arg) {
     return true;
+}
+function isTMap(obj) {
+    return {}.toString.call(obj) == '[object Object]';
 }
 function isObject(obj) {
     return typeof obj === 'object' && !!obj;

@@ -852,9 +852,13 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     }
 
     private _cache(key, child: BetterHTMLElement | BetterHTMLElement[]): void {
+        if (child === undefined) {
+            console.warn(`${this}._cache(key: "${key}") | 'child' is undefined. Not caching anything.`);
+            return
+        }
         const oldchild = this._cachedChildren[key];
         if (oldchild !== undefined) {
-            console.warn(`Overwriting this._cachedChildren[${key}]!`, `old child: ${oldchild}`,
+            console.warn(`${this}._cache() | Overwriting this._cachedChildren[${key}]!`, `old child: ${oldchild}`,
                 `new child: ${child}`, `are they different?: ${oldchild == child}`
             );
         }
@@ -1320,6 +1324,7 @@ class Input<TInputType extends InputType,
             super({ tag: "input" as Element2Tag<Generic>, cls, setid });
             if (type !== undefined) {
                 // @ts-ignore
+                // noinspection JSConstantReassignment
                 this._htmlElement.type = type;
             }
         }
