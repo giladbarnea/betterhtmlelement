@@ -218,8 +218,8 @@ class BetterHTMLElement {
     wrapSomethingElse(newHtmlElement) {
         this._cachedChildren = {};
         if (newHtmlElement instanceof BetterHTMLElement) {
-            this._htmlElement.replaceWith(newHtmlElement.e);
-            this._htmlElement = newHtmlElement.e;
+            this._htmlElement.replaceWith(newHtmlElement._htmlElement);
+            this._htmlElement = newHtmlElement._htmlElement;
             for (let [_key, _cachedChild] of enumerate(newHtmlElement._cachedChildren)) {
                 this._cache(_key, _cachedChild);
             }
@@ -354,88 +354,65 @@ class BetterHTMLElement {
         }
     }
     after(...nodes) {
-        for (let node of nodes) {
-            if (node instanceof BetterHTMLElement) {
-                this._htmlElement.after(node.e);
-            }
-            else {
-                this._htmlElement.after(node);
-            }
-        }
+        this._htmlElement.after(...nodes.map(node => { var _a; return (_a = node['_htmlElement']) !== null && _a !== void 0 ? _a : node; }));
         return this;
     }
     insertAfter(node) {
-        if (node instanceof BetterHTMLElement) {
-            node._htmlElement.after(this._htmlElement);
-        }
-        else {
-            node.after(this._htmlElement);
-        }
+        var _a;
+        ((_a = node['_htmlElement']) !== null && _a !== void 0 ? _a : node).after(this._htmlElement);
         return this;
     }
     append(...nodes) {
         for (let node of nodes) {
             if (node instanceof BetterHTMLElement) {
-                this._htmlElement.append(node.e);
+                this._htmlElement.append(node._htmlElement);
+                continue;
+            }
+            if (node instanceof Node) {
+                this._htmlElement.append(node);
+                continue;
+            }
+            console.warn(`${this} .append(...nodes) | node is not BHE nor Node: ${node} (${typeof node}). calling cacheAppend ??`);
+            if (Array.isArray(node)) {
+                this.cacheAppend([node]);
             }
             else {
-                if (node instanceof Node) {
-                    this._htmlElement.append(node);
-                }
-                else {
-                    if (Array.isArray(node)) {
-                        this.cacheAppend([node]);
-                    }
-                    else {
-                        this.cacheAppend(node);
-                    }
-                }
+                this.cacheAppend(node);
             }
         }
         return this;
     }
     appendTo(node) {
-        if (node instanceof BetterHTMLElement) {
-            node._htmlElement.append(this._htmlElement);
-        }
-        else {
-            node.append(this._htmlElement);
-        }
+        var _a;
+        ((_a = node['_htmlElement']) !== null && _a !== void 0 ? _a : node).append(this._htmlElement);
         return this;
     }
     before(...nodes) {
-        for (let node of nodes) {
-            if (node instanceof BetterHTMLElement) {
-                this._htmlElement.before(node.e);
-            }
-            else {
-                this._htmlElement.before(node);
-            }
-        }
+        this._htmlElement.before(...nodes.map(node => { var _a; return (_a = node['_htmlElement']) !== null && _a !== void 0 ? _a : node; }));
         return this;
     }
-    insertBefore(node) {
-        if (node instanceof BetterHTMLElement) {
-            node._htmlElement.before(this._htmlElement);
-        }
-        else {
-            node.before(this._htmlElement);
-        }
+    insertBefore(newChild, refChild) {
+        var _a, _b;
+        this._htmlElement.insertBefore((_a = newChild['_htmlElement']) !== null && _a !== void 0 ? _a : newChild, (_b = refChild['_htmlElement']) !== null && _b !== void 0 ? _b : refChild);
         return this;
     }
     removeChild(oldChild) {
         var _a;
-        const removed = this._htmlElement.removeChild((_a = oldChild._htmlElement) !== null && _a !== void 0 ? _a : oldChild);
+        const removed = this._htmlElement.removeChild((_a = oldChild['_htmlElement']) !== null && _a !== void 0 ? _a : oldChild);
         const bheRemoved = this._cls().wrapWithBHE(removed);
         return bheRemoved;
     }
-    prepend(...elements) {
-        this._htmlElement.prepend(...elements.map(element => { var _a; return (_a = element['_htmlElement']) !== null && _a !== void 0 ? _a : element; }));
+    prepend(...nodes) {
+        this._htmlElement.prepend(...nodes.map(node => { var _a; return (_a = node['_htmlElement']) !== null && _a !== void 0 ? _a : node; }));
         return this;
     }
     replaceChild(newChild, oldChild) {
         var _a, _b;
         this._htmlElement.replaceChild((_a = newChild['_htmlElement']) !== null && _a !== void 0 ? _a : newChild, (_b = oldChild['_htmlElement']) !== null && _b !== void 0 ? _b : oldChild);
+        return this;
+    }
+    replaceWith(...nodes) {
+        this._htmlElement.replaceWith(...nodes.map(node => { var _a; return (_a = node['_htmlElement']) !== null && _a !== void 0 ? _a : node; }));
         return this;
     }
     insertAdjacentElement(position, insertedElement) {
@@ -464,18 +441,18 @@ class BetterHTMLElement {
     _cls() {
         return BetterHTMLElement;
     }
-    child(selector, bheCls) {
+    child(selector, bheCtor) {
         const htmlElement = this._htmlElement.querySelector(selector);
         if (htmlElement === null) {
             console.warn(`${this}.child(${selector}): no child. returning undefined`);
             return undefined;
         }
         let bhe;
-        if (bheCls === undefined) {
+        if (bheCtor === undefined) {
             bhe = this._cls().wrapWithBHE(htmlElement);
         }
         else {
-            bhe = new bheCls({ htmlElement });
+            bhe = new bheCtor({ htmlElement });
         }
         return bhe;
     }
@@ -509,7 +486,7 @@ class BetterHTMLElement {
                 else {
                     let entries = Object.entries(value);
                     if (entries[1] !== undefined) {
-                        console.warn(`cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
+                        console.warn(`${this}.cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
                             key,
                             entries,
                             value,
@@ -531,7 +508,7 @@ class BetterHTMLElement {
                 let match = /<(\w+)>$/.exec(value);
                 if (match) {
                     let tagName = match[1];
-                    const htmlElements = [...this._htmlElement.getElementsByTagName(tagName)];
+                    const htmlElements = Array.from(this._htmlElement.getElementsByTagName(tagName));
                     let bhes = [];
                     for (let htmlElement of htmlElements) {
                         bhes.push(this._cls().wrapWithBHE(htmlElement));
@@ -543,7 +520,7 @@ class BetterHTMLElement {
                 }
             }
             else {
-                console.warn(`cacheChildren, bad value type: "${type}". key: "${key}", value: "${value}". childrenObj:`, childrenObj);
+                console.warn(`${this}.cacheChildren(), bad value: ${value} (${type}). key: "${key}", childrenObj:`, childrenObj);
             }
         }
         return this;

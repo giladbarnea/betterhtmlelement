@@ -443,7 +443,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    /**Replaces `this` with `node`(s).*/
+    /**Replaces `this` with `node`(s)*/
     replaceWith(...nodes: Array<NodeOrBHE>): this {
         this._htmlElement.replaceWith(...nodes.map(node => node['_htmlElement'] ?? node));
         return this;
@@ -540,7 +540,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     }
 
     /**
-     * Stores child BHE's in `this` so they can be accessed via e.g. `navbar.home.class('selected')`.
+     * Stores existing child nodes in `this` as BHE's so they can be accessed via e.g. `navbar.home.class('selected')`.
      * @example
      * navbar.cacheChildren({ 'home': 'button.home' })
      * // or
