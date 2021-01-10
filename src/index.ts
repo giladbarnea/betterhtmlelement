@@ -16,7 +16,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     constructor({ htmlElement, children }: { htmlElement: Generic; children?: ChildrenObj });
     constructor(elemOptions) {
         let {
-            tag, cls, setid, html, // create
+            tag, cls, setid, html, // create new
             htmlElement, byid, query, children // wrap existing
         } = elemOptions;
 
@@ -93,15 +93,15 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this._htmlElement;
     }
 
-    /**Constructs a specific BetterHTMLElement based on given `element`'s tag.*/
-    static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
+    /**Constructs a specific BetterHTMLElement based on given `htmlElement`'s tag.*/
     static wrapWithBHE<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = FormishHTMLElement>(htmlElement: Generic): Input<TInputType, Generic>;
+    static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
     static wrapWithBHE(htmlElement: HTMLImageElement): Img;
     static wrapWithBHE(htmlElement: HTMLParagraphElement): Paragraph;
     static wrapWithBHE(htmlElement: HTMLSpanElement): Span;
     static wrapWithBHE(htmlElement: HTMLButtonElement): Button;
     static wrapWithBHE(htmlElement: HTMLDivElement): Div;
-    static wrapWithBHE(htmlElement: HTMLSelectElement): Div;
+    static wrapWithBHE(htmlElement: HTMLSelectElement): Select;
     static wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
     static wrapWithBHE(htmlElement: Element): BetterHTMLElement;
     static wrapWithBHE(element) {
@@ -169,8 +169,8 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     wrapSomethingElse(newHtmlElement) {
         this._cachedChildren = {};
         if (newHtmlElement instanceof BetterHTMLElement) {
-            this._htmlElement.replaceWith(newHtmlElement.e);
-            this._htmlElement = newHtmlElement.e;
+            this._htmlElement.replaceWith(newHtmlElement._htmlElement);
+            this._htmlElement = newHtmlElement._htmlElement;
             for (let [_key, _cachedChild] of enumerate(newHtmlElement._cachedChildren)) {
                 this._cache(_key, _cachedChild)
             }
@@ -348,108 +348,108 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     }
 
     // *** Nodes
-    /**Insert at least one `node` just after `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
-    after(...nodes: Array<BetterHTMLElement | Node>): this {
-        for (let node of nodes) {
-            if (node instanceof BetterHTMLElement) {
-                this._htmlElement.after(node.e);
-            } else {
-                this._htmlElement.after(node);
-            }
-        }
+    /**Insert `node`(s) just after `this`.
+     * @see HTMLElement.after*/
+    after(...nodes: Array<NodeOrBHE>): this {
+        this._htmlElement.after(...nodes.map(node => node['_htmlElement'] ?? node))
         return this;
     }
 
-    /**Insert `this` just after a `BetterHTMLElement` or a vanilla `Node`.*/
-    insertAfter(node: BetterHTMLElement | HTMLElement): this {
-        if (node instanceof BetterHTMLElement) {
-            node._htmlElement.after(this._htmlElement);
-        } else {
-            node.after(this._htmlElement);
-        }
+    /**Insert `this` just after `node`.
+     * @see HTMLElement.after*/
+    insertAfter(node: ElementOrBHE): this {
+        (node['_htmlElement'] ?? node).after(this._htmlElement);
+        // if (node instanceof BetterHTMLElement) {
+        //     node._htmlElement.after(this._htmlElement);
+        // } else {
+        //     node.after(this._htmlElement);
+        // }
         return this;
     }
 
-    /**Insert at least one `node` after the last child of `this`.
+    /**Insert `node`(s) after the last child of `this`.
      * Any `node` can be either a `BetterHTMLElement`, a vanilla `Node`,
      * a `{someKey: BetterHTMLElement}` pairs object, or a `[someKey, BetterHTMLElement]` tuple.*/
-    append(...nodes: Array<BetterHTMLElement | Node | TMap<BetterHTMLElement> | [string, BetterHTMLElement]>): this {
+    append(...nodes: Array<NodeOrBHE | TMap<BetterHTMLElement> | [key: string, child: BetterHTMLElement]>): this {
         for (let node of nodes) {
             if (node instanceof BetterHTMLElement) {
-                this._htmlElement.append(node.e);
-            } else {
-                if (node instanceof Node) {
-                    this._htmlElement.append(node);
-                } else {
-                    if (Array.isArray(node)) {
-                        this.cacheAppend([node]);
-                    } else {
-                        this.cacheAppend(node)
-                    }
-                }
+                this._htmlElement.append(node._htmlElement);
+                continue;
             }
-        }
-        return this;
-
-    }
-
-    /**Append `this` to a `BetterHTMLElement` or a vanilla `Node`*/
-    appendTo(node: BetterHTMLElement | HTMLElement): this {
-        if (node instanceof BetterHTMLElement) {
-            node._htmlElement.append(this._htmlElement);
-        } else {
-            node.append(this._htmlElement);
-        }
-
-        return this;
-    }
-
-    /**Insert at least one `node` just before `this`. Any `node` can be either `BetterHTMLElement`s or vanilla `Node`.*/
-    before(...nodes: Array<BetterHTMLElement | Node>): this {
-        for (let node of nodes) {
-            if (node instanceof BetterHTMLElement) {
-                this._htmlElement.before(node.e);
-            } else {
-                this._htmlElement.before(node);
+            if (node instanceof Node) {
+                this._htmlElement.append(node);
+                continue;
             }
+            console.warn(`${this} .append(...nodes) | node is not BHE nor Node: ${node} (${typeof node}). calling cacheAppend ??`)
+            // this use of cacheAppend is intentional! I think!
+            if (Array.isArray(node)) {
+                this.cacheAppend([node]);
+            } else {
+                this.cacheAppend(node)
+            }
+
+
         }
+        return this;
+
+    }
+
+    /**Append `this` to `node`.
+     * @see HTMLElement.append*/
+    appendTo(node: ElementOrBHE): this {
+        (node['_htmlElement'] ?? node).append(this._htmlElement);
+        // if (node instanceof BetterHTMLElement) {
+        //     node._htmlElement.append(this._htmlElement);
+        // } else {
+        //     node.append(this._htmlElement);
+        // }
+
         return this;
     }
 
-    /**Insert `this` just before a `BetterHTMLElement` or a vanilla `Node`s.*/
-    insertBefore(node: BetterHTMLElement | HTMLElement): this {
-        if (node instanceof BetterHTMLElement) {
-            node._htmlElement.before(this._htmlElement);
-        } else {
-            node.before(this._htmlElement);
-        }
+    /**Insert `node`(s) just before `this`.
+     * @see HTMLElement.before*/
+    before(...nodes: Array<NodeOrBHE>): this {
+        this._htmlElement.before(...nodes.map(node => node['_htmlElement'] ?? node))
+        return this;
+    }
+
+    /**Inserts `newChild` before `refChild` as a child of `this`.
+     If `newChild` already exists in the document, it is moved from its current position to the new position.
+     (That is, it will automatically be removed from its existing parent before appending it to the specified new parent.)*/
+    insertBefore(newChild: NodeOrBHE, refChild: NodeOrBHE): this {
+        this._htmlElement.insertBefore(newChild['_htmlElement'] ?? newChild, refChild['_htmlElement'] ?? refChild)
         return this;
     }
 
 
-    removeChild<T extends HTMLElement>(oldChild: T): BetterHTMLElement<T>;
-    removeChild<T extends BetterHTMLElement>(oldChild: T): T;
-    removeChild(oldChild): BetterHTMLElement {
-
-        const removed = this._htmlElement.removeChild(oldChild._htmlElement ?? oldChild);
-        const bheRemoved = this._cls().wrapWithBHE(removed);
+    // removeChild<T extends HTMLElement>(oldChild: T): BetterHTMLElement<T>;
+    // removeChild<T extends BetterHTMLElement>(oldChild: T): T;
+    removeChild<T extends HTMLElement>(oldChild: T | BetterHTMLElement<T>): BetterHTMLElement<T> {
+        const removed: T = this._htmlElement.removeChild(oldChild['_htmlElement'] ?? oldChild);
+        const bheRemoved = this._cls().wrapWithBHE(removed) as BetterHTMLElement<T>;
         return bheRemoved;
     }
 
-    /**Inserts `elements` before the first child of `this`*/
-    prepend(...elements: Array<HTMLElement | BetterHTMLElement>): this {
-        this._htmlElement.prepend(...elements.map(element => element['_htmlElement'] ?? element));
+    /**Inserts `nodes` before the first child of `this`*/
+    prepend(...nodes: Array<NodeOrBHE>): this {
+        this._htmlElement.prepend(...nodes.map(node => node['_htmlElement'] ?? node));
         return this;
     }
 
     /**Replaces `oldChild` with `newChild`, where parent is `this`.*/
-    replaceChild(newChild: HTMLElement | BetterHTMLElement, oldChild: HTMLElement | BetterHTMLElement): this {
-
+    replaceChild(newChild: NodeOrBHE, oldChild: NodeOrBHE): this {
         this._htmlElement.replaceChild(newChild['_htmlElement'] ?? newChild, oldChild['_htmlElement'] ?? oldChild);
         return this;
     }
 
-    insertAdjacentElement(position: InsertPosition, insertedElement: Element | BetterHTMLElement) {
+    /**Replaces `this` with `node`(s).*/
+    replaceWith(...nodes: Array<NodeOrBHE>): this {
+        this._htmlElement.replaceWith(...nodes.map(node => node['_htmlElement'] ?? node));
+        return this;
+    }
+
+    insertAdjacentElement(position: InsertPosition, insertedElement: ElementOrBHE) {
         const ret = this._htmlElement.insertAdjacentElement(position, insertedElement['_htmlElement'] ?? insertedElement);
         const bheRet = this._cls().wrapWithBHE(ret);
         return bheRet;
@@ -460,10 +460,10 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this
 
     /**For each `[key, child]` tuple, `append(child)` and store it in `this[key]`. */
-    cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this
+    cacheAppend(keyChildPairs: [key: string, child: BetterHTMLElement][]): this
 
     cacheAppend(keyChildPairs) {
-        const _cacheAppend = (_key: string, _child: BetterHTMLElement) => {
+        const _cacheAppend = (_key: PropertyKey, _child: BetterHTMLElement) => {
             this.append(_child);
             this._cache(_key, _child);
         };
@@ -472,7 +472,8 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
                 _cacheAppend(key, child);
             }
         } else {
-            for (let [key, child] of enumerate(keyChildPairs)) {
+            // keyChildPairs = keyChildPairs as TMap<BetterHTMLElement>;
+            for (let [key, child] of enumerate(<TMap<BetterHTMLElement>>keyChildPairs)) {
                 _cacheAppend(key, child);
             }
         }
@@ -485,7 +486,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     child(selector: "img"): Img;
     child(selector: "a"): Anchor;
-    child<TInputType extends InputType = InputType>(selector: "input"): Input<TInputType, HTMLInputElement>;
+    child<TInputType extends InputType = InputType>(selector: "input"): Input<TInputType>;
     child(selector: "select"): Input<undefined, HTMLSelectElement>;
     child(selector: "p"): Paragraph;
     child(selector: "span"): Span;
@@ -493,18 +494,18 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     child(selector: "div"): Div;
     child<T extends Tag>(selector: T): BetterHTMLElement<HTMLElementTagNameMap[T]>;
     child(selector: string): BetterHTMLElement;
-    child<T extends typeof BetterHTMLElement>(selector: string, bheCls: T): T;
-    child(selector, bheCls?) {
+    child<T extends typeof BetterHTMLElement>(selector: string, bheCtor: T): T; // bheCtor is used in cacheChildren
+    child(selector, bheCtor?) {
         const htmlElement = this._htmlElement.querySelector(selector) as HTMLElement;
         if (htmlElement === null) {
             console.warn(`${this}.child(${selector}): no child. returning undefined`);
             return undefined;
         }
         let bhe;
-        if (bheCls === undefined) {
+        if (bheCtor === undefined) {
             bhe = this._cls().wrapWithBHE(htmlElement);
         } else {
-            bhe = new bheCls({ htmlElement });
+            bhe = new bheCtor({ htmlElement });
         }
         return bhe;
     }
@@ -539,7 +540,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     }
 
     /**
-     * Stores child BHE's in `this` so they can be accessed e.g. `navbar.home.class('selected')`.
+     * Stores child BHE's in `this` so they can be accessed via e.g. `navbar.home.class('selected')`.
      * @example
      * navbar.cacheChildren({ 'home': 'button.home' })
      * // or
@@ -560,7 +561,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     cacheChildren(childrenObj: ChildrenObj): this {
         for (let [key, value] of enumerate(childrenObj)) {
             let type = typeof value;
-            if (isObject(value)) {
+            if (isObject(value)) { // don't use with isTMap
                 if (value instanceof BetterHTMLElement) {
                     // { "myimg": img(...) }
                     this._cache(key, value)
@@ -568,11 +569,15 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
                     const bhe = this._cls().wrapWithBHE(value)
                     this._cache(key, bhe);
                 } else {
-                    // { "mydiv": { "myimg": img(...), "myinput": input(...) } }
+                    // { "mydiv": {
+                    //      "myimg": img(...),
+                    //      "myinput": input(...)
+                    //   }
+                    // }
                     let entries = Object.entries(value);
                     if (entries[1] !== undefined) {
                         console.warn(
-                            `cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
+                            `${this}.cacheChildren() received recursive obj with more than 1 selector for a key. Using only 0th selector`, {
                                 key,
                                 entries,
                                 value,
@@ -596,8 +601,9 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
                 if (match) {
                     // { "options": "<option>" }
                     let tagName = match[1] as Tag;
-                    // @ts-ignore
-                    const htmlElements = [...this._htmlElement.getElementsByTagName(tagName)] as HTMLElementTagNameMap[typeof tagName][];
+
+                    // const htmlElements = [...this._htmlElement.getElementsByTagName(tagName)] as HTMLElementTagNameMap[typeof tagName][];
+                    const htmlElements = Array.from(this._htmlElement.getElementsByTagName(tagName)) as Array<HTMLElementTagNameMap[typeof tagName]>;
                     let bhes = [];
                     for (let htmlElement of htmlElements) {
                         bhes.push(this._cls().wrapWithBHE(htmlElement));
@@ -608,7 +614,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
                     this._cache(key, this.child(value as TagOrString));
                 }
             } else {
-                console.warn(`cacheChildren, bad value type: "${type}". key: "${key}", value: "${value}". childrenObj:`, childrenObj,);
+                console.warn(`${this}.cacheChildren(), bad value: ${value} (${type}). key: "${key}", childrenObj:`, childrenObj,);
             }
         }
         return this;
@@ -617,6 +623,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
     /**Remove all children from DOM*/
     empty(): this {
+
         while (this._htmlElement.firstChild) {
             this._htmlElement.removeChild(this._htmlElement.firstChild);
         }

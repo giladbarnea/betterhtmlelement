@@ -11,9 +11,7 @@ interface TRecMap<T> {
     [s: number]: T | TRecMap<T>
 }
 
-// type IMap<T> = {
-//     [s in keyof T]: T
-// }
+
 
 
 type EventName = keyof HTMLElementEventMap;
@@ -29,7 +27,7 @@ type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventNa
  * "a", "div"
  * @example
  * const foo = <K extends Tag>(tag: K) => document.createElement(tag);
- * foo("a") → HTMLAnchorElement
+ * foo("a") // HTMLAnchorElement
  * foo("BAD") // error
  */
 type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
@@ -46,12 +44,13 @@ type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<NotTag<T>>>;
 // type Tag2Element<K extends Tag = Tag> = K extends Tag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[Tag]
 type TagOrString = Tag | string;
 /**
- * "a", "div", "gilad".
- * QuerySelector expects a tag and returns a Tag.
+ * `"a"`, `"div"`, `"gilad"`.
+ * QuerySelector expects a tag name (string) and returns a `Tag`.
  * @example
  * const bar = <K extends Tag | string>(query: QuerySelector<K>) => document.querySelector(query);
  * bar("a") → HTMLAnchorElement
  * bar("gilad") → HTMLSelectElement | HTMLLegendElement | ...
+ * @see Tag
  */
 type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
 
@@ -90,11 +89,19 @@ interface Tag2BHE {
 //     HTMLButtonElement |
 //     HTMLSpanElement
 
-type Element2Tag<T> =
+/*type Element2Tag<T> =
     T extends HTMLInputElement ? "input"
         : T extends HTMLAnchorElement ? "a"
         : T extends HTMLImageElement ? "img"
-            : Tag
+            : Tag*/
+
+/**
+ * @example
+ * const foo: Element2Tag<HTMLInputElement> = "input"  // ok
+ * const bar: Element2Tag<HTMLInputElement> = "img"  // ERROR
+ */
+
+type Element2Tag<T> = { [K in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[K] extends T ? K : never }[keyof HTMLElementTagNameMap]
 
 
 // type MapValues<T> = { [K in keyof T]: T[K] }[keyof T];
@@ -104,7 +111,7 @@ type Element2Tag<T> =
 // type Filter<T> = T extends HTMLElements ? T : never;
 // type GenericFilter<T, U> = T extends U ? T : never;
 
-// const what: Element2Tag<HTMLDivElement> = undefined;
+
 // const what: Filter<HTMLInputElement, HTMLElements> = undefined;
 // const what: Filter<HTMLInputElement> = undefined;
 // const what: Element2Tag<HTMLAnchorElement> = undefined;
@@ -115,11 +122,15 @@ type Element2Tag<T> =
 type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>
 type Enumerated<T> =
     T extends (infer U)[] ? [number, U][]
+        : T extends TMap<(infer U)> ? [keyof T, U][]
         : T extends TRecMap<(infer U)> ? [keyof T, U][]
-        : T extends boolean ? never : any;
+        // : T extends boolean ? never : any;
+        : never;
 type Returns<T> = (s: string) => T;
 // type TReturnBoolean = (s: string) => boolean;
 
+type NodeOrBHE = BetterHTMLElement | Node;
+type ElementOrBHE = BetterHTMLElement | Element;
 
 type Awaited<T> = T extends Promise<infer U> ? U : T;
 // type Callable<T1, T2, F> = F extends (a1: T1, a2: T2) => infer R ? R : any;
