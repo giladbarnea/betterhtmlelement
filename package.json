@@ -1,6 +1,6 @@
 {
     "name": "betterhtmlelement",
-    "version": "1.1.0",
+    "version": "1.0",
     "description": "A Fast, intuitive, chainable wrapper for HTMLElement",
     "module": "dist/bhe.js",
     "typings": "dist/bhe.d.ts",
