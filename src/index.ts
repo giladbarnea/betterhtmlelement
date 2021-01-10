@@ -93,6 +93,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this._htmlElement;
     }
 
+    /**Constructs a specific BetterHTMLElement based on given `element`'s tag.*/
     static wrapWithBHE(htmlElement: HTMLAnchorElement): Anchor;
     static wrapWithBHE<TInputType extends InputType = InputType, Generic extends FormishHTMLElement = FormishHTMLElement>(htmlElement: Generic): Input<TInputType, Generic>;
     static wrapWithBHE(htmlElement: HTMLImageElement): Img;
@@ -102,6 +103,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     static wrapWithBHE(htmlElement: HTMLDivElement): Div;
     static wrapWithBHE(htmlElement: HTMLSelectElement): Div;
     static wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
+    static wrapWithBHE(htmlElement: Element): BetterHTMLElement;
     static wrapWithBHE(element) {
         const tag = element.tagName.toLowerCase() as Element2Tag<typeof element>;
         // const tag = element.tagName.toLowerCase() as Tag;
@@ -424,11 +426,33 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    replaceChild(newChild: Node, oldChild: Node): this;
-    replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
-    replaceChild(newChild, oldChild) {
-        this._htmlElement.replaceChild(newChild, oldChild);
+
+    removeChild<T extends HTMLElement>(oldChild: T): BetterHTMLElement<T>;
+    removeChild<T extends BetterHTMLElement>(oldChild: T): T;
+    removeChild(oldChild): BetterHTMLElement {
+
+        const removed = this._htmlElement.removeChild(oldChild._htmlElement ?? oldChild);
+        const bheRemoved = this._cls().wrapWithBHE(removed);
+        return bheRemoved;
+    }
+
+    /**Inserts `elements` before the first child of `this`*/
+    prepend(...elements: Array<HTMLElement | BetterHTMLElement>): this {
+        this._htmlElement.prepend(...elements.map(element => element['_htmlElement'] ?? element));
         return this;
+    }
+
+    /**Replaces `oldChild` with `newChild`, where parent is `this`.*/
+    replaceChild(newChild: HTMLElement | BetterHTMLElement, oldChild: HTMLElement | BetterHTMLElement): this {
+
+        this._htmlElement.replaceChild(newChild['_htmlElement'] ?? newChild, oldChild['_htmlElement'] ?? oldChild);
+        return this;
+    }
+
+    insertAdjacentElement(position: InsertPosition, insertedElement: Element | BetterHTMLElement) {
+        const ret = this._htmlElement.insertAdjacentElement(position, insertedElement['_htmlElement'] ?? insertedElement);
+        const bheRet = this._cls().wrapWithBHE(ret);
+        return bheRet;
     }
 
 

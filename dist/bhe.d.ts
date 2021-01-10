@@ -52,6 +52,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     static wrapWithBHE(htmlElement: HTMLDivElement): Div;
     static wrapWithBHE(htmlElement: HTMLSelectElement): Div;
     static wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
+    static wrapWithBHE(htmlElement: Element): BetterHTMLElement;
     toString(): any;
     wrapSomethingElse<T extends HTMLElement>(newHtmlElement: BetterHTMLElement<T>): this;
     wrapSomethingElse(newHtmlElement: Node): this;
@@ -82,8 +83,11 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     appendTo(node: BetterHTMLElement | HTMLElement): this;
     before(...nodes: Array<BetterHTMLElement | Node>): this;
     insertBefore(node: BetterHTMLElement | HTMLElement): this;
-    replaceChild(newChild: Node, oldChild: Node): this;
-    replaceChild(newChild: BetterHTMLElement, oldChild: BetterHTMLElement): this;
+    removeChild<T extends HTMLElement>(oldChild: T): BetterHTMLElement<T>;
+    removeChild<T extends BetterHTMLElement>(oldChild: T): T;
+    prepend(...elements: Array<HTMLElement | BetterHTMLElement>): this;
+    replaceChild(newChild: HTMLElement | BetterHTMLElement, oldChild: HTMLElement | BetterHTMLElement): this;
+    insertAdjacentElement(position: InsertPosition, insertedElement: Element | BetterHTMLElement): BetterHTMLElement<HTMLElement>;
     cacheAppend(keyChildPairs: TMap<BetterHTMLElement>): this;
     cacheAppend(keyChildPairs: [string, BetterHTMLElement][]): this;
     _cls(): typeof BetterHTMLElement;

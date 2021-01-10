@@ -423,9 +423,26 @@ class BetterHTMLElement {
         }
         return this;
     }
-    replaceChild(newChild, oldChild) {
-        this._htmlElement.replaceChild(newChild, oldChild);
+    removeChild(oldChild) {
+        var _a;
+        const removed = this._htmlElement.removeChild((_a = oldChild._htmlElement) !== null && _a !== void 0 ? _a : oldChild);
+        const bheRemoved = this._cls().wrapWithBHE(removed);
+        return bheRemoved;
+    }
+    prepend(...elements) {
+        this._htmlElement.prepend(...elements.map(element => { var _a; return (_a = element['_htmlElement']) !== null && _a !== void 0 ? _a : element; }));
         return this;
+    }
+    replaceChild(newChild, oldChild) {
+        var _a, _b;
+        this._htmlElement.replaceChild((_a = newChild['_htmlElement']) !== null && _a !== void 0 ? _a : newChild, (_b = oldChild['_htmlElement']) !== null && _b !== void 0 ? _b : oldChild);
+        return this;
+    }
+    insertAdjacentElement(position, insertedElement) {
+        var _a;
+        const ret = this._htmlElement.insertAdjacentElement(position, (_a = insertedElement['_htmlElement']) !== null && _a !== void 0 ? _a : insertedElement);
+        const bheRet = this._cls().wrapWithBHE(ret);
+        return bheRet;
     }
     cacheAppend(keyChildPairs) {
         const _cacheAppend = (_key, _child) => {
@@ -877,7 +894,7 @@ class Form extends BetterHTMLElement {
     value(val) {
         var _a;
         if (val === undefined) {
-            return _a = this._htmlElement.value, (_a !== null && _a !== void 0 ? _a : undefined);
+            return (_a = this._htmlElement.value) !== null && _a !== void 0 ? _a : undefined;
         }
         else {
             if (isObject(val)) {
@@ -1073,7 +1090,7 @@ class CheckboxInput extends Changable {
     value(val) {
         var _a;
         if (val === undefined) {
-            return _a = this._htmlElement.checked, (_a !== null && _a !== void 0 ? _a : undefined);
+            return (_a = this._htmlElement.checked) !== null && _a !== void 0 ? _a : undefined;
         }
         else {
             if (isObject(val)) {
@@ -1128,7 +1145,7 @@ class Select extends Changable {
     value(val) {
         var _a;
         if (val === undefined) {
-            return _a = this.selected.value, (_a !== null && _a !== void 0 ? _a : undefined);
+            return (_a = this.selected.value) !== null && _a !== void 0 ? _a : undefined;
         }
         else {
             this.selected = val;

@@ -27,6 +27,6 @@
     "author": "Gilad Barnea",
     "license": "ISC",
     "dependencies": {
-        "typescript": "^3.9.2"
+        "typescript": "^4.1.3"
     }
 }
