@@ -1,17 +1,24 @@
 // TODO: why <EventName> needed in allOff()?
-interface TMap<T> {
+interface TMap<T = any> {
     [s: string]: T;
 
     [s: number]: T
 }
 
-interface TRecMap<T> {
-    [s: string]: T | TRecMap<T>;
+interface SMap<T = any> {
+    [s: string]: T;
+}
 
-    [s: number]: T | TRecMap<T>
+interface NMap<T = any> {
+    [s: number]: T;
 }
 
 
+interface RecMap<T = any> {
+    [s: string]: T | RecMap<T>;
+
+    [s: number]: T | RecMap<T>
+}
 
 
 type EventName = keyof HTMLElementEventMap;
@@ -117,15 +124,19 @@ type Element2Tag<T> = { [K in keyof HTMLElementTagNameMap]: HTMLElementTagNameMa
 // const what: Element2Tag<HTMLAnchorElement> = undefined;
 
 
-// type ChildrenObj = TMap<Tag2Element> | TRecMap<Tag2Element>
-// type ChildrenObj = TMap<QuerySelector> | TRecMap<QuerySelector>
-type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>
+// type ChildrenObj = TMap<Tag2Element> | RecMap<Tag2Element>
+// type ChildrenObj = TMap<QuerySelector> | RecMap<QuerySelector>
+type ChildrenObj = RecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>
 type Enumerated<T> =
-    T extends (infer U)[] ? [number, U][]
-        : T extends TMap<(infer U)> ? [keyof T, U][]
-        : T extends TRecMap<(infer U)> ? [keyof T, U][]
-        // : T extends boolean ? never : any;
-        : never;
+    T extends (infer U)[] ? [i: number, item: U][] // Array
+        // Dicts
+        : T extends SMap<(infer U)> ? [key: string, value: U][]
+        : T extends NMap<(infer U)> ? [key: number, value: U][]
+            : T extends TMap<(infer U)> ? [key: keyof T, value: U][]
+                : T extends RecMap<(infer U)> ? [key: keyof T, value: U][]
+                    // : T extends boolean ? never : any;
+                    // : T extends infer U ? [key: string, value: U[keyof U]][]
+                    : never;
 type Returns<T> = (s: string) => T;
 // type TReturnBoolean = (s: string) => boolean;
 

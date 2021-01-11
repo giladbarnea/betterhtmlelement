@@ -29,7 +29,7 @@ function enumerate<T>(obj: T): Enumerated<T> {
         || typeofObj === "number"
         || typeofObj === "function"
     ) {
-        throw new TypeError(`${typeofObj} object is not iterable`);
+        throw new TypeError(`enumerate(obj) | obj (${typeofObj}) is not iterable (${obj})`);
     }
     let array = [];
     if (isArray(obj)) {
@@ -118,7 +118,67 @@ function bool(val: any): boolean {
     return !!val.valueOf();
 }
 
-function isArray<T>(obj): obj is Array<T> { // same as Array.isArray
+function copy<T>(obj: T): T {
+    return JSON.parse(JSON.stringify(obj))
+}
+
+/**
+ `true` if objects have the same CONTENT. This means that order doesn't matter, but loose data structure does matter
+ (i.e. if `a` an array, so should be `b`)
+ @example
+ > equal( [1,2], [2,1] )
+ true
+
+ */
+function equal(a, b): boolean {
+    if (a === b) {
+        return true;
+    }
+    if (isArray(a)) {
+        if (!isArray(b)) {
+            return false;
+        }
+        if (a.length != b.length) {
+            return false;
+        }
+        const a_sorted = copy(a).sort();
+        const b_sorted = copy(b).sort();
+        // a.sort();
+        // b.sort();
+        for (let i = 0; i < a_sorted.length; i++) {
+            if (!equal(a_sorted[i], b_sorted[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    if (isObject(a)) { // I think it's ok to check if object and not to check if TMap
+        if (!isObject(b)) {
+            return false;
+        }
+        const a_keys = Object.keys(a);
+        const b_keys = Object.keys(b);
+        if (a_keys.length != b_keys.length) {
+            return false;
+        }
+        const a_keys_sorted = copy(a_keys).sort();
+        const b_keys_sorted = copy(b_keys).sort();
+
+        for (let i = 0; i < a_keys_sorted.length; i++) {
+            if (!equal(a_keys_sorted[i], b_keys_sorted[i])) {
+                return false;
+            }
+            if (!equal(a[a_keys_sorted[i]], b[b_keys_sorted[i]])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return a === b;
+}
+
+function isArray<T>(obj): obj is Array<T> {
+    // same as Array.isArray
     // 0                   false
     // 1                   false
     // ''                  false
@@ -222,9 +282,7 @@ function isEmptyObj(obj): boolean {
 }
 
 
-function isFunction<F>(fn: F): fn is F
-function isFunction(fn: (...args: any[]) => any): fn is (...args: any[]) => any
-function isFunction(fn) {
+function isFunction<F>(fn: F): fn is F {
     // 0                   false
     // 1                   false
     // ''                  false
@@ -258,42 +316,76 @@ function isFunction(fn) {
     return !!fn && toStringed === '[object Function]'
 }
 
-function anyDefined(obj): boolean {
+function anyDefined(obj: Array<any> | TMap<any>): boolean {
     let array;
-    if (isObject(obj)) {
+    if (isTMap(obj)) {
         array = Object.values(obj);
     } else if (isArray(obj)) {
         array = obj;
     } else {
-        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+        throw new TypeError(`anyDefined(obj): expected array or dict-like, got ${typeof obj}: ${obj}`);
     }
     return array.filter(x => x !== undefined).length > 0;
 }
 
-function anyTruthy(obj): boolean {
+function anyTruthy(obj: Array<any> | TMap<any>): boolean {
     let array;
-    if (isObject(obj)) {
+    if (isTMap(obj)) {
         array = Object.values(obj);
     } else if (isArray(obj)) {
         array = obj;
     } else {
-        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+        throw new TypeError(`anyTruthy(obj): expected array or dict-like, got ${typeof obj}: ${obj}`);
     }
     return array.filter(x => bool(x)).length > 0;
 }
 
-function allUndefined(obj): boolean {
+function allUndefined(obj: Array<any> | TMap<any>): boolean {
     let array;
-    if (isObject(obj)) {
+    if (isTMap(obj)) {
         array = Object.values(obj)
     } else if (isArray(obj)) {
         array = obj;
     } else {
-        throw new TypeError(`expected array or obj, got: ${typeof obj}`)
+        throw new TypeError(`allUndefined(obj): expected array or dict-like, got ${typeof obj}: ${obj}`);
     }
     return array.filter(x => x !== undefined).length === 0
 }
 
+
+function prettyNode(node: NodeOrBHE): string {
+    if (!node) { // undefined, ...
+        return `${node}`
+    }
+    if (node instanceof BetterHTMLElement) {
+        return node.toString();
+    }
+    let ret = '';
+    let str = `${node}`;
+    let type = str.match(/\[object (\w+)\]/)[1] ?? typeof node;
+    let cls;
+    let id;
+    let tag;
+
+    // maybe node is Element, try getting more information
+    if (node instanceof Element) {
+        cls = node.className;
+        id = node.id;
+        tag = node.tagName;
+    }
+    if (tag) {
+        ret += `${tag} (${type})`;
+    } else {
+        ret += type;
+    }
+    if (id) {
+        ret += ` #${id}`
+    }
+    if (cls) {
+        ret += `.${cls}`
+    }
+    return ret;
+}
 
 /**Check every `checkInterval` ms if `cond()` is truthy. If, within `timeout`, cond() is truthy, return `true`. Return `false` if time is out.
  * @example

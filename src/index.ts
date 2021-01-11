@@ -158,6 +158,26 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return str
     }
 
+    /**Returns whether `this` and `otherNode` have the same properties.*/
+    isEqualNode(otherNode: NodeOrBHE | null): boolean {
+        try {
+            return this._htmlElement.isEqualNode(otherNode['_htmlElement'] ?? otherNode);
+        } catch (err) {
+            console.warn(`${this}.isEqualNode(${prettyNode(otherNode)}) raised a ${err?.name}: ${err?.message}`)
+            return false
+        }
+    }
+
+    /** Returns whether `this` and `otherNode` reference the same object*/
+    isSameNode(otherNode: NodeOrBHE | null): boolean {
+        try {
+            return this._htmlElement.isSameNode(otherNode['_htmlElement'] ?? otherNode);
+        } catch (err) {
+            console.warn(`${this}.isSameNode(${prettyNode(otherNode)}) raised a ${err?.name}: ${err?.message}`)
+            return false
+        }
+    }
+
     /**Sets `this._htmlElement` to `newHtmlElement._htmlElement`.
      * Resets `this._cachedChildren` and caches `newHtmlElement._cachedChildren`.
      * Adds event listeners from `newHtmlElement._listeners`, while keeping `this._listeners`.*/
@@ -638,7 +658,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
 
 
     // *** Events
-    on(evTypeFnPairs: TMap<EventName2Function>, options?: AddEventListenerOptions): this {
+    on(evTypeFnPairs: SMap<EventName2Function>, options?: AddEventListenerOptions): this {
         // const foo = evTypeFnPairs["abort"];
         for (let [evType, evFn] of enumerate(evTypeFnPairs)) {
             const _f = function _f(evt) {
@@ -836,24 +856,23 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
         return this;
     }
 
-    /** For each `[attr, val]` pair, apply `setAttribute`*/
-    attr(attrValPairs: TMap<string | boolean>): this
-
     // *** Attributes
 
     /** apply `getAttribute`*/
     attr(attributeName: string): string
-
+    /** For each `[attr, val]` pair, apply `setAttribute`*/
+    attr(attrValPairs: SMap<string | boolean | number>): this
     attr(attrValPairs) {
         if (typeof attrValPairs === 'string') {
             return this._htmlElement.getAttribute(attrValPairs);
         } else {
-            for (let [attr, val] of enumerate(attrValPairs)) {
-                this._htmlElement.setAttribute(attr, val);
+            for (let [attr, val] of enumerate(attrValPairs as SMap)) {
+                this._htmlElement.setAttribute(attr, <string>val);
             }
             return this;
         }
     }
+
 
     /** `removeAttribute` */
     removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this {
@@ -875,6 +894,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     getdata(key: string, parse: boolean = true): string | TMap<string> {
         // TODO: jquery doesn't affect data-* attrs in DOM. https://api.jquery.com/data/
         const data = this._htmlElement.getAttribute(`data-${key}`);
+
         if (parse === true) {
             return JSON.parse(data);
         } else {
@@ -883,15 +903,29 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     }
 
     private _cache(key, child: BetterHTMLElement | BetterHTMLElement[]): void {
-        if (child === undefined) {
-            console.warn(`${this}._cache(key: "${key}") | 'child' is undefined. Not caching anything.`);
+        if (!child) {
+            console.warn(`${this}._cache(key: "${key}") | 'child' is ${child} (${typeof child}). Not caching anything.`);
             return
         }
         const oldchild = this._cachedChildren[key];
         if (oldchild !== undefined) {
-            console.warn(`${this}._cache() | Overwriting this._cachedChildren[${key}]!`, `old child: ${oldchild}`,
-                `new child: ${child}`, `are they different?: ${oldchild == child}`
-            );
+            const warnmsgs = [`${this}._cache() | Overwriting this._cachedChildren[${key}]!`,
+                `old child: ${oldchild}`,
+                `new child: ${child}`,
+            ];
+            const oldchildIsArray = Array.isArray(oldchild);
+            const childIsArray = Array.isArray(child);
+            if (oldchildIsArray && childIsArray) {
+                warnmsgs.push(`equal(oldchild, child): ${equal(oldchild, child)}`)
+
+            } else if (oldchildIsArray === childIsArray) { // neither is an array
+                warnmsgs.push(
+                    `oldchild == child: ${oldchild == child}`,
+                    // @ts-ignore
+                    `oldchild.isEqualNode(child): ${oldchild.isEqualNode(child)}`, `oldchild.isSameNode(child): ${oldchild.isSameNode(child)}`,
+                )
+            }
+            console.warn(...warnmsgs);
         }
         this[key] = child;
         this._cachedChildren[key] = child;

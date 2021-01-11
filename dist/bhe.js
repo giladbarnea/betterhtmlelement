@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 function getArgsFullRepr(argsWithValues) {
     return Object.entries(argsWithValues)
         .flatMap(([argname, argval]) => `${argname} (${typeof argval}): ${isObject(argval) ? `{${getArgsFullRepr(argval)}}` : argval}`)
@@ -214,6 +223,26 @@ class BetterHTMLElement {
             str += `)`;
         }
         return str;
+    }
+    isEqualNode(otherNode) {
+        var _a;
+        try {
+            return this._htmlElement.isEqualNode((_a = otherNode['_htmlElement']) !== null && _a !== void 0 ? _a : otherNode);
+        }
+        catch (err) {
+            console.warn(`${this}.isEqualNode(${prettyNode(otherNode)}) raised a ${err === null || err === void 0 ? void 0 : err.name}: ${err === null || err === void 0 ? void 0 : err.message}`);
+            return false;
+        }
+    }
+    isSameNode(otherNode) {
+        var _a;
+        try {
+            return this._htmlElement.isSameNode((_a = otherNode['_htmlElement']) !== null && _a !== void 0 ? _a : otherNode);
+        }
+        catch (err) {
+            console.warn(`${this}.isSameNode(${prettyNode(otherNode)}) raised a ${err === null || err === void 0 ? void 0 : err.name}: ${err === null || err === void 0 ? void 0 : err.message}`);
+            return false;
+        }
     }
     wrapSomethingElse(newHtmlElement) {
         this._cachedChildren = {};
@@ -690,13 +719,25 @@ class BetterHTMLElement {
         }
     }
     _cache(key, child) {
-        if (child === undefined) {
-            console.warn(`${this}._cache(key: "${key}") | 'child' is undefined. Not caching anything.`);
+        if (!child) {
+            console.warn(`${this}._cache(key: "${key}") | 'child' is ${child} (${typeof child}). Not caching anything.`);
             return;
         }
         const oldchild = this._cachedChildren[key];
         if (oldchild !== undefined) {
-            console.warn(`${this}._cache() | Overwriting this._cachedChildren[${key}]!`, `old child: ${oldchild}`, `new child: ${child}`, `are they different?: ${oldchild == child}`);
+            const warnmsgs = [`${this}._cache() | Overwriting this._cachedChildren[${key}]!`,
+                `old child: ${oldchild}`,
+                `new child: ${child}`,
+            ];
+            const oldchildIsArray = Array.isArray(oldchild);
+            const childIsArray = Array.isArray(child);
+            if (oldchildIsArray && childIsArray) {
+                warnmsgs.push(`equal(oldchild, child): ${equal(oldchild, child)}`);
+            }
+            else if (oldchildIsArray === childIsArray) {
+                warnmsgs.push(`oldchild == child: ${oldchild == child}`, `oldchild.isEqualNode(child): ${oldchild.isEqualNode(child)}`, `oldchild.isSameNode(child): ${oldchild.isSameNode(child)}`);
+            }
+            console.warn(...warnmsgs);
         }
         this[key] = child;
         this._cachedChildren[key] = child;
@@ -882,15 +923,19 @@ class Form extends BetterHTMLElement {
             return this;
         }
     }
-    async flashBad() {
-        this.addClass('bad');
-        await wait(2000);
-        this.removeClass('bad');
+    flashBad() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.addClass('bad');
+            yield wait(2000);
+            this.removeClass('bad');
+        });
     }
-    async flashGood() {
-        this.addClass('good');
-        await wait(2000);
-        this.removeClass('good');
+    flashGood() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.addClass('good');
+            yield wait(2000);
+            this.removeClass('good');
+        });
     }
     clear() {
         return this.value(null);
@@ -906,38 +951,44 @@ class Form extends BetterHTMLElement {
         }
         return self;
     }
-    async _softErr(e, thisArg) {
-        console.error(`${e.name}:\n${e.message}`);
-        let self = this === undefined ? thisArg : this;
-        if (self.flashBad) {
-            await self.flashBad();
-        }
-        return self;
+    _softErr(e, thisArg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.error(`${e.name}:\n${e.message}`);
+            let self = this === undefined ? thisArg : this;
+            if (self.flashBad) {
+                yield self.flashBad();
+            }
+            return self;
+        });
     }
-    async _softWarn(e, thisArg) {
-        console.warn(`${e.name}:\n${e.message}`);
-        let self = this === undefined ? thisArg : this;
-        if (self.flashBad) {
-            await self.flashBad();
-        }
-        return self;
+    _softWarn(e, thisArg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.warn(`${e.name}:\n${e.message}`);
+            let self = this === undefined ? thisArg : this;
+            if (self.flashBad) {
+                yield self.flashBad();
+            }
+            return self;
+        });
     }
     _afterEvent(thisArg) {
         let self = this === undefined ? thisArg : this;
         return self.enable();
     }
-    async _wrapFnInEventHooks(asyncFn, event) {
-        try {
-            this._beforeEvent();
-            const ret = await asyncFn(event);
-            await this._onEventSuccess(ret);
-        }
-        catch (e) {
-            await this._softErr(e);
-        }
-        finally {
-            this._afterEvent();
-        }
+    _wrapFnInEventHooks(asyncFn, event) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                this._beforeEvent();
+                const ret = yield asyncFn(event);
+                yield this._onEventSuccess(ret);
+            }
+            catch (e) {
+                yield this._softErr(e);
+            }
+            finally {
+                this._afterEvent();
+            }
+        });
     }
 }
 class Button extends Form {
@@ -967,9 +1018,9 @@ class Button extends Form {
     }
     click(_fn) {
         if (_fn !== undefined) {
-            const fn = async (event) => {
-                await this._wrapFnInEventHooks(_fn, event);
-            };
+            const fn = (event) => __awaiter(this, void 0, void 0, function* () {
+                yield this._wrapFnInEventHooks(_fn, event);
+            });
             return super.click(fn);
         }
         return super.click();
@@ -1014,7 +1065,7 @@ class TextInput extends Input {
         }
     }
     keydown(_fn) {
-        const fn = async (event) => {
+        const fn = (event) => __awaiter(this, void 0, void 0, function* () {
             if (event.key !== 'Enter') {
                 return;
             }
@@ -1023,16 +1074,16 @@ class TextInput extends Input {
                 this._softWarn(new ValueError({ faultyValue: { val }, expected: "truthy", where: "keydown()" }));
                 return;
             }
-            await this._wrapFnInEventHooks(_fn, event);
-        };
+            yield this._wrapFnInEventHooks(_fn, event);
+        });
         return super.keydown(fn);
     }
 }
 class Changable extends Input {
     change(_fn) {
-        const fn = async (event) => {
-            await this._wrapFnInEventHooks(_fn, event);
-        };
+        const fn = (event) => __awaiter(this, void 0, void 0, function* () {
+            yield this._wrapFnInEventHooks(_fn, event);
+        });
         return super.change(fn);
     }
 }
@@ -1080,9 +1131,14 @@ class CheckboxInput extends Changable {
     clear() {
         return this.uncheck();
     }
-    async _softErr(e, thisArg) {
-        this.toggleChecked(!this.checked);
-        return super._softErr(e);
+    _softErr(e, thisArg) {
+        const _super = Object.create(null, {
+            _softErr: { get: () => super._softErr }
+        });
+        return __awaiter(this, void 0, void 0, function* () {
+            this.toggleChecked(!this.checked);
+            return _super._softErr.call(this, e);
+        });
     }
 }
 class Select extends Changable {
@@ -1197,7 +1253,7 @@ function enumerate(obj) {
         || typeofObj === "boolean"
         || typeofObj === "number"
         || typeofObj === "function") {
-        throw new TypeError(`${typeofObj} object is not iterable`);
+        throw new TypeError(`enumerate(obj) | obj (${typeofObj}) is not iterable (${obj})`);
     }
     let array = [];
     if (isArray(obj)) {
@@ -1236,6 +1292,52 @@ function bool(val) {
     }
     return !!val.valueOf();
 }
+function copy(obj) {
+    return JSON.parse(JSON.stringify(obj));
+}
+function equal(a, b) {
+    if (a === b) {
+        return true;
+    }
+    if (isArray(a)) {
+        if (!isArray(b)) {
+            return false;
+        }
+        if (a.length != b.length) {
+            return false;
+        }
+        const a_sorted = copy(a).sort();
+        const b_sorted = copy(b).sort();
+        for (let i = 0; i < a_sorted.length; i++) {
+            if (!equal(a_sorted[i], b_sorted[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    if (isObject(a)) {
+        if (!isObject(b)) {
+            return false;
+        }
+        const a_keys = Object.keys(a);
+        const b_keys = Object.keys(b);
+        if (a_keys.length != b_keys.length) {
+            return false;
+        }
+        const a_keys_sorted = copy(a_keys).sort();
+        const b_keys_sorted = copy(b_keys).sort();
+        for (let i = 0; i < a_keys_sorted.length; i++) {
+            if (!equal(a_keys_sorted[i], b_keys_sorted[i])) {
+                return false;
+            }
+            if (!equal(a[a_keys_sorted[i]], b[b_keys_sorted[i]])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return a === b;
+}
 function isArray(obj) {
     if (!obj) {
         return false;
@@ -1254,63 +1356,98 @@ function isFunction(fn) {
 }
 function anyDefined(obj) {
     let array;
-    if (isObject(obj)) {
+    if (isTMap(obj)) {
         array = Object.values(obj);
     }
     else if (isArray(obj)) {
         array = obj;
     }
     else {
-        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+        throw new TypeError(`anyDefined(obj): expected array or dict-like, got ${typeof obj}: ${obj}`);
     }
     return array.filter(x => x !== undefined).length > 0;
 }
 function anyTruthy(obj) {
     let array;
-    if (isObject(obj)) {
+    if (isTMap(obj)) {
         array = Object.values(obj);
     }
     else if (isArray(obj)) {
         array = obj;
     }
     else {
-        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+        throw new TypeError(`anyTruthy(obj): expected array or dict-like, got ${typeof obj}: ${obj}`);
     }
     return array.filter(x => bool(x)).length > 0;
 }
 function allUndefined(obj) {
     let array;
-    if (isObject(obj)) {
+    if (isTMap(obj)) {
         array = Object.values(obj);
     }
     else if (isArray(obj)) {
         array = obj;
     }
     else {
-        throw new TypeError(`expected array or obj, got: ${typeof obj}`);
+        throw new TypeError(`allUndefined(obj): expected array or dict-like, got ${typeof obj}: ${obj}`);
     }
     return array.filter(x => x !== undefined).length === 0;
 }
-async function waitUntil(cond, checkInterval = 20, timeout = Infinity) {
-    if (checkInterval <= 0) {
-        throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
+function prettyNode(node) {
+    var _a;
+    if (!node) {
+        return `${node}`;
     }
-    if (checkInterval > timeout) {
-        throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). checkInterval has to be lower than timeout.`);
+    if (node instanceof BetterHTMLElement) {
+        return node.toString();
     }
-    const loops = timeout / checkInterval;
-    if (loops <= 1) {
-        console.warn(`loops <= 1, you probably didn't want this to happen`);
+    let ret = '';
+    let str = `${node}`;
+    let type = (_a = str.match(/\[object (\w+)\]/)[1]) !== null && _a !== void 0 ? _a : typeof node;
+    let cls;
+    let id;
+    let tag;
+    if (node instanceof Element) {
+        cls = node.className;
+        id = node.id;
+        tag = node.tagName;
     }
-    let count = 0;
-    while (count < loops) {
-        if (cond()) {
-            return true;
+    if (tag) {
+        ret += `${tag} (${type})`;
+    }
+    else {
+        ret += type;
+    }
+    if (id) {
+        ret += ` #${id}`;
+    }
+    if (cls) {
+        ret += `.${cls}`;
+    }
+    return ret;
+}
+function waitUntil(cond, checkInterval = 20, timeout = Infinity) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (checkInterval <= 0) {
+            throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
         }
-        await wait(checkInterval);
-        count++;
-    }
-    return false;
+        if (checkInterval > timeout) {
+            throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). checkInterval has to be lower than timeout.`);
+        }
+        const loops = timeout / checkInterval;
+        if (loops <= 1) {
+            console.warn(`loops <= 1, you probably didn't want this to happen`);
+        }
+        let count = 0;
+        while (count < loops) {
+            if (cond()) {
+                return true;
+            }
+            yield wait(checkInterval);
+            count++;
+        }
+        return false;
+    });
 }
 function isBHE(bhe, bheSubType) {
     return (bhe instanceof bheSubType);

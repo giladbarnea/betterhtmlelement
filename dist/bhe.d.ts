@@ -54,6 +54,8 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     static wrapWithBHE(htmlElement: HTMLElement): BetterHTMLElement;
     static wrapWithBHE(htmlElement: Element): BetterHTMLElement;
     toString(): any;
+    isEqualNode(otherNode: NodeOrBHE | null): boolean;
+    isSameNode(otherNode: NodeOrBHE | null): boolean;
     wrapSomethingElse<T extends HTMLElement>(newHtmlElement: BetterHTMLElement<T>): this;
     wrapSomethingElse(newHtmlElement: Node): this;
     html(html: string): this;
@@ -109,7 +111,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     cacheChildren(childrenObj: ChildrenObj): this;
     empty(): this;
     remove(): this;
-    on(evTypeFnPairs: TMap<EventName2Function>, options?: AddEventListenerOptions): this;
+    on(evTypeFnPairs: SMap<EventName2Function>, options?: AddEventListenerOptions): this;
     touchstart(fn: (ev: TouchEvent) => any, options?: AddEventListenerOptions): this;
     pointerdown(fn: (event: PointerEvent | MouseEvent) => any, options?: AddEventListenerOptions): this;
     click(): this;
@@ -129,8 +131,8 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     mouseover(fn: (event: MouseEvent) => void, options?: AddEventListenerOptions): this;
     off(event: EventName): this;
     allOff(): this;
-    attr(attrValPairs: TMap<string | boolean>): this;
     attr(attributeName: string): string;
+    attr(attrValPairs: SMap<string | boolean | number>): this;
     removeAttr(qualifiedName: string, ...qualifiedNames: string[]): this;
     getdata(key: string, parse?: boolean): string | TMap<string>;
     private _cache;
@@ -537,13 +539,19 @@ declare function anchor({ htmlElement, children }: {
     children?: ChildrenObj;
 }): Anchor;
 declare function anchor(): Anchor;
-interface TMap<T> {
+interface TMap<T = any> {
     [s: string]: T;
     [s: number]: T;
 }
-interface TRecMap<T> {
-    [s: string]: T | TRecMap<T>;
-    [s: number]: T | TRecMap<T>;
+interface SMap<T = any> {
+    [s: string]: T;
+}
+interface NMap<T = any> {
+    [s: number]: T;
+}
+interface RecMap<T = any> {
+    [s: string]: T | RecMap<T>;
+    [s: number]: T | RecMap<T>;
 }
 declare type EventName = keyof HTMLElementEventMap;
 declare type EventName2Function<E extends EventName = EventName> = {
@@ -558,8 +566,8 @@ declare type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag 
 declare type Element2Tag<T> = {
     [K in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[K] extends T ? K : never;
 }[keyof HTMLElementTagNameMap];
-declare type ChildrenObj = TRecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>;
-declare type Enumerated<T> = T extends (infer U)[] ? [number, U][] : T extends TMap<(infer U)> ? [keyof T, U][] : T extends TRecMap<(infer U)> ? [keyof T, U][] : never;
+declare type ChildrenObj = RecMap<QuerySelector | BetterHTMLElement | typeof BetterHTMLElement>;
+declare type Enumerated<T> = T extends (infer U)[] ? [i: number, item: U][] : T extends SMap<(infer U)> ? [key: string, value: U][] : T extends NMap<(infer U)> ? [key: number, value: U][] : T extends TMap<(infer U)> ? [key: keyof T, value: U][] : T extends RecMap<(infer U)> ? [key: keyof T, value: U][] : never;
 declare type Returns<T> = (s: string) => T;
 declare type NodeOrBHE = BetterHTMLElement | Node;
 declare type ElementOrBHE = BetterHTMLElement | Element;
@@ -622,14 +630,16 @@ interface AnimateOptions {
 declare function enumerate<T>(obj: T): Enumerated<T>;
 declare function wait(ms: number): Promise<any>;
 declare function bool(val: any): boolean;
+declare function copy<T>(obj: T): T;
+declare function equal(a: any, b: any): boolean;
 declare function isArray<T>(obj: any): obj is Array<T>;
 declare function isEmptyArr(collection: any): boolean;
 declare function isEmptyObj(obj: any): boolean;
 declare function isFunction<F>(fn: F): fn is F;
-declare function isFunction(fn: (...args: any[]) => any): fn is (...args: any[]) => any;
-declare function anyDefined(obj: any): boolean;
-declare function anyTruthy(obj: any): boolean;
-declare function allUndefined(obj: any): boolean;
+declare function anyDefined(obj: Array<any> | TMap<any>): boolean;
+declare function anyTruthy(obj: Array<any> | TMap<any>): boolean;
+declare function allUndefined(obj: Array<any> | TMap<any>): boolean;
+declare function prettyNode(node: NodeOrBHE): string;
 declare function waitUntil(cond: () => boolean, checkInterval?: number, timeout?: number): Promise<boolean>;
 declare function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType: any): bhe is T;
 declare function isType<T>(arg: T): arg is T;
