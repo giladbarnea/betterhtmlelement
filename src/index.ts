@@ -616,7 +616,8 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
                     }
                 }
             } else if (type === "string") {
-                let match = /<(\w+)>$/.exec(value as string);
+
+                let match = /<(\w+)>$/.exec(value as string); // <option>
 
                 if (match) {
                     // { "options": "<option>" }
@@ -631,7 +632,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
                     this._cache(key, bhes);
                 } else {
                     // { "myinput": "input[type=checkbox]" }
-                    this._cache(key, this.child(value as TagOrString));
+                    this._cache(key, this.child(value as string));
                 }
             } else {
                 console.warn(`${this}.cacheChildren(), bad value: ${value} (${type}). key: "${key}", childrenObj:`, childrenObj,);
@@ -839,7 +840,7 @@ class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     }
 
     /** Remove the event listener of `event`, if exists.*/
-    off(event: EventName): this {
+    off(event: keyof HTMLElementEventMap): this {
         // TODO: Should remove listener from this._listeners?
         this._htmlElement.removeEventListener(event, this._listeners[event]);
         return this;
@@ -1126,17 +1127,12 @@ class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
     }
 }
 
-interface Flashable {
-    flashBad(): Promise<void>;
-
-    flashGood(): Promise<void>;
-}
 
 type FormishHTMLElement = HTMLButtonElement | HTMLInputElement | HTMLSelectElement;
 type InputType = "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local"
 
 abstract class Form<Generic extends FormishHTMLElement>
-    extends BetterHTMLElement<Generic> implements Flashable {
+    extends BetterHTMLElement<Generic> {
     get disabled(): boolean {
         return this._htmlElement.disabled;
     }
@@ -1178,7 +1174,7 @@ abstract class Form<Generic extends FormishHTMLElement>
      Errors if `on` is non-primitive (object, array).*/
     toggleEnabled(on): this {
         if (isObject(on)) {
-            this._softErr(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleEnabled()" }));
+            this._onEventError(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleEnabled()" }));
             return this
         }
         if (bool(on)) {
@@ -1201,7 +1197,7 @@ abstract class Form<Generic extends FormishHTMLElement>
             return this._htmlElement.value ?? undefined;
         } else {
             if (isObject(val)) {
-                this._softErr(new BHETypeError({ faultyValue: { val }, expected: "primitive", where: "value()" }));
+                this._onEventError(new BHETypeError({ faultyValue: { val }, expected: "primitive", where: "value()" }));
                 return this;
             }
             this._htmlElement.value = val;
@@ -1209,84 +1205,68 @@ abstract class Form<Generic extends FormishHTMLElement>
         }
     }
 
-    async flashBad(): Promise<void> {
-        this.addClass('bad');
-        await wait(2000);
-        this.removeClass('bad');
-
-    }
-
-    async flashGood(): Promise<void> {
-        this.addClass('good');
-        await wait(2000);
-        this.removeClass('good');
-    }
 
     clear(): this {
         return this.value(null)
     }
 
+
     // ** Event Hooks
-    _beforeEvent(): this;
-    /**Calls `self.disable()`.*/
-    _beforeEvent(thisArg: this): this
+    /**This hook is invoked before the function that is passed to an event listener (such as `click`) is called.*/
     _beforeEvent(thisArg?: this): this {
-        let self = this === undefined ? thisArg : this;
+        let self = thisArg ?? this;
+        if (!self) {
+            console.warn(`_beforeEvent(thisArg?): this is ${this} and thisArg is ${thisArg}. This probably means _beforeEvent() was used statically and thisArg wasn't given.`)
+        }
         return self.disable()
     }
 
-    _onEventSuccess(ret: any): this
-    _onEventSuccess(ret: any, thisArg: this): this
-    /**Calls `self.flashGood()`.*/
-    _onEventSuccess(ret: any, thisArg?: this): this {
-        let self = this === undefined ? thisArg : this;
-        if (self.flashGood) {
-            self.flashGood()
+    /**When the function that is passed to an event listener (such as `click`) returns successfully, this hook is invoked.*/
+    _onEventSuccess(thisArg?: this): this {
+        let self = thisArg ?? this;
+        if (!self) {
+            console.warn(`_onEventSuccess(thisArg?): this is ${this} and thisArg is ${thisArg}. This probably means _onEventSuccess() was used statically and thisArg wasn't given.`)
         }
         return self
     }
 
-    async _softErr(e: Error): Promise<this>;
-    async _softErr(e: Error, thisArg: this): Promise<this>;
-    /**Logs error to console and calls `self.flashBad()`.*/
-    async _softErr(e: Error, thisArg?: this): Promise<this> {
-        console.error(`${e.name}:\n${e.message}`);
-        let self = this === undefined ? thisArg : this;
-        if (self.flashBad) {
-            await self.flashBad();
+    /**When the function that is passed to an event listener (such as `click`) throws an error, this hook is invoked.
+     * Logs shortly-formatted `error` to console.*/
+    async _onEventError(error: Error, thisArg?: this): Promise<this> {
+        console.error(`${error.name}:\n${error.message}`);
+        let self = thisArg ?? this;
+        if (!self) {
+            console.warn(`_onEventError(e: Error, thisArg?): this is ${this} and thisArg is ${thisArg}. This probably means _onEventError() was used statically and thisArg wasn't given.`)
         }
         return self
     }
 
-    async _softWarn(e: Error): Promise<this>;
-    async _softWarn(e: Error, thisArg: this): Promise<this>;
-    /**Logs warning to console and calls `self.flashBad()`.*/
-    async _softWarn(e: Error, thisArg?: this): Promise<this> {
-        console.warn(`${e.name}:\n${e.message}`);
-        let self = this === undefined ? thisArg : this;
-        if (self.flashBad) {
-            await self.flashBad();
-        }
-        return self
-    }
 
-    _afterEvent(): this;
-    _afterEvent(thisArg: this): this;
-    /**Calls `self.enable()`.*/
+    /**This hook is always invoked, regardless of whether the function passed to an event listener (such as `click`) succeeds or fails.*/
     _afterEvent(thisArg?: this): this {
-        let self = this === undefined ? thisArg : this;
+        let self = thisArg ?? this;
+        if (!self) {
+            console.warn(`_afterEvent(e: Error, thisArg?): this is ${this} and thisArg is ${thisArg}. This probably means _afterEvent() was used statically and thisArg wasn't given.`)
+        }
         return self.enable();
     }
 
-    /**Used by e.g. `click(fn)` to wrap passed `fn` safely and trigger `_[before|after|on]Event[Success|Error]`.*/
+    /**Used by event listeners, such as `click(fn)`, to wrap passed `fn`. Installs the following hooks:
+     | Hook                        | When                                                                                                  |
+     | :-------------------------- | :---------------------------------------------------------------------------------------------------- |
+     | `this._beforeEvent()`       | Before calling `asyncFn(event)`                                                                       |
+     | `this._onEventSuccess()`    | When `asyncFn(event)` has been awaited successfully                                                   |
+     | `this._onEventError(error)` | When `asyncFn(event)` has thrown an error                                                             |
+     | `this._afterEvent()`        | When an event listener is about to return, regardless of whether `asyncFn(event)` succeeded or failed |
+     * */
     protected async _wrapFnInEventHooks<F extends (event: Event) => Promise<any>>(asyncFn: F, event: Event): Promise<void> {
         try {
             this._beforeEvent();
-            const ret = await asyncFn(event);
-            await this._onEventSuccess(ret);
+            const returnval = await asyncFn(event);
+            await this._onEventSuccess(returnval);
 
         } catch (e) {
-            await this._softErr(e);
+            await this._onEventError(e);
 
         } finally {
             this._afterEvent();
@@ -1339,7 +1319,7 @@ class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonEle
     }
 
     click(_fn?: (_event: MouseEvent) => Promise<any>): this {
-        if (_fn !== undefined) {
+        if (_fn) {
             const fn = async (event) => {
                 await this._wrapFnInEventHooks(_fn, event);
             };
@@ -1442,14 +1422,6 @@ class TextInput<Q extends QuerySelector = QuerySelector> extends Input<"text"> {
 
     keydown(_fn: (_event: KeyboardEvent) => Promise<any>): this {
         const fn = async (event) => {
-            if (event.key !== 'Enter') {
-                return;
-            }
-            let val = this.value();
-            if (!bool(val)) {
-                this._softWarn(new ValueError({ faultyValue: { val }, expected: "truthy", where: "keydown()" }));
-                return;
-            }
             await this._wrapFnInEventHooks(_fn, event);
         };
         return super.keydown(fn);
@@ -1498,7 +1470,7 @@ class CheckboxInput extends Changable<"checkbox", HTMLInputElement> {
      Errors if `on` is non-primitive (object, array).*/
     toggleChecked(on) {
         if (isObject(on)) {
-            this._softErr(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleChecked()" }));
+            this._onEventError(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleChecked()" }));
             return this
         }
         if (bool(on)) {
@@ -1521,7 +1493,7 @@ class CheckboxInput extends Changable<"checkbox", HTMLInputElement> {
             return this._htmlElement.checked ?? undefined;
         } else {
             if (isObject(val)) {
-                this._softErr(new BHETypeError({ faultyValue: { val }, expected: "primitive", where: "value()" }));
+                this._onEventError(new BHETypeError({ faultyValue: { val }, expected: "primitive", where: "value()" }));
             }
             this._htmlElement.checked = val;
             return this;
@@ -1532,9 +1504,9 @@ class CheckboxInput extends Changable<"checkbox", HTMLInputElement> {
         return this.uncheck();
     }
 
-    async _softErr(e: Error, thisArg?: this): Promise<this> {
+    async _onEventError(e: Error, thisArg?: this): Promise<this> {
         this.toggleChecked(!this.checked);
-        return super._softErr(e);
+        return super._onEventError(e);
     }
 }
 
@@ -1559,12 +1531,14 @@ class Select extends Changable<undefined, HTMLSelectElement> {
         return this.item(this.selectedIndex)
     }
 
-    /**@param val - Either a specific HTMLOptionElement, number (index)*/
+    /**@param val - Either a specific HTMLOptionElement, number (index).
+     * Sets `this.selectedIndex`.
+     * @see this.selectedIndex*/
     set selected(val) {
         if (val instanceof HTMLOptionElement) {
             let index = this.options.findIndex(o => o === val);
             if (index === -1) {
-                this._softWarn(new ValueError({ faultyValue: { val }, where: "set selected(val)", message: `no option equals passed val` }));
+                console.warn(`set selected(val): given val was not found in this.options.\n val: ${prettyNode(val)}\nthis.options (${this.options.length}): ${this.options.map(prettyNode)}`)
             }
             this.selectedIndex = index;
         } else if (typeof val === 'number') {
@@ -1576,7 +1550,7 @@ class Select extends Changable<undefined, HTMLSelectElement> {
     }
 
     get options(): HTMLOptionElement[] {
-        return [...this._htmlElement.options as unknown as Iterable<HTMLOptionElement>]
+        return [...this._htmlElement.options as unknown as Array<HTMLOptionElement>]
     }
 
     item(index: number): HTMLOptionElement {

@@ -899,7 +899,7 @@ class Form extends BetterHTMLElement {
     }
     toggleEnabled(on) {
         if (isObject(on)) {
-            this._softErr(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleEnabled()" }));
+            this._onEventError(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleEnabled()" }));
             return this;
         }
         if (bool(on)) {
@@ -916,74 +916,56 @@ class Form extends BetterHTMLElement {
         }
         else {
             if (isObject(val)) {
-                this._softErr(new BHETypeError({ faultyValue: { val }, expected: "primitive", where: "value()" }));
+                this._onEventError(new BHETypeError({ faultyValue: { val }, expected: "primitive", where: "value()" }));
                 return this;
             }
             this._htmlElement.value = val;
             return this;
         }
     }
-    flashBad() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.addClass('bad');
-            yield wait(2000);
-            this.removeClass('bad');
-        });
-    }
-    flashGood() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.addClass('good');
-            yield wait(2000);
-            this.removeClass('good');
-        });
-    }
     clear() {
         return this.value(null);
     }
     _beforeEvent(thisArg) {
-        let self = this === undefined ? thisArg : this;
+        let self = thisArg !== null && thisArg !== void 0 ? thisArg : this;
+        if (!self) {
+            console.warn(`_beforeEvent(thisArg?): this is ${this} and thisArg is ${thisArg}. This probably means _beforeEvent() was used statically and thisArg wasn't given.`);
+        }
         return self.disable();
     }
-    _onEventSuccess(ret, thisArg) {
-        let self = this === undefined ? thisArg : this;
-        if (self.flashGood) {
-            self.flashGood();
+    _onEventSuccess(thisArg) {
+        let self = thisArg !== null && thisArg !== void 0 ? thisArg : this;
+        if (!self) {
+            console.warn(`_onEventSuccess(thisArg?): this is ${this} and thisArg is ${thisArg}. This probably means _onEventSuccess() was used statically and thisArg wasn't given.`);
         }
         return self;
     }
-    _softErr(e, thisArg) {
+    _onEventError(error, thisArg) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.error(`${e.name}:\n${e.message}`);
-            let self = this === undefined ? thisArg : this;
-            if (self.flashBad) {
-                yield self.flashBad();
-            }
-            return self;
-        });
-    }
-    _softWarn(e, thisArg) {
-        return __awaiter(this, void 0, void 0, function* () {
-            console.warn(`${e.name}:\n${e.message}`);
-            let self = this === undefined ? thisArg : this;
-            if (self.flashBad) {
-                yield self.flashBad();
+            console.error(`${error.name}:\n${error.message}`);
+            let self = thisArg !== null && thisArg !== void 0 ? thisArg : this;
+            if (!self) {
+                console.warn(`_onEventError(e: Error, thisArg?): this is ${this} and thisArg is ${thisArg}. This probably means _onEventError() was used statically and thisArg wasn't given.`);
             }
             return self;
         });
     }
     _afterEvent(thisArg) {
-        let self = this === undefined ? thisArg : this;
+        let self = thisArg !== null && thisArg !== void 0 ? thisArg : this;
+        if (!self) {
+            console.warn(`_afterEvent(e: Error, thisArg?): this is ${this} and thisArg is ${thisArg}. This probably means _afterEvent() was used statically and thisArg wasn't given.`);
+        }
         return self.enable();
     }
     _wrapFnInEventHooks(asyncFn, event) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 this._beforeEvent();
-                const ret = yield asyncFn(event);
-                yield this._onEventSuccess(ret);
+                const returnval = yield asyncFn(event);
+                yield this._onEventSuccess(returnval);
             }
             catch (e) {
-                yield this._softErr(e);
+                yield this._onEventError(e);
             }
             finally {
                 this._afterEvent();
@@ -1017,7 +999,7 @@ class Button extends Form {
         }
     }
     click(_fn) {
-        if (_fn !== undefined) {
+        if (_fn) {
             const fn = (event) => __awaiter(this, void 0, void 0, function* () {
                 yield this._wrapFnInEventHooks(_fn, event);
             });
@@ -1066,14 +1048,6 @@ class TextInput extends Input {
     }
     keydown(_fn) {
         const fn = (event) => __awaiter(this, void 0, void 0, function* () {
-            if (event.key !== 'Enter') {
-                return;
-            }
-            let val = this.value();
-            if (!bool(val)) {
-                this._softWarn(new ValueError({ faultyValue: { val }, expected: "truthy", where: "keydown()" }));
-                return;
-            }
             yield this._wrapFnInEventHooks(_fn, event);
         });
         return super.keydown(fn);
@@ -1105,7 +1079,7 @@ class CheckboxInput extends Changable {
     }
     toggleChecked(on) {
         if (isObject(on)) {
-            this._softErr(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleChecked()" }));
+            this._onEventError(new BHETypeError({ faultyValue: { on }, expected: "primitive", where: "toggleChecked()" }));
             return this;
         }
         if (bool(on)) {
@@ -1122,7 +1096,7 @@ class CheckboxInput extends Changable {
         }
         else {
             if (isObject(val)) {
-                this._softErr(new BHETypeError({ faultyValue: { val }, expected: "primitive", where: "value()" }));
+                this._onEventError(new BHETypeError({ faultyValue: { val }, expected: "primitive", where: "value()" }));
             }
             this._htmlElement.checked = val;
             return this;
@@ -1131,13 +1105,13 @@ class CheckboxInput extends Changable {
     clear() {
         return this.uncheck();
     }
-    _softErr(e, thisArg) {
+    _onEventError(e, thisArg) {
         const _super = Object.create(null, {
-            _softErr: { get: () => super._softErr }
+            _onEventError: { get: () => super._onEventError }
         });
         return __awaiter(this, void 0, void 0, function* () {
             this.toggleChecked(!this.checked);
-            return _super._softErr.call(this, e);
+            return _super._onEventError.call(this, e);
         });
     }
 }
@@ -1158,7 +1132,7 @@ class Select extends Changable {
         if (val instanceof HTMLOptionElement) {
             let index = this.options.findIndex(o => o === val);
             if (index === -1) {
-                this._softWarn(new ValueError({ faultyValue: { val }, where: "set selected(val)", message: `no option equals passed val` }));
+                console.warn(`set selected(val): given val was not found in this.options.\n val: ${prettyNode(val)}\nthis.options (${this.options.length}): ${this.options.map(prettyNode)}`);
             }
             this.selectedIndex = index;
         }
@@ -1425,35 +1399,6 @@ function prettyNode(node) {
         ret += `.${cls}`;
     }
     return ret;
-}
-function waitUntil(cond, checkInterval = 20, timeout = Infinity) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (checkInterval <= 0) {
-            throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
-        }
-        if (checkInterval > timeout) {
-            throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). checkInterval has to be lower than timeout.`);
-        }
-        const loops = timeout / checkInterval;
-        if (loops <= 1) {
-            console.warn(`loops <= 1, you probably didn't want this to happen`);
-        }
-        let count = 0;
-        while (count < loops) {
-            if (cond()) {
-                return true;
-            }
-            yield wait(checkInterval);
-            count++;
-        }
-        return false;
-    });
-}
-function isBHE(bhe, bheSubType) {
-    return (bhe instanceof bheSubType);
-}
-function isType(arg) {
-    return true;
 }
 function isTMap(obj) {
     return {}.toString.call(obj) == '[object Object]';

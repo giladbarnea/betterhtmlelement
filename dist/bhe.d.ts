@@ -129,7 +129,7 @@ declare class BetterHTMLElement<Generic extends HTMLElement = HTMLElement> {
     keydown(fn: (event: KeyboardEvent) => any, options?: AddEventListenerOptions): this;
     mouseout(fn: (event: MouseEvent) => any, options?: AddEventListenerOptions): this;
     mouseover(fn: (event: MouseEvent) => void, options?: AddEventListenerOptions): this;
-    off(event: EventName): this;
+    off(event: keyof HTMLElementEventMap): this;
     allOff(): this;
     attr(attributeName: string): string;
     attr(attrValPairs: SMap<string | boolean | number>): this;
@@ -228,13 +228,9 @@ declare class Anchor extends BetterHTMLElement<HTMLAnchorElement> {
     target(): string;
     target(val: string): this;
 }
-interface Flashable {
-    flashBad(): Promise<void>;
-    flashGood(): Promise<void>;
-}
 declare type FormishHTMLElement = HTMLButtonElement | HTMLInputElement | HTMLSelectElement;
 declare type InputType = "checkbox" | "number" | "radio" | "text" | "time" | "datetime-local";
-declare abstract class Form<Generic extends FormishHTMLElement> extends BetterHTMLElement<Generic> implements Flashable {
+declare abstract class Form<Generic extends FormishHTMLElement> extends BetterHTMLElement<Generic> {
     get disabled(): boolean;
     disable(): this;
     enable(): this;
@@ -244,19 +240,11 @@ declare abstract class Form<Generic extends FormishHTMLElement> extends BetterHT
     value(val: undefined): any;
     value(val: null | ''): this;
     value(val: any): this;
-    flashBad(): Promise<void>;
-    flashGood(): Promise<void>;
     clear(): this;
-    _beforeEvent(): this;
-    _beforeEvent(thisArg: this): this;
-    _onEventSuccess(ret: any): this;
-    _onEventSuccess(ret: any, thisArg: this): this;
-    _softErr(e: Error): Promise<this>;
-    _softErr(e: Error, thisArg: this): Promise<this>;
-    _softWarn(e: Error): Promise<this>;
-    _softWarn(e: Error, thisArg: this): Promise<this>;
-    _afterEvent(): this;
-    _afterEvent(thisArg: this): this;
+    _beforeEvent(thisArg?: this): this;
+    _onEventSuccess(thisArg?: this): this;
+    _onEventError(error: Error, thisArg?: this): Promise<this>;
+    _afterEvent(thisArg?: this): this;
     protected _wrapFnInEventHooks<F extends (event: Event) => Promise<any>>(asyncFn: F, event: Event): Promise<void>;
 }
 declare class Button<Q extends QuerySelector = QuerySelector> extends Form<HTMLButtonElement> {
@@ -346,7 +334,7 @@ declare class CheckboxInput extends Changable<"checkbox", HTMLInputElement> {
     value(val: null | ''): this;
     value(val: any): this;
     clear(): this;
-    _softErr(e: Error, thisArg?: this): Promise<this>;
+    _onEventError(e: Error, thisArg?: this): Promise<this>;
 }
 declare class Select extends Changable<undefined, HTMLSelectElement> {
     constructor(selectOpts: any);
@@ -553,16 +541,16 @@ interface RecMap<T = any> {
     [s: string]: T | RecMap<T>;
     [s: number]: T | RecMap<T>;
 }
-declare type EventName = keyof HTMLElementEventMap;
-declare type EventName2Function<E extends EventName = EventName> = {
-    [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+declare type _EventName = keyof HTMLElementEventMap;
+declare type EventName2Function<E extends _EventName = _EventName> = {
+    [P in _EventName]?: (event: HTMLElementEventMap[P]) => void;
 }[E];
-declare type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventName2Function>>;
+declare type MapOfEventName2Function = Partial<Record<_EventName, EventName2Function>>;
 declare type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
-declare type NotTag<T extends Tag> = Exclude<Tag, T>;
-declare type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<NotTag<T>>>;
-declare type TagOrString = Tag | string;
-declare type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
+declare type _NotTag<T extends Tag> = Exclude<Tag, T>;
+declare type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<_NotTag<T>>>;
+declare type _TagOrString = Tag | string;
+declare type QuerySelector<K extends _TagOrString = _TagOrString> = K extends Tag ? K : string;
 declare type Element2Tag<T> = {
     [K in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[K] extends T ? K : never;
 }[keyof HTMLElementTagNameMap];
@@ -635,14 +623,11 @@ declare function equal(a: any, b: any): boolean;
 declare function isArray<T>(obj: any): obj is Array<T>;
 declare function isEmptyArr(collection: any): boolean;
 declare function isEmptyObj(obj: any): boolean;
-declare function isFunction<F>(fn: F): fn is F;
-declare function anyDefined(obj: Array<any> | TMap<any>): boolean;
-declare function anyTruthy(obj: Array<any> | TMap<any>): boolean;
-declare function allUndefined(obj: Array<any> | TMap<any>): boolean;
+declare function isFunction<F extends Function>(fn: F): fn is F;
+declare function anyDefined(obj: Array<any> | TMap): boolean;
+declare function anyTruthy(obj: Array<any> | TMap): boolean;
+declare function allUndefined(obj: Array<any> | TMap): boolean;
 declare function prettyNode(node: NodeOrBHE): string;
-declare function waitUntil(cond: () => boolean, checkInterval?: number, timeout?: number): Promise<boolean>;
-declare function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType: any): bhe is T;
-declare function isType<T>(arg: T): arg is T;
 declare function isTMap<T>(obj: TMap<T>): obj is TMap<T>;
 declare function isObject(obj: any): boolean;
 declare function shallowProperty<T>(key: string): (obj: T) => T extends null ? undefined : T[keyof T];

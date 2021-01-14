@@ -1,4 +1,3 @@
-// TODO: why <EventName> needed in allOff()?
 interface TMap<T = any> {
     [s: string]: T;
 
@@ -21,25 +20,42 @@ interface RecMap<T = any> {
 }
 
 
-type EventName = keyof HTMLElementEventMap;
+type _EventName = keyof HTMLElementEventMap;
+// TODO: I'm not sure what's the difference between EventName2Function and MapOfEventName2Function?
 // EventName2Function<"click"> → function(event: MouseEvent) { }
-type EventName2Function<E extends EventName = EventName> = {
-    [P in EventName]?: (event: HTMLElementEventMap[P]) => void;
+type EventName2Function<E extends _EventName = _EventName> = {
+    [P in _EventName]?: (event: HTMLElementEventMap[P]) => void;
 }[E]
 // e.g. { "mouseover" : MouseEvent, ... }
-type MapOfEventName2Function = Partial<Record<keyof HTMLElementEventMap, EventName2Function>>
+type MapOfEventName2Function = Partial<Record<_EventName, EventName2Function>>
 
 
 /**
  * "a", "div"
  * @example
- * const foo = <K extends Tag>(tag: K) => document.createElement(tag);
+ * const foo = (tag: Tag) => document.createElement(tag);
  * foo("a") // HTMLAnchorElement
  * foo("BAD") // error
  */
 type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
-type NotTag<T extends Tag> = Exclude<Tag, T>;
-type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<NotTag<T>>>;
+/**
+ * @example
+ * const foo = (tag: _NotTag<"input">) => document.createElement(tag);
+ * foo("a") // HTMLAnchorElement
+ * foo("input") // error
+ * foo("BAD") // error
+ */
+type _NotTag<T extends Tag> = Exclude<Tag, T>;
+/**
+ * Accepts either a `QuerySelector`
+ * @example
+ * const foo: QueryOrPreciseTag;
+ * foo("a") // HTMLAnchorElement
+ * foo("input") // error
+ * foo("BAD") // error
+ * @see QuerySelector
+ */
+type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<_NotTag<T>>>;
 // /**
 //  *"a", "div", "gilad".
 //  *Tag2Element expects a tag and returns an HTMLElement.
@@ -49,17 +65,17 @@ type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<NotTag<T>>>;
 //  *baz("diva") → HTMLSelectElement | HTMLLegendElement | ...
 //  */
 // type Tag2Element<K extends Tag = Tag> = K extends Tag ? HTMLElementTagNameMap[K] : HTMLElementTagNameMap[Tag]
-type TagOrString = Tag | string;
+type _TagOrString = Tag | string;
 /**
  * `"a"`, `"div"`, `"gilad"`.
  * QuerySelector expects a tag name (string) and returns a `Tag`.
  * @example
- * const bar = <K extends Tag | string>(query: QuerySelector<K>) => document.querySelector(query);
- * bar("a") → HTMLAnchorElement
- * bar("gilad") → HTMLSelectElement | HTMLLegendElement | ...
+ * const foo = <K extends Tag | string>(query: QuerySelector<K>) => document.querySelector(query);
+ * foo("a") // HTMLAnchorElement
+ * foo("gilad") // HTMLSelectElement | HTMLLegendElement | ...
  * @see Tag
  */
-type QuerySelector<K extends TagOrString = TagOrString> = K extends Tag ? K : string;
+type QuerySelector<K extends _TagOrString = _TagOrString> = K extends Tag ? K : string;
 
 // const foo = <K extends Tag>(tag: K) => document.createElement(tag);
 
@@ -107,7 +123,6 @@ interface Tag2BHE {
  * const foo: Element2Tag<HTMLInputElement> = "input"  // ok
  * const bar: Element2Tag<HTMLInputElement> = "img"  // ERROR
  */
-
 type Element2Tag<T> = { [K in keyof HTMLElementTagNameMap]: HTMLElementTagNameMap[K] extends T ? K : never }[keyof HTMLElementTagNameMap]
 
 

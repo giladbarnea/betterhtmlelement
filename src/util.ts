@@ -282,7 +282,7 @@ function isEmptyObj(obj): boolean {
 }
 
 
-function isFunction<F>(fn: F): fn is F {
+function isFunction<F extends Function>(fn: F): fn is F {
     // 0                   false
     // 1                   false
     // ''                  false
@@ -316,7 +316,7 @@ function isFunction<F>(fn: F): fn is F {
     return !!fn && toStringed === '[object Function]'
 }
 
-function anyDefined(obj: Array<any> | TMap<any>): boolean {
+function anyDefined(obj: Array<any> | TMap): boolean {
     let array;
     if (isTMap(obj)) {
         array = Object.values(obj);
@@ -328,7 +328,7 @@ function anyDefined(obj: Array<any> | TMap<any>): boolean {
     return array.filter(x => x !== undefined).length > 0;
 }
 
-function anyTruthy(obj: Array<any> | TMap<any>): boolean {
+function anyTruthy(obj: Array<any> | TMap): boolean {
     let array;
     if (isTMap(obj)) {
         array = Object.values(obj);
@@ -340,7 +340,7 @@ function anyTruthy(obj: Array<any> | TMap<any>): boolean {
     return array.filter(x => bool(x)).length > 0;
 }
 
-function allUndefined(obj: Array<any> | TMap<any>): boolean {
+function allUndefined(obj: Array<any> | TMap): boolean {
     let array;
     if (isTMap(obj)) {
         array = Object.values(obj)
@@ -387,33 +387,33 @@ function prettyNode(node: NodeOrBHE): string {
     return ret;
 }
 
-/**Check every `checkInterval` ms if `cond()` is truthy. If, within `timeout`, cond() is truthy, return `true`. Return `false` if time is out.
- * @example
- * // Give the user a 200ms chance to get her pointer over "mydiv". Continue immediately once she does, or after 200ms if she doesn't.
- * mydiv.pointerenter( () => mydiv.pointerHovering = true; )
- * const pointerOnMydiv = await waitUntil(() => mydiv.pointerHovering, 200, 10);*/
-async function waitUntil(cond: () => boolean, checkInterval: number = 20, timeout: number = Infinity): Promise<boolean> {
-    if (checkInterval <= 0) {
-        throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
-    }
-    if (checkInterval > timeout) {
-        throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). checkInterval has to be lower than timeout.`);
-    }
-
-    const loops = timeout / checkInterval;
-    if (loops <= 1) {
-        console.warn(`loops <= 1, you probably didn't want this to happen`);
-    }
-    let count = 0;
-    while (count < loops) {
-        if (cond()) {
-            return true;
-        }
-        await wait(checkInterval);
-        count++;
-    }
-    return false;
-}
+// /**Check every `checkInterval` ms if `cond()` is truthy. If, within `timeout`, cond() is truthy, return `true`. Return `false` if time is out.
+//  * @example
+//  * // Give the user a 200ms chance to get her pointer over "mydiv". Continue immediately once she does, or after 200ms if she doesn't.
+//  * mydiv.pointerenter( () => mydiv.pointerHovering = true; )
+//  * const pointerOnMydiv = await waitUntil(() => mydiv.pointerHovering, 200, 10);*/
+// async function waitUntil(cond: () => boolean, checkInterval: number = 20, timeout: number = Infinity): Promise<boolean> {
+//     if (checkInterval <= 0) {
+//         throw new Error(`checkInterval <= 0. checkInterval: ${checkInterval}`);
+//     }
+//     if (checkInterval > timeout) {
+//         throw new Error(`checkInterval > timeout (${checkInterval} > ${timeout}). checkInterval has to be lower than timeout.`);
+//     }
+//
+//     const loops = timeout / checkInterval;
+//     if (loops <= 1) {
+//         console.warn(`loops <= 1, you probably didn't want this to happen`);
+//     }
+//     let count = 0;
+//     while (count < loops) {
+//         if (cond()) {
+//             return true;
+//         }
+//         await wait(checkInterval);
+//         count++;
+//     }
+//     return false;
+// }
 
 /*function isHTMLInputElement(el: HTMLInputElement): el is HTMLInputElement {
     return (el instanceof HTMLInputElement)
@@ -423,13 +423,13 @@ function isHTMLButtonElement(el: HTMLButtonElement): el is HTMLButtonElement {
     return (el instanceof HTMLButtonElement)
 }*/
 
-function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType): bhe is T {
-    return (bhe instanceof bheSubType)
-}
+// function isBHE<T extends BetterHTMLElement>(bhe: T, bheSubType): bhe is T {
+//     return (bhe instanceof bheSubType)
+// }
 
-function isType<T>(arg: T): arg is T {
-    return true
-}
+// function isType<T>(arg: T): arg is T {
+//     return true
+// }
 
 function isTMap<T>(obj: TMap<T>): obj is TMap<T> {
     // 0                   false
