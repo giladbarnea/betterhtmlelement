@@ -47,15 +47,16 @@ type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
  */
 type _NotTag<T extends Tag> = Exclude<Tag, T>;
 /**
- * Accepts either a `QuerySelector`
- * @example
- * const foo: QueryOrPreciseTag;
- * foo("a") // HTMLAnchorElement
- * foo("input") // error
- * foo("BAD") // error
- * @see QuerySelector
+ Accepts `Q`: a generic `QuerySelector`, and `T`: a specific `Tag`, such as `"img"`.
+ If `T` was given, then type checking will fail for any tag that is not exactly `T`.
+ @example
+ const foo = <Q extends QuerySelector>(q: QueryOrPreciseTag<Q, "img">) => {}
+ foo("img") // OK
+ foo("div") // error
+ foo("whatever") // OK
+ @see QuerySelector
  */
-type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<_NotTag<T>>>;
+type QueryOrPreciseTag<Q extends QuerySelector, T extends Tag> = Exclude<Q, QuerySelector<_NotTag<T>>>;
 // /**
 //  *"a", "div", "gilad".
 //  *Tag2Element expects a tag and returns an HTMLElement.

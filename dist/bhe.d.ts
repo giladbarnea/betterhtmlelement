@@ -548,7 +548,7 @@ declare type EventName2Function<E extends _EventName = _EventName> = {
 declare type MapOfEventName2Function = Partial<Record<_EventName, EventName2Function>>;
 declare type Tag = Exclude<keyof HTMLElementTagNameMap, "object">;
 declare type _NotTag<T extends Tag> = Exclude<Tag, T>;
-declare type QueryOrPreciseTag<Q, T extends Tag> = Exclude<Q, QuerySelector<_NotTag<T>>>;
+declare type QueryOrPreciseTag<Q extends QuerySelector, T extends Tag> = Exclude<Q, QuerySelector<_NotTag<T>>>;
 declare type _TagOrString = Tag | string;
 declare type QuerySelector<K extends _TagOrString = _TagOrString> = K extends Tag ? K : string;
 declare type Element2Tag<T> = {
